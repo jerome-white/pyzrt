@@ -1,5 +1,6 @@
-class Segmenter:
-    def __init__(self, rate=1):
+class Segmenter(list):
+    def __init__(self, distance_string_constructor, rate=1):
+        self.mkstr = distance_string_constructor
         self.rate = rate
 
     def segment(self, data):
@@ -7,4 +8,6 @@ class Segmenter:
 
 class Slicer(Segmenter):
     def segment(self, data):
-        return [ data[i:i+self.rate] for i in range(0, len(data), self.rate) ]
+        for i in range(0, len(data), self.rate):
+            yield self.mkstr(data[i:i+self.rate])
+            
