@@ -4,8 +4,7 @@ import segment
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
-
-from multiprocessing import Pool
+import multiprocessing as mp
 
 class Document:
     def __init__(self, fname, docno, data):
@@ -29,6 +28,8 @@ class Corpus(list):
         return ' '.join([ x.data for x in self ])
 
     def similarity(self, segmenter, parallel=1, orient=True):
+        parallel = min(mp.cpu_count(), max(parallel, 1))
+        
         while True:
             words = list(segmenter.segment(str(self)))
             try:
@@ -40,7 +41,7 @@ class Corpus(list):
                 for _ in range(cull):
                     self.pop()
 
-        with Pool(parallel) as pool:
+        with mp.Pool(parallel) as pool:
             f = pool.imap_unordered
             for i in range(len(words)):
                 for (j, value) in f(distance, enum(words, i)):
