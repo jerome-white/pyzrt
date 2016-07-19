@@ -33,8 +33,8 @@ class Corpus(list):
         
         while True:
             words = list(segmenter.segment(str(self)))
+            shape = [ len(words) ] * 2
             try:
-                shape = [ len(words) ] * 2
                 dot = np.zeros(shape, dtype=np.float16)
                 break
             except MemoryError:
