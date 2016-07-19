@@ -52,7 +52,8 @@ with Pool() as pool:
     # pickle.dump(corpus, open('corpus_90-92.pkl', 'wb'))
     
 log.info('similarity')
-s = corpus.similarity(segmenter(1000), distance())
+s = segmenter(distance, 1000)
+dots = corpus.similarity(s, None)
 
 log.info('plot')
-corpus.dotplot(s, 'wsj.png')
+corpus.dotplot(dots, 'wsj.png')
