@@ -28,6 +28,8 @@ def wsj(doc):
     return (docno, text)
 
 log = logger.getlogger(True)
+
+# corpus = pickle.load(open('corpus_90-92.pkl', 'rb'))
 corpus = document.Corpus()
 
 with Pool() as pool:
@@ -52,7 +54,7 @@ with Pool() as pool:
     # pickle.dump(corpus, open('corpus_90-92.pkl', 'wb'))
     
 log.info('similarity')
-s = segmenter(distance, 1000)
+s = segmenter(distance, 100)
 dots = corpus.similarity(s, None)
 
 log.info('plot')
