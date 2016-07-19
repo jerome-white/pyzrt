@@ -4,21 +4,25 @@ import numpy as np
 
 from nltk.metrics import distance
 
-class StringDistance:
-    def distance(self, s1, s2):
+class DistanceString:
+    def __init__(self, data):
+        self.data = data
+        
+    def __sub__(self, other):
         raise NotImplementedError
 
-class CharacterWiseDistance(StringDistance):
-    def distance(self, s1, s2):
-        return np.mean([ x == y for (x, y) in zip(s1, s2) ])
+class CharacterWiseDistance(DistanceString):
+    def __sub__(self, other):
+        return np.mean([ x == y for (x, y) in zip(self.data, other.data) ])
 
-class SequenceDistance(StringDistance):
-    def distance(self, s1, s2):
-        return difflib.SequenceMatcher(None, s1, s2).ratio()
+class SequenceDistance(DistanceString):
+    def __sub__(self, other):
+        seq = difflib.SequenceMatcher(None, self.data, other.data)
+        return seq.ratio()
 
-class Levenshtein(StringDistance):
-    def distance(self, s1, s2):
-        ed = distance.edit_distance(s1, s2)
+class Levenshtein(DistanceString):
+    def __sub__(self, other):
+        ed = distance.edit_distance(self.data, other.data)
         if ed != 0:
             ed **= -1
             
