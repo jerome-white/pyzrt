@@ -5,19 +5,32 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 
+from multiprocessing import Pool
+
 class Document:
     def __init__(self, fname, docno, data):
         self.fname = fname
         self.docno = docno
         self.data = data
 
+def enum(words, offset):
+    idx = offset + 1
+    s1 = words[offset]
+
+    for (i, s2) in enumerate(words[idx:], idx):
+        yield (i, s1, s2)
+        
+def distance(args):
+    (col, s1, s2) = args
+    return (col, s1 - s2)
+        
 class Corpus(list):
     def __str__(self):
         return ' '.join([ x.data for x in self ])
 
-    def similarity(self, segmenter, distance, parallel=1, orient=True):
+    def similarity(self, segmenter, parallel=1, orient=True):
         while True:
-            words = segmenter.segment(str(self))
+            words = list(segmenter.segment(str(self)))
             try:
                 shape = [ len(words) ] * 2
                 dot = np.zeros(shape, dtype=np.float16)
@@ -27,10 +40,11 @@ class Corpus(list):
                 for _ in range(cull):
                     self.pop()
 
-        for (i, c1) in enumerate(words):
-            following = i + 1
-            for (j, c2) in enumerate(words[following:], following):
-                dot[(i, j)] = distance.distance(c1, c2)
+        with Pool(parallel) as pool:
+            f = pool.imap_unordered
+            for i in range(len(words)):
+                for (j, value) in f(distance, enum(words, i)):
+                    dot[(i, j)] = value
         np.fill_diagonal(dot, 1)
 
         if orient:
