@@ -15,9 +15,9 @@ class Corpus(list):
     def __str__(self):
         return ' '.join([ x.data for x in self ])
 
-    def similarity(self):
+    def similarity(self, segmenter, distance, parallel=1):
         while True:
-            words = segment.Sampler(str(self), 1000, segment.Sequence)
+            words = segmenter.segment(str(self))
             try:
                 shape = [ len(words) ] * 2
                 dot = np.ones(shape, dtype=np.float16)
@@ -30,7 +30,7 @@ class Corpus(list):
         for (i, c1) in enumerate(words):
             following = i + 1
             for (j, c2) in enumerate(words[following:], following):
-                dot[(i, j)] = c1 - c2
+                dot[(i, j)] = distance.distance(c1, c2)
                 
         return np.transpose(np.fliplr(np.triu(dot)))
         

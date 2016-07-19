@@ -9,6 +9,9 @@ import xml.etree.ElementTree as et
 from pathlib import Path
 from multiprocessing import Pool
 
+from segment import Slicer as segmenter
+from distance import SequenceDistance as distance
+
 def wsj(doc):
     docno = doc.findall('DOCNO')
     assert(len(docno) == 1)
@@ -49,6 +52,7 @@ with Pool() as pool:
     # pickle.dump(corpus, open('corpus_90-92.pkl', 'wb'))
     
 log.info('similarity')
-s = corpus.similarity()
+s = corpus.similarity(segmenter(1000), distance())
+
 log.info('plot')
 corpus.dotplot(s, 'wsj.png')
