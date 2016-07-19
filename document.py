@@ -28,20 +28,17 @@ class Corpus(list):
         return ' '.join([ x.data for x in self ])
 
     def similarity(self, segmenter, parallel=1, orient=True):
+        log = logger.get_logger()
+        
         if parallel is not None:
             parallel = min(mp.cpu_count(), max(parallel, 1))
-        
-        while True:
-            words = list(segmenter.segment(str(self)))
-            shape = [ len(words) ] * 2
-            try:
-                dot = np.zeros(shape, dtype=np.float16)
-                break
-            except MemoryError:
-                cull = len(self) - (len(self) // 100)
-                for _ in range(cull):
-                    self.pop()
 
+        log.info('segmentation')
+        words = list(segmenter.segment(str(self)))
+        shape = [ len(words) ] * 2
+        dot = np.zeros(shape, dtype=np.float16)
+
+        log.info('distance computation')
         with mp.Pool(parallel) as pool:
             f = pool.imap_unordered
             for i in range(len(words)):
@@ -50,6 +47,7 @@ class Corpus(list):
         np.fill_diagonal(dot, 1)
 
         if orient:
+            log.info('orientation')
             return np.transpose(np.fliplr(dot))
         else:
             return dot
