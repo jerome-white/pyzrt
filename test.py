@@ -10,4 +10,4 @@ c.append(d)
 
 s = segment_(distance_)
 dots = c.similarity(s, parallel=4)
-c.dotplot(dots, 'aren.png')
+c.dotplot(dots, 'test.png')
