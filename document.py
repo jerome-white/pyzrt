@@ -28,7 +28,8 @@ class Corpus(list):
         return ' '.join([ x.data for x in self ])
 
     def similarity(self, segmenter, parallel=1, orient=True):
-        parallel = min(mp.cpu_count(), max(parallel, 1))
+        if parallel is not None:
+            parallel = min(mp.cpu_count(), max(parallel, 1))
         
         while True:
             words = list(segmenter.segment(str(self)))
