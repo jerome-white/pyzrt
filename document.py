@@ -28,7 +28,7 @@ class Corpus(list):
         return ' '.join([ x.data for x in self ])
 
     def similarity(self, segmenter, parallel=1, orient=True):
-        log = logger.get_logger()
+        log = logger.getlogger()
         
         if parallel is not None:
             parallel = min(mp.cpu_count(), max(parallel, 1))
