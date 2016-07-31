@@ -30,7 +30,7 @@ def wsj(doc):
 log = logger.getlogger(True)
 
 # corpus = pickle.load(open('corpus_90-92.pkl', 'rb'))
-corpus = document.Corpus()
+corpus = {}
 
 with Pool() as pool:
     root = Path('/Users/jerome/Documents/Data/corpus/WSJ')
@@ -44,9 +44,8 @@ with Pool() as pool:
         
         try:
             root = et.fromstringlist(combos)
-            for (i, j) in pool.imap_unordered(wsj, root.findall('DOC')):
-                d = document.Document(i, fpath, j)
-                corpus.append(d)
+            for (docno, data) in pool.imap_unordered(wsj, root.findall('DOC')):
+                corpus[docno] = Document(fpath, data)
         except et.ParseError as e:
             log.error('{0}: line {1} col {2}'.format(str(fpath), *e.position))
             
