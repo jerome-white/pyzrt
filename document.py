@@ -6,6 +6,10 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import multiprocessing as mp
 
+from collections import namedtuple
+
+Document = namedtuple('Document', 'fpath, data')
+
 class Document:
     def __init__(self, fname, docno, data):
         self.fname = fname
