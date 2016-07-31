@@ -7,10 +7,8 @@ import itertools
 import xml.etree.ElementTree as et
 
 from pathlib import Path
+from collections import OrderedDict
 from multiprocessing import Pool
-
-from segment import Slicer as segmenter
-from distance import SequenceDistance as distance
 
 def wsj(doc):
     docno = doc.findall('DOCNO')
@@ -30,7 +28,7 @@ def wsj(doc):
 log = logger.getlogger(True)
 
 # corpus = pickle.load(open('corpus_90-92.pkl', 'rb'))
-corpus = {}
+corpus = OrderedDict()
 
 with Pool() as pool:
     root = Path('/Users/jerome/Documents/Data/corpus/WSJ')
@@ -51,10 +49,7 @@ with Pool() as pool:
             
     log.info('Corpus: {0}'.format(len(corpus)))
     # pickle.dump(corpus, open('corpus_90-92.pkl', 'wb'))
-    
-log.info('similarity')
-s = segmenter(distance, 100)
-dots = corpus.similarity(s, None)
 
-log.info('plot')
-corpus.dotplot(dots, 'wsj.png')
+s = segment(corpus, 100)
+matrix = similarity(fragment(corpus, s), distance, None)
+dotplot(to_numpy(matrix), 'wsj.png')

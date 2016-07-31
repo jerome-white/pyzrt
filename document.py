@@ -10,57 +10,55 @@ from collections import namedtuple
 
 Document = namedtuple('Document', 'fpath, data')
 
-class Document:
-    def __init__(self, fname, docno, data):
-        self.fname = fname
-        self.docno = docno
-        self.data = data
+def fragment(corpus, segments):
+    blocks = []
+    
+    for fragment in segments:
+        string = []
+        for (docno, start, stop) in fragment:
+            s = corpus[docno].data[start:end]
+            string.append(s)
+        blocks.append(mkstring(''.join(string)))
 
-def enum(words, offset):
+    return blocks
+        
+def enum(blocks, offset):
     idx = offset + 1
-    s1 = words[offset]
+    s1 = blocks[offset]
 
-    for (i, s2) in enumerate(words[idx:], idx):
+    for (i, s2) in enumerate(blocks[idx:], idx):
         yield (i, s1, s2)
         
 def distance(args):
     (col, s1, s2) = args
     return (col, s1 - s2)
-        
-class Corpus(list):
-    def __str__(self):
-        return ' '.join([ x.data for x in self ])
 
-    def similarity(self, segmenter, parallel=1, orient=True):
-        log = logger.getlogger()
-        
-        if parallel is not None:
-            parallel = min(mp.cpu_count(), max(parallel, 1))
+def similarity(blocks, mkstring, parallel=1):
+    matrix = {}
+    
+    with mp.Pool(parallel) as pool:
+        f = pool.imap_unordered
+        for i in range(len(blocks)):
+            for (j, value) in f(distance, enum(blocks, i)):
+                matrix[(i, j)] = value
 
-        log.info('segmentation')
-        words = list(segmenter.segment(str(self)))
-        shape = [ len(words) ] * 2
-        dot = np.zeros(shape, dtype=np.float16)
+    return matrix
 
-        log.info('distance computation')
-        with mp.Pool(parallel) as pool:
-            f = pool.imap_unordered
-            for i in range(len(words)):
-                for (j, value) in f(distance, enum(words, i)):
-                    dot[(i, j)] = value
-        np.fill_diagonal(dot, 1)
-
-        if orient:
-            log.info('orientation')
-            return np.transpose(np.fliplr(dot))
-        else:
-            return dot
+def to_numpy(matrix, orient=True, mirror=False, dtype=np.float16):
+    dot = np.zeros([ len(matrix) ] * 2, dtype=dtype)
+    dot[matrix.keys()] = matrix.values()
+    np.fill_diagonal(dot, 1)
         
-    def dotplot(self, sim, fname):
-        extent = [ 0, len(sim) ] * 2
-        plt.imshow(sim, interpolation='none', extent=extent)
+    if orient:
+        dot = np.transpose(np.fliplr(dot))
+            
+    return dot
         
-        plt.grid('off')
-        plt.tight_layout()
-        
-        plt.savefig(fname)
+def dotplot(from_numpy, fname):
+    extent = [ 0, len(from_numpy) ] * 2
+    plt.imshow(from_numpy, interpolation='none', extent=extent)
+    
+    plt.grid('off')
+    plt.tight_layout()
+    
+    plt.savefig(fname)
