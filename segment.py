@@ -1,13 +1,42 @@
-class Segmenter(list):
-    def __init__(self, distance_string_constructor, rate=1):
-        self.mkstr = distance_string_constructor
-        self.rate = rate
+import numpy as np
 
-    def segment(self, data):
-        raise NotImplementedError
+from collections import namedtuple
 
-class Slicer(Segmenter):
-    def segment(self, data):
-        for i in range(0, len(data), self.rate):
-            yield self.mkstr(data[i:i+self.rate])
+Fragment = namedtuple('Segment', 'docno, start, end')
+
+def orange(start, stop, step, offset=None):
+    i = start
+    while i < stop:
+        if offset is not None:
+            j = i + offset
+            offset = None
+        else:
+            j = i + step
+        j = min(j, stop)
             
+        yield (i, j)
+        i = j
+
+def segment(corpus, block_size, tail_frag=True):
+    remaining = None
+    fragments = []
+    length = 0
+    
+    for (docno, document) in corpus.items():
+        for (i, j) in orange(0, len(document.data), block_size, remaining):
+            f = Fragment(docno, i, j)
+            fragments.append(f)
+            length += j - i
+                
+            if length == block_size:
+                yield fragments
+                
+                remaining = None
+                fragments = []
+                length = 0
+
+        if fragments:
+            remaining = block_size - length
+
+    if tail_frag and fragments:
+        yield fragments
