@@ -2,6 +2,7 @@ import numpy as np
 
 from collections import namedtuple
 
+Document = namedtuple('Document', 'fpath, data')
 Fragment = namedtuple('Segment', 'docno, start, end')
 
 def orange(start, stop, step, offset=None):
