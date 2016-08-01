@@ -1,13 +1,13 @@
-import document
+import segment
+import distance
+import similarity
 
-from segment import Slicer as segment_
-from distance import CharacterWiseDistance as distance_
+corpus = {
+    'd1': segment.Document(None, 'text processing vs. speech processing'),
+}
 
-msg = 'text processing vs. speech processing'
-d = document.Document(None, None, msg)
-c = document.Corpus()
-c.append(d)
-
-s = segment_(distance_)
-dots = c.similarity(s, parallel=4)
-c.dotplot(dots, 'test.png')
+segmentation = segment.segment(corpus, 1)
+chunks = similarity.chunk(corpus, segmentation, distance.CharacterWiseDistance)
+matrix = similarity.similarity(chunks)
+dots = similarity.to_numpy(matrix)
+similarity.dotplot(dots, 'test.png')

@@ -1,8 +1,11 @@
 import re
 import logger
 import pickle
-import document
 import itertools
+
+import segment
+import distance
+import similarity
 
 import xml.etree.ElementTree as et
 
@@ -43,13 +46,15 @@ with Pool() as pool:
         try:
             root = et.fromstringlist(combos)
             for (docno, data) in pool.imap_unordered(wsj, root.findall('DOC')):
-                corpus[docno] = Document(fpath, data)
+                corpus[docno] = segment.Document(fpath, data)
         except et.ParseError as e:
             log.error('{0}: line {1} col {2}'.format(str(fpath), *e.position))
             
     log.info('Corpus: {0}'.format(len(corpus)))
     # pickle.dump(corpus, open('corpus_90-92.pkl', 'wb'))
 
-s = segment(corpus, 100)
-matrix = similarity(fragment(corpus, s), distance, None)
-dotplot(to_numpy(matrix), 'wsj.png')
+segmentation = segment.segment(corpus, 100)
+chunks = similarity.chunk(corpus, segmentation, distance.SequenceDistance)
+matrix = similarity.similarity(chunks)
+dots = similarity.to_numpy(matrix)
+similarity.dotplot(dots, 'wsj.png')
