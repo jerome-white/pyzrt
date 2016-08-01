@@ -18,7 +18,7 @@ def orange(start, stop, step, offset=None):
         yield (i, j)
         i = j
 
-def segment(corpus, block_size, tail_frag=True):
+def segment(corpus, block_size):
     remaining = None
     fragments = []
     length = 0
@@ -39,5 +39,5 @@ def segment(corpus, block_size, tail_frag=True):
         if fragments:
             remaining = block_size - length
 
-    if tail_frag and fragments:
+    if fragments:
         yield fragments
