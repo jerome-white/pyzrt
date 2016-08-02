@@ -1,23 +1,22 @@
 import math
-# import logger
-import operator as op
+import logger
+import itertools
 
 import numpy as np
+import operator as op
 import matplotlib.pyplot as plt
 import multiprocessing as mp
 
 ###########################################################################
 
-def enum(blocks, offset):
-    idx = offset + 1
-    s1 = blocks[offset]
-
-    for (i, s2) in enumerate(blocks[idx:], idx):
-        yield (i, s1, s2)
+def enum(distance, blocks):
+    # http://stackoverflow.com/a/27151051
+    for i in itertools.combinations(enumerate(blocks), 2):
+        yield (distance, *[ x for x in zip(*i) ])
         
-def distance(args):
-    (col, s1, s2) = args
-    return (col, s1 - s2)
+def f(args):
+    (distance, index, strings) = args
+    return (index, distance(*strings))
 
 def quadratic(a, b, c):
     numerator = math.sqrt(b ** 2 - 4 * a * c)
@@ -27,31 +26,21 @@ def quadratic(a, b, c):
 
 ###########################################################################
 
-def chunk(corpus, segments, mkstring):
-    blocks = []
-    
+def chunk(corpus, segments):
     for fragment in segments:
         string = []
         for (docno, start, end) in fragment:
             s = corpus[docno].data[start:end]
             string.append(s)
-        blocks.append(mkstring(''.join(string)))
+        yield ''.join(string)
 
-    return blocks
-
-def similarity(blocks, parallel=None):
+def similarity(blocks, distance, parallel=None):
     if parallel is not None:
         parallel = min(mp.cpu_count(), max(parallel, 1))
-        
-    matrix = {}
-    
-    with mp.Pool(parallel) as pool:
-        f = pool.imap_unordered
-        for (i, _) in enumerate(blocks):
-            for (j, value) in f(distance, enum(blocks, i)):
-                matrix[(i, j)] = value
 
-    return matrix
+    with mp.Pool(parallel) as pool:
+        p = pool.imap_unordered
+        return { i: j for (i, j) in p(f, enum(distance, blocks)) }
 
 def to_numpy(matrix, orient=True, mirror=False, dtype=np.float16):
     length = max(quadratic(1/2, 1/2, -len(matrix)))
