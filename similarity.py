@@ -4,8 +4,8 @@ import itertools
 
 import numpy as np
 import operator as op
-import matplotlib.pyplot as plt
 import multiprocessing as mp
+import matplotlib.pyplot as plt
 
 ###########################################################################
 
@@ -34,7 +34,7 @@ def chunk(corpus, segments):
             string.append(s)
         yield ''.join(string)
 
-def similarity(blocks, distance, parallel=None):
+def similarity(blocks, distance=op.eq, parallel=None):
     if parallel is not None:
         parallel = min(mp.cpu_count(), max(parallel, 1))
 
