@@ -1,13 +1,11 @@
-import segment
 import distance
 import similarity
 
-corpus = {
-    'd1': segment.Document(None, 'text processing vs. speech processing'),
-}
+from corpus import Corpus, Document
 
-segmentation = segment.segment(corpus)
-chunks = similarity.chunk(corpus, segmentation)
-matrix = similarity.similarity(chunks, distance.characters)
+corpus = Corpus()
+corpus['d1'] = Document(None, 'text processing vs. speech processing')
+
+matrix = similarity.similarity(corpus.mend(corpus.fragment()))
 dots = similarity.to_numpy(matrix)
 similarity.dotplot(dots, 'test.png')
