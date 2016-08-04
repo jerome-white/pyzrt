@@ -1,8 +1,8 @@
 import re
-import logger
 import pickle
 import itertools
 
+import logger
 import distance
 import similarity
 from corpus import Corpus, Document
@@ -18,8 +18,6 @@ def wsj(doc):
     docno = doc.findall('DOCNO')
     assert(len(docno) == 1)
     docno = docno.pop().text.strip()
-
-    # log.info(docno)
 
     text = []
     for i in [ 'LP', 'TEXT' ]:
@@ -37,26 +35,28 @@ corpus = pickle.load(open(corpus_pickle, 'rb'))
 
 if not corpus:
     with mp.Pool() as pool:
-        f = pool.imap_unordered
-        for fpath in Path('WSJ').glob('*/WSJ_*'):
+        path = Path('WSJ')
+        for fpath in path.glob('*/WSJ_*'):
             log.info(str(fpath))
-        
+            
+            # http://stackoverflow.com/a/23891895            
             xml = re.sub('&', ' ', fpath.read_text())
-        
-            # http://stackoverflow.com/a/23891895
             combos = itertools.chain('<root>', xml, '</root>')
-        
+            
             try:
                 root = et.fromstringlist(combos)
-                for (docno, data) in f(wsj, root.findall('DOC')):
-                    corpus[docno] = Document(fpath, data)
             except et.ParseError as e:
                 msg = '{0}: line {1} col {2}'
                 log.error(msg.format(str(fpath), *e.position))
+                continue
             
+            for (docno, data) in pool.imap_unordered(wsj, root.findall('DOC')):
+                corpus[docno] = Document(fpath, data)
     pickle.dump(corpus, open(corpus_pickle, 'wb'))
+    
 for i in [ 'documents', 'characters' ]:
-    log.info('{0}: {1}'.format(i, getattr(corpus, i)()))
+    f = getattr(corpus, i)
+    log.info('{0}: {1}'.format(i, f()))
 
 matrix = similarity.similarity(corpus.mend(corpus.fragment()))
 pickle.dump(matrix, open('wsj-matrix.pkl', 'wb'))
