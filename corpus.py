@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from collections import namedtuple
+from collections import namedtuple, OrderedDict
 
 Document = namedtuple('Document', 'fpath, data')
 Fragment = namedtuple('Segment', 'docno, start, end')
@@ -19,7 +19,7 @@ Fragment = namedtuple('Segment', 'docno, start, end')
             
 #         return ''.join(s)
 
-class Corpus(dict):
+class Corpus(OrderedDict):
     def orange(self, start, stop, step, offset=None):
         i = start
         while i < stop:
