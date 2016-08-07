@@ -4,9 +4,9 @@ import itertools
 
 import logger
 import distance
-import similarity
 from parser import WSJParser
 from corpus import Corpus, Document
+from similarity import ComparisonPerCPU as Similarity
 
 import operator as op
 import multiprocessing as mp
@@ -28,8 +28,9 @@ for i in [ 'documents', 'characters' ]:
     f = getattr(corpus, i)
     log.info('{0}: {1}'.format(i, f()))
 
-matrix = similarity.similarity(corpus.mend(corpus.fragment()))
+s = Similarity()
+matrix = s.similarity(corpus.mend(corpus.fragment()))
 pickle.dump(matrix, open('wsj-matrix.pkl', 'wb'))
 
-dots = similarity.to_numpy(matrix)
-similarity.dotplot(dots, 'wsj.png')
+dots = s.to_numpy(matrix)
+s.dotplot(dots, 'wsj.png')
