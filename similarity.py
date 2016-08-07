@@ -26,14 +26,6 @@ def quadratic(a, b, c):
 
 ###########################################################################
 
-def chunk(corpus, segments):
-    for fragment in segments:
-        string = []
-        for (docno, start, end) in fragment:
-            s = corpus[docno].data[start:end]
-            string.append(s)
-        yield ''.join(string)
-
 def similarity(blocks, distance=op.eq, parallel=None):
     if parallel is not None:
         parallel = min(mp.cpu_count(), max(parallel, 1))
