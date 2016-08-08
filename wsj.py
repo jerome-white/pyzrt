@@ -22,14 +22,16 @@ arguments.add_argument('--from-pickle')
 args = arguments.parse_args()
 
 if args.from_pickle:
-    corpus = pickle.load(open(args.from_pickle), 'rb')
+    with open(args.from_pickle, 'rb') as fp:
+        corpus = pickle.load(fp)
 else:
     parser = WSJParser()
     documents = parser.parse(args.input_directory)
     corpus = Corpus(sorted(documents, key=itemgetter(0)))
     
 if args.to_pickle:
-    pickle.dump(corpus, open(args.to_pickle, 'wb'))
+    with open(args.from_pickle, 'wb') as fp:
+        pickle.dump(corpus, fp)
 
 for i in [ 'documents', 'characters' ]:
     f = getattr(corpus, i)
@@ -41,7 +43,8 @@ log.info('Fragments {0}'.format(len(fragments)))
 matrix = Similarity(fragments.strings())
 
 o = output.joinpath('wsj-matrix').with_suffix('.pkl')
-pickle.dump(matrix, o.open('wb'))
+with o.open('wb') as fp:
+    pickle.dump(matrix, fp)
 
 o = output.joinpath('wsj').with_suffix('.png')
 matrix.dotplot(str(o))
