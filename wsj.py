@@ -34,10 +34,10 @@ if args.to_pickle:
 for i in [ 'documents', 'characters' ]:
     f = getattr(corpus, i)
     log.info('{0}: {1}'.format(i, f()))
-exit()
 output = Path(args.output_directory)
 
 fragments = FragmentedCorpus(corpus)
+log.info('Fragments {0}'.format(len(fragments)))
 matrix = Similarity(fragments.strings())
 
 o = output.joinpath('wsj-matrix').with_suffix('.pkl')
