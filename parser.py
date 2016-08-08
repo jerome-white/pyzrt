@@ -18,10 +18,10 @@ class Parser():
     
     def parse(self, top_level, glob_expression):
         log = logger.getlogger(True)
-        tld = Path(top_level)
+        path = Path(top_level)
         
         with mp.Pool() as pool:
-            for i in tld.glob(glob_expression):
+            for i in path.glob(glob_expression):
                 log.info(str(i))
 
                 try:
