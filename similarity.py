@@ -13,30 +13,28 @@ def quadratic(a, b, c):
 
     return [ f(-b, numerator) / denominator for f in (op.add, op.sub) ]
 
-class SimilarityMatrix:
-    def enum(self, distance, blocks):
+class SimilarityMatrix(dict):
+    def __init__(self, fragments, distance=op.eq, parallel=None):
+        if parallel is not None:
+            parallel = min(mp.cpu_count(), max(parallel, 1))
+
+        with mp.Pool(parallel) as pool:
+            p = pool.imap_unordered
+            for i in p(self.f, self.enum(distance, fragments)):
+                self.update(i)
+    
+    def enum(self, distance, fragments):
         raise NotImplementedError
 
     def f(self, args):
         raise NotImplementedError
 
-    def similarity(self, blocks, distance=op.eq, parallel=None):
-        if parallel is not None:
-            parallel = min(mp.cpu_count(), max(parallel, 1))
-
-        d = {}
-        with mp.Pool(parallel) as pool:
-            for i in pool.imap_unordered(self.f, self.enum(distance, blocks)):
-                d.update(i)
-
-        return d
-
-    def to_numpy(self, matrix, orient=True, mirror=False, dtype=np.float16):
-        length = max(quadratic(1/2, 1/2, -len(matrix)))
+    def to_numpy(self, orient=True, mirror=False, dtype=np.float16):
+        length = max(quadratic(1/2, 1/2, -len(self)))
         assert(length.is_integer())
     
         dots = np.zeros([ int(length) + 1 ] * 2, dtype=dtype)
-        for (key, value) in matrix.items():
+        for (key, value) in self.items():
             dots[key] = value
         np.fill_diagonal(dots, 1)
         
@@ -45,7 +43,10 @@ class SimilarityMatrix:
             
         return dots
         
-    def dotplot(self, dots, fname):
+    def dotplot(self, fname, dots=None):
+        if dots is None:
+            dots = self.to_numpy()
+            
         extent = [ 0, len(dots) ] * 2
         plt.imshow(dots, interpolation='none', extent=extent)
         
@@ -55,9 +56,9 @@ class SimilarityMatrix:
         plt.savefig(fname)
 
 class ComparisonPerCPU(SimilarityMatrix):
-    def enum(self, distance, blocks):
+    def enum(self, distance, fragments):
         # http://stackoverflow.com/a/27151051
-        for i in itertools.combinations(enumerate(blocks), 2):
+        for i in itertools.combinations(enumerate(fragments), 2):
             yield (*[ x for x in zip(*i) ], distance)
         
     def f(self, args):
@@ -65,10 +66,13 @@ class ComparisonPerCPU(SimilarityMatrix):
         return { index: distance(*strings) }
 
 class RowPerCPU(SimilarityMatrix):
-    def enum(self, distance, blocks):
-        blks = list(blocks)
-        for i in range(len(blks)):
-            yield (i, blks, distance)
+    def enum(self, distance, fragments):
+        log = logger.getlogger()
+        blocks = list(fragments)
+        
+        for i in range(len(blocks)):
+            log.info(i)
+            yield (i, blocks, distance)
 
     def f(self, args):
         (index, blocks, distance) = args
