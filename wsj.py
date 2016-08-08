@@ -22,7 +22,7 @@ arguments.add_argument('--from-pickle')
 args = arguments.parse_args()
 
 if args.from_pickle:
-    corpus.load(open(args.from_pickle), 'rb')
+    corpus = pickle.load(open(args.from_pickle), 'rb')
 else:
     parser = WSJParser()
     documents = parser.parse(args.input_directory)
