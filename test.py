@@ -1,12 +1,13 @@
 import distance
 
-from corpus import Corpus, Document
+from corpus import Document, Corpus, FragmentedCorpus
 from similarity import RowPerCPU as Similarity
 
-corpus = Corpus()
-corpus['d1'] = Document(None, 'text processing vs. speech processing')
+documents = [
+    ('d1', Document(None, 'text processing vs. speech processing'))
+    ]
+corpus = Corpus(documents)
 
-s = Similarity()
-matrix = s.similarity(corpus.mend(corpus.fragment()))
-dots = s.to_numpy(matrix)
-s.dotplot(dots, 'test.png')
+fragments = FragmentedCorpus(corpus)
+matrix = Similarity(fragments.strings())
+matrix.dotplot('test.png')
