@@ -9,7 +9,7 @@ from argparse import ArgumentParser
 import logger
 import distance
 from parser import WSJParser
-from corpus import Corpus, Document
+from corpus import Document, Corpus, FragmentedCorpus
 from similarity import RowPerCPU as Similarity
 
 log = logger.getlogger(True)
