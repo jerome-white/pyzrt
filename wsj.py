@@ -40,8 +40,8 @@ output = Path(args.output_directory)
 
 fragments = FragmentedCorpus(corpus)
 log.info('Fragments {0}'.format(len(fragments)))
-matrix = Similarity(fragments.strings())
 
+matrix = Similarity(fragments)
 o = output.joinpath('wsj-matrix').with_suffix('.pkl')
 with o.open('wb') as fp:
     pickle.dump(matrix, fp)

@@ -1,11 +1,12 @@
 import math
 import logger
-import itertools
 
 import numpy as np
 import operator as op
 import multiprocessing as mp
 import matplotlib.pyplot as plt
+
+from itertools import combinations
 
 def quadratic(a, b, c):
     numerator = math.sqrt(b ** 2 - 4 * a * c)
@@ -57,9 +58,9 @@ class SimilarityMatrix(dict):
 
 class ComparisonPerCPU(SimilarityMatrix):
     def enum(self, distance, fragments):
-        # http://stackoverflow.com/a/27151051
-        for i in itertools.combinations(enumerate(fragments), 2):
-            yield (*[ x for x in zip(*i) ], distance)
+        for i in combinations(range(len(fragments)), 2):
+            strings = [ fragments.at(x) for x in i ]
+            yield (i, strings, distance)
         
     def f(self, args):
         (index, strings, distance) = args
@@ -68,19 +69,15 @@ class ComparisonPerCPU(SimilarityMatrix):
 class RowPerCPU(SimilarityMatrix):
     def enum(self, distance, fragments):
         log = logger.getlogger()
-        blocks = list(fragments)
-        
-        for i in range(len(blocks)):
+        for i in range(len(fragments)):
             log.info(i)
-            yield (i, blocks, distance)
+            yield (i, fragments, distance)
 
     def f(self, args):
-        (index, blocks, distance) = args
+        (index, fragments, distance) = args
 
-        d = {}
-        s1 = blocks[index]
-        for (i, s2) in enumerate(blocks):
-            if i > index:
-                d[(index, i)] = distance(s1, s2)
+        s1 = fragments.at(index)
+        j = index + 1
+        iterable = enumerate(fragments.strings(j), j)
 
-        return d
+        return { (index, i): distance(s1, s2) for (i, s2) in iterable }
