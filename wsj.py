@@ -1,4 +1,3 @@
-import re
 import pickle
 import itertools
 
