@@ -52,17 +52,21 @@ class FragmentedCorpus(list):
             
             yield (i, j)
             i = j
+
+    def at(self, i):
+        assert(0 <= i < len(self))
+
+        string = []
+        
+        for (docno, start, end) in self[i]:
+            document = self.corpus[docno]
+            s = document.data[start:end]
+            string.append(s)
             
+        return ''.join(string)
+        
     def strings(self, start=0, end=None):
         if end is None:
             end = len(self)
 
-        for i in range(start, len(self)):
-            string = []
-            for (docno, start, end) in self[i]:
-                s = self.corpus[docno].data[start:end]
-                string.append(s)
-            yield ''.join(string)
-
-    def at(self, i):
-        return self.strings(i, i + 1)
+        yield from [ self.at(x) for x in range(start, len(self)) ]
