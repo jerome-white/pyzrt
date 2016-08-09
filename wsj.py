@@ -30,7 +30,7 @@ else:
     corpus = Corpus(sorted(documents, key=itemgetter(0)))
     
 if args.to_pickle:
-    with open(args.from_pickle, 'wb') as fp:
+    with open(args.to_pickle, 'wb') as fp:
         pickle.dump(corpus, fp)
 
 for i in [ 'documents', 'characters' ]:
