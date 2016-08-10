@@ -68,16 +68,19 @@ class ComparisonPerCPU(SimilarityMatrix):
 
 class RowPerCPU(SimilarityMatrix):
     def enum(self, distance, fragments):
-        log = logger.getlogger()
+        log = logger.getlogger(True)
+        
         for i in range(len(fragments)):
             log.info(i)
             yield (i, fragments, distance)
 
     def f(self, args):
         (index, fragments, distance) = args
-
+       
         s1 = fragments.at(index)
         j = index + 1
         iterable = enumerate(fragments.strings(j), j)
 
+        logger.getlogger().info(j)
+        
         return { (index, i): distance(s1, s2) for (i, s2) in iterable }
