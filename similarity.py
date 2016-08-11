@@ -19,12 +19,15 @@ class SimilarityMatrix(dict):
         if parallel is not None:
             parallel = min(mp.cpu_count(), max(parallel, 1))
 
-        with mp.Pool(parallel) as pool:
+        with mp.Pool(parallel) as pool, mp.Manager() as manager:
             p = pool.imap_unordered
-            for i in p(self.f, self.enum(distance, fragments)):
-                self.update(i)
+            sd = manager.dict()
+            for _ in p(self.f, self.enum(distance, fragments, sd)):
+                pass
+            
+            self.update(sd)
     
-    def enum(self, distance, fragments):
+    def enum(self, distance, fragments, sd):
         raise NotImplementedError
 
     def f(self, args):
@@ -57,30 +60,30 @@ class SimilarityMatrix(dict):
         plt.savefig(fname)
 
 class ComparisonPerCPU(SimilarityMatrix):
-    def enum(self, distance, fragments):
+    def enum(self, distance, fragments, sd):
         for i in combinations(range(len(fragments)), 2):
             strings = [ fragments.at(x) for x in i ]
-            yield (i, strings, distance)
+            yield (i, strings, distance, sd)
         
     def f(self, args):
-        (index, strings, distance) = args
-        return { index: distance(*strings) }
+        (index, strings, distance, sd) = args
+        return sd.update({ index: distance(*strings) })
 
 class RowPerCPU(SimilarityMatrix):
-    def enum(self, distance, fragments):
+    def enum(self, distance, fragments, sd):
         log = logger.getlogger(True)
         
         for i in range(len(fragments)):
             log.info(i)
-            yield (i, fragments, distance)
+            yield (i, fragments, distance, sd)
 
     def f(self, args):
-        (index, fragments, distance) = args
+        (index, fragments, distance, sd) = args
        
         s1 = fragments.at(index)
         j = index + 1
         iterable = enumerate(fragments.strings(j), j)
 
         logger.getlogger().info(j)
-        
-        return { (index, i): distance(s1, s2) for (i, s2) in iterable }
+
+        sd.update({ (index, i): distance(s1, s2) for (i, s2) in iterable })
