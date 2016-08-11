@@ -1,4 +1,5 @@
 import os
+import time
 import logging
 import platform
 
@@ -50,3 +51,20 @@ def getlogger(root=False):
     name = '.'.join(elements)
     
     return logging.getLogger(name)
+
+#
+# Log messages periodically. Handy for when the alternative is just
+# too much. Not thread safe!
+#
+class PeriodicLogger:
+    def __init__(self, periods):
+        self.periods = periods
+        self.last = time.time()
+
+    def emit(self, msg, log_method=None):
+        now = time.time()
+        if now - self.last > self.periods:
+            self.last = now
+            if log_method is None:
+                log_method = getlogger().info
+            log_method(msg)
