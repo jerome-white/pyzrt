@@ -6,6 +6,7 @@ import operator as op
 import multiprocessing as mp
 import matplotlib.pyplot as plt
 
+from scipy import constants
 from itertools import combinations
 
 def quadratic(a, b, c):
@@ -61,14 +62,17 @@ class SimilarityMatrix(dict):
 
 class ComparisonPerCPU(SimilarityMatrix):
     def enum(self, distance, fragments, sd):
+        log = logger.PeriodicLogger(5 * constants.minute)
+        
         for i in combinations(range(len(fragments)), 2):
+            log.emit(len(sd))
             strings = [ fragments.at(x) for x in i ]
             yield (i, strings, distance, sd)
         
     def f(self, args):
         (index, strings, distance, sd) = args
-        return sd.update({ index: distance(*strings) })
-
+        sd[index] = distance(*strings)
+    
 class RowPerCPU(SimilarityMatrix):
     def enum(self, distance, fragments, sd):
         log = logger.getlogger(True)
