@@ -1,7 +1,7 @@
 import distance
+import similarity as sim
 
 from corpus import Document, Corpus, FragmentedCorpus
-from similarity import ComparisonPerCPU as Similarity
 
 documents = [
     ('d1', Document(None, 'text processing vs. speech processing'))
@@ -9,5 +9,7 @@ documents = [
 corpus = Corpus(documents)
 
 fragments = FragmentedCorpus(corpus)
-matrix = Similarity(fragments)
-matrix.dotplot('test.png')
+for f in sim.ComparisonPerCPU, sim.RowPerCPU:
+    matrix = f(fragments)
+    fname = 'test-{0}.png'.format(f.__name__)
+    matrix.dotplot(fname)
