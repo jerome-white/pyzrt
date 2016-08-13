@@ -1,3 +1,6 @@
+import sys
+import csv
+
 import numpy as np
 
 from collections import namedtuple, OrderedDict
@@ -21,7 +24,7 @@ class FragmentedCorpus(list):
         length = 0
     
         for (docno, doc) in self.corpus.items():
-            for (i, j) in self.range_(0, len(doc.data), block_size, remaining):
+            for (i, j) in self._range(0, len(doc.data), block_size, remaining):
                 f = Fragment(docno, *map(int, [ i, j ]))
                 fragments.append(f)
                 length += j - i
@@ -40,7 +43,7 @@ class FragmentedCorpus(list):
         if fragments:
             self.append(fragments)
 
-    def range_(self, start, stop, step, offset=None):
+    def _range(self, start, stop, step, offset=None):
         i = start
         while i < stop:
             if offset is None:
@@ -70,3 +73,12 @@ class FragmentedCorpus(list):
             end = len(self)
 
         yield from [ self.at(x) for x in range(start, len(self)) ]
+
+    def each(self):
+        for (i, pieces) in enumerate(self):
+            for (j, fragment) in enumerate(pieces):
+                yield (i, j, fragment.docno, fragment.start, fragment.end)
+                
+    def to_csv(self):
+        writer = csv.writer(sys.stdout)
+        writer.writerows(self.each())
