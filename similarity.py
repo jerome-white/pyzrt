@@ -16,14 +16,14 @@ def quadratic(a, b, c):
     return [ f(-b, numerator) / denominator for f in (op.add, op.sub) ]
 
 class SimilarityMatrix(dict):
-    def __init__(self, fragments, distance=op.eq, parallel=None):
+    def __init__(self, fragments, distance=op.eq, parallel=None, chunksize=1):
         if parallel is not None:
             parallel = min(mp.cpu_count(), max(parallel, 1))
 
         with mp.Pool(parallel) as pool, mp.Manager() as manager:
             p = pool.imap_unordered
             sd = manager.dict()
-            for _ in p(self.f, self.enum(distance, fragments, sd)):
+            for _ in p(self.f, self.enum(distance, fragments, sd), chunksize):
                 pass
             
             self.update(sd)
@@ -61,6 +61,11 @@ class SimilarityMatrix(dict):
         plt.savefig(fname)
 
 class ComparisonPerCPU(SimilarityMatrix):
+    def __init__(self, fragments, distance=op.eq, parallel=None,
+                 chunk_ratio=0.1):
+        chunksize = round(len(fragments) * chunk_ratio)
+        super().__init__(fragments, distance, parallel, chunksize)
+        
     def enum(self, distance, fragments, sd):
         log = logger.PeriodicLogger(5 * constants.minute)
         
