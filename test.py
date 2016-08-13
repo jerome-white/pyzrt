@@ -4,7 +4,7 @@ import similarity as sim
 from corpus import Document, Corpus, FragmentedCorpus
 
 documents = [
-    ('d1', Document(None, 'text processing vs. speech processing'))
+    ('d1', Document(None, 'text processing vs. speech processing')),
     ]
 corpus = Corpus(documents)
 
