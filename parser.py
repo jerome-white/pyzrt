@@ -1,13 +1,27 @@
 import re
+import sys
 import itertools
 
 import logger
-from corpus import Document
 
 import multiprocessing as mp
 import xml.etree.ElementTree as et
 
 from pathlib import Path
+
+class CorpusListing(list):
+    def __init__(self, directory):
+        path = Path(directory)
+        assert(path.is_dir())
+        files = [ x for x in path.iterdir() ]
+        super().__init__(self._sort(files))
+
+    def _sort(self, files):
+        raise NotImplementedError
+
+class NameSortedCorpus(CorpusListing):
+    def _sort(self, files):
+        return sorted(files)
 
 class Parser():
     def f(self, doc):
@@ -16,12 +30,11 @@ class Parser():
     def extract(self, path):
         raise NotImplementedError
     
-    def parse(self, top_level, glob_expression):
+    def parse(self, file_list=sys.stdin):
         log = logger.getlogger(True)
-        path = Path(top_level)
         
         with mp.Pool() as pool:
-            for i in path.glob(glob_expression):
+            for i in map(Path, file_list):
                 log.info(str(i))
 
                 try:
@@ -31,14 +44,9 @@ class Parser():
                     log.error(msg.format(str(i), *e.position))
                     continue
                     
-                for (docno, data) in pool.imap_unordered(self.f, relevant):
-                    document = Document(Path(i), data)
-                    yield (docno, document)
+                yield from pool.imap_unordered(self.f, relevant)
 
 class WSJParser(Parser):
-    def parse(self, top_level, glob_expression='*/WSJ_*'):
-        return super().parse(top_level, glob_expression)
-        
     def f(self, doc):
         docno = doc.findall('DOCNO')
         assert(len(docno) == 1)
