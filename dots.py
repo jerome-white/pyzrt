@@ -12,12 +12,12 @@ def quadratic(a, b, c):
 
     return [ f(-b, numerator) / denominator for f in (op.add, op.sub) ]
 
-def to_numpy(self, similarity, orient=True, mirror=False, dtype=np.float16):
+def to_numpy(similarity, orient=True, mirror=False, dtype=np.float16):
     length = max(quadratic(1/2, 1/2, -len(similarity)))
     assert(length.is_integer())
     
     dots = np.zeros([ int(length) + 1 ] * 2, dtype=dtype)
-    for (key, value) in similarity:
+    for (key, value) in similarity.items():
         dots[key] = value
     np.fill_diagonal(dots, 1)
         
@@ -26,7 +26,7 @@ def to_numpy(self, similarity, orient=True, mirror=False, dtype=np.float16):
             
     return dots
         
-def dotplot(self, dots, output):
+def dotplot(dots, output):
     extent = [ 0, len(dots) ] * 2
     plt.imshow(dots, interpolation='none', extent=extent)
         
