@@ -21,14 +21,20 @@ case $task in
         done
         ;;
     fragment)
-        python3 fragment.py \
-                --corpus-directory $SCRATCH/WSJ.fmt/1990 > \
-                $SCRATCH/fragments.csv
+        for i in `seq 1990 1992`; do
+            python3 fragment.py \
+                    --corpus-directory $SCRATCH/WSJ.fmt/$i > \
+                    $SCRATCH/fragments-$i.csv
+        done
         ;;
     similarity)
-        python3 similarity_gen.py \
+        python3 -u similarity-gen.py \
                 --corpus-directory $corpus \
-                --fragment-file $SCRATCH/fragments.csv
+                --fragment-file $SCRATCH/fragments.csv >\
+                $SCRATCH/similarity.csv
+        ;;
+    dots)
+        python3 dot-gen.py --png $SCRATCH/wsj.png < $SCRATCH/similarity.csv
         ;;
     *)
         exit 1
