@@ -1,61 +1,64 @@
 import sys
 import csv
 import logger
-import corpus
 
 import operator as op
+import multiprocessing as mp
 
+from corpus import to_string
+from pathlib import Path
+from itertools import islice
 from collections import namedtuple
-from multiprocessing import Pool
 
-Args = namedtuple('Args', 'anchor, offset, corpus, fragment_file, distance')
+Args = namedtuple('Args', 'anchor, corpus, fragments, distance')
 Fragment = namedtuple('Fragment', 'docno, start, end')
 
-def mkfragments(fragment_file, offset=0):
-    frames = []
-    previous = None
+def func(args):
+    log = logger.getlogger()
+    log.info(args.anchor)
     
-    with open(fragment_file) as fp:
-        fp.seek(offset)
-        reader = csv.reader(fp)
-        for row in reader:
-            (current, key) = [ int(x) for x in row[:2] ]
-            fragment = Fragment(row[2], *map(int, row[3:]))
-            
-            if previous is not None and previous != current:
-                frames.sort(key=op.itemgetter(0))
-                yield (previous, map(op.itemgetter(1), frames))
-                frames = []
-                
-            frames.append([ key, fragment ])
-            previous = current
-
-def f(args):
     s1 = None
     writer = csv.writer(sys.stdout)
-    
-    for (i, fragment) in mkfragments(args.fragment_file, args.offset):
-        s2 = corpus.to_string(args.corpus, fragment)
-        if i == args.anchor:
-            assert(s1 is None)
+
+    g = lambda x: to_string(args.corpus, x)
+    f = islice(args.fragments, args.anchor, None)
+    for (i, s2) in enumerate(map(g, f), args.anchor):
+        if s1 is None:
             s1 = s2
         else:
-            d = float(args.distance(s1, s2))
-            writer.writerow([ args.anchor, i, d ])
+            d = args.distance(s1, s2)
+            writer.writerow([ args.anchor, i, float(d) ])
             
-def enum(corpus, fragment_file, distance):
-    offset = 0
-    previous = None
-    
-    with open(fragment_file) as fp:
-        for line in fp:
-            current = int(line.split(',', 1).pop(0))
-            if previous is None or previous != current:
-                yield Args(current, offset, corpus, fragment_file, distance)
-            previous = current
-            offset += len(line) + 1
-            
-def pairs(corpus, fragment_file, distance=op.eq):
-    with Pool() as pool:
-        for _ in pool.imap_unordered(f, enum(corpus, fragment_file, distance)):
-            pass
+def enum(corpus, fragments, distance):
+    for (i, _) in enumerate(fragments):
+        yield Args(i, corpus, fragments, distance)
+        
+def pairs(corpus_directory, fragment_file, distance=op.eq):
+    with mp.Manager() as manager:
+        path = Path(corpus_directory)
+        corpus = manager.dict()
+        for i in path.iterdir():
+            with i.open() as fp:
+                corpus[i.name] = fp.read()
+
+        frames = []
+        previous = None
+        fragments = manager.list()
+        with open(fragment_file) as fp:
+            reader = csv.reader(fp)
+            for row in reader:
+                (current, key) = map(int, row[:2])
+                
+                if previous is not None and previous != current:
+                    frames.sort(key=op.itemgetter(0))
+                    fragments.extend([ x[1:] for x in frames ])
+                    frames = []
+                    
+                fragment = Fragment(row[2], *map(int, row[3:]))
+                frames.append([ key, fragment ])
+                previous = current
+
+        with mp.Pool() as pool:
+            iterable = enum(corpus, fragments, distance)
+            for _ in pool.imap_unordered(func, iterable):
+                pass
