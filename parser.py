@@ -1,5 +1,6 @@
 import re
 import sys
+import uuid
 import itertools
 
 import logger
@@ -34,18 +35,27 @@ class Parser():
         log = logger.getlogger(True)
         
         with mp.Pool() as pool:
-            for i in map(Path, file_list):
-                log.info(str(i))
+            for i in file_list:
+                path = Path(i.strip())
+                log.info(str(path))
 
                 try:
-                    relevant = self.extract(i)
+                    relevant = self.extract(path)
                 except et.ParseError as e:
                     msg = '{0}: line {1} col {2}'
-                    log.error(msg.format(str(i), *e.position))
+                    log.error(msg.format(str(path), *e.position))
                     continue
                     
                 yield from pool.imap_unordered(self.f, relevant)
 
+class TestParser(Parser):
+    def f(self, doc):
+        with doc.open() as fp:
+            return (str(uuid.uuid4()), fp.read())
+
+    def extract(self, path):
+        yield from [ path ]
+    
 class WSJParser(Parser):
     def f(self, doc):
         docno = doc.findall('DOCNO')
