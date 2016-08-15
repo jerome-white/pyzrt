@@ -11,6 +11,7 @@ arguments.add_argument('--fragment-file')
 args = arguments.parse_args()
 
 with Manager() as manager:
+    # fragments = manager.list(similarity.mkfragments(args.fragment_file))
     corpus = manager.dict()
     path = Path(args.corpus_directory)
     for i in path.iterdir():
