@@ -25,7 +25,7 @@ class NameSortedCorpus(CorpusListing):
         return sorted(files)
 
 class Parser():
-    def f(self, doc):
+    def func(self, doc):
         raise NotImplementedError
 
     def extract(self, path):
@@ -46,10 +46,10 @@ class Parser():
                     log.error(msg.format(str(path), *e.position))
                     continue
                     
-                yield from pool.imap_unordered(self.f, relevant)
+                yield from pool.imap_unordered(self.func, relevant)
 
 class TestParser(Parser):
-    def f(self, doc):
+    def func(self, doc):
         with doc.open() as fp:
             return (str(uuid.uuid4()), fp.read())
 
@@ -57,7 +57,7 @@ class TestParser(Parser):
         yield from [ path ]
     
 class WSJParser(Parser):
-    def f(self, doc):
+    def func(self, doc):
         docno = doc.findall('DOCNO')
         assert(len(docno) == 1)
         docno = docno.pop().text.strip()
