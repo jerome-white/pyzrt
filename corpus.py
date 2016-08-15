@@ -24,10 +24,9 @@ def fragment(corpus_listing, block_size=1):
     n = Notebook()
     
     for path in corpus_listing:
-        with path.open() as fp:
-            data = fp.read()
-        for (i, j) in orange(0, len(data), block_size, n.remaining):
+        for (i, j) in orange(0, path.stat().st_size, block_size, n.remaining):
             yield (n.key, n.fragment, path.name, i, j)
+            
             n.length += j - i
             assert(n.length <= block_size)
                 
@@ -42,7 +41,7 @@ def fragment(corpus_listing, block_size=1):
     if n.fragment:
         yield (n.key, n.fragment, path.name, i, j)
 
-def to_string(fragment, corpus):
+def to_string(corpus, fragment):
     string = [ corpus[docno][start:end] for (docno, start, end) in fragment ]
     
     return ''.join(string)
