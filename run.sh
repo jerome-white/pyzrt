@@ -11,32 +11,35 @@ done
 
 case $task in
     archive)
-        mkdir --parents $corpus/1990-1992
+        # mkdir --parents $corpus/1990-1992
         for i in `seq 1990 1992`; do
-            output=$corpus/$year
+            output=$corpus/$i
             mkdir --parents $output
-            ls WSJ/$i/WSJ_* | \
-	        python3 archive.py \
+
+            ls $SCRATCH/WSJ/$i/WSJ_* | \
+	        python3 $HOME/src/pyzrt/archive.py \
                         --output-directory $output \
                         --archive-type WSJ
-            (cd $corpus/1990-1992; ln --symbolic ../$year/*)
+            # (cd $corpus/1990-1992; ln --symbolic ../$i/*)
         done
         ;;
     fragment)
         for i in $SCRATCH/WSJ.fmt/*; do
-            python3 fragment.py \
-                    --corpus-directory $i > \
-                    $SCRATCH/fragments-`basename $i`.csv
+            python3 $HOME/src/pyzrt/fragment.py \
+                --corpus-directory $i > \
+                $SCRATCH/fragments-`basename $i`.csv
         done
         ;;
     similarity)
-        python3 -u similarity-gen.py \
-                --corpus-directory $corpus \
-                --fragment-file $SCRATCH/fragments.csv >\
-                $SCRATCH/similarity.csv
+        python3 -u $HOME/src/pyzrt/similarity-gen.py \
+            --corpus-directory $corpus \
+            --fragment-file $SCRATCH/fragments.csv > \
+            $SCRATCH/similarity.csv
         ;;
     dots)
-        python3 dot-gen.py --png $SCRATCH/wsj.png < $SCRATCH/similarity.csv
+        python3 $HOME/src/pyzrt/dot-gen.py \
+	    --png $SCRATCH/wsj.png < \
+	    $SCRATCH/similarity.csv
         ;;
     *)
         exit 1
