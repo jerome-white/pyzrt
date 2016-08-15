@@ -1,4 +1,5 @@
 from pathlib import Path
+from itertools import islice
 
 class Notebook:
     def __init__(self, key=0):
@@ -41,7 +42,11 @@ def fragment(corpus_listing, block_size=1):
     if n.fragment:
         yield (n.key, n.fragment, path.name, i, j)
 
-def to_string(corpus, fragment):
-    string = [ corpus[docno][start:end] for (docno, start, end) in fragment ]
+def to_string(corpus, chunk):
+    string = []
     
+    for (docno, start, end) in chunk:
+        data = corpus[docno]
+        string.append(data[start:end])
+
     return ''.join(string)
