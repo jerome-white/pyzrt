@@ -33,7 +33,7 @@ case $task in
     similarity)
         python3 -u $HOME/src/pyzrt/similarity-gen.py \
             --corpus-directory $corpus \
-            --fragment-file $SCRATCH/fragments.csv > \
+            --fragment-file $fragments > \
             $SCRATCH/similarity.csv
         ;;
     dots)
