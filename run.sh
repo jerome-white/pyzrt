@@ -11,20 +11,22 @@ done
 
 case $task in
     archive)
+        mkdir --parents $corpus/1990-1992
         for i in `seq 1990 1992`; do
-            output=$SCRATCH/WSJ.fmt/$year
+            output=$corpus/$year
             mkdir --parents $output
-            ls $SCRATCH/WSJ/$i/WSJ_* | \
+            ls WSJ/$i/WSJ_* | \
 	        python3 archive.py \
                         --output-directory $output \
                         --archive-type WSJ
+            (cd $corpus/1990-1992; ln --symbolic ../$year/*)
         done
         ;;
     fragment)
-        for i in `seq 1990 1992`; do
+        for i in $SCRATCH/WSJ.fmt/*; do
             python3 fragment.py \
-                    --corpus-directory $SCRATCH/WSJ.fmt/$i > \
-                    $SCRATCH/fragments-$i.csv
+                    --corpus-directory $i > \
+                    $SCRATCH/fragments-`basename $i`.csv
         done
         ;;
     similarity)
