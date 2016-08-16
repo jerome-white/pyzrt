@@ -6,6 +6,7 @@ class Notebook:
         self.key = key
         self.length = 0
         self.fragment = 0
+        self.reported = False
         self.remaining = None
         
 def orange(start, stop, step, offset=None):
@@ -27,6 +28,7 @@ def fragment(corpus_listing, block_size=1):
     for path in corpus_listing:
         for (i, j) in orange(0, path.stat().st_size, block_size, n.remaining):
             yield (n.key, n.fragment, path.name, i, j)
+            n.reported = True
             
             n.length += j - i
             assert(n.length <= block_size)
@@ -39,7 +41,7 @@ def fragment(corpus_listing, block_size=1):
         if n.fragment:
             n.remaining = block_size - n.length
 
-    if n.fragment:
+    if n.fragment and not n.reported:
         yield (n.key, n.fragment, path.name, i, j)
 
 def to_string(corpus, chunk):
