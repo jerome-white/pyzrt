@@ -15,10 +15,11 @@ ls test-docs/raw/* | \
 
 python3 fragment.py \
         --corpus-directory test-docs/parsed \
-        --block-size 4
+        --block-size 7 > \
+        test-docs/fragments.csv
 
-# python3 -u similarity-gen.py \
-#         --corpus-directory test-docs/parsed \
-#         --fragment-file test-docs/fragments.csv > test-docs/similarity.csv
+python3 -u similarity-gen.py \
+        --corpus-directory test-docs/parsed \
+        --fragment-file test-docs/fragments.csv > test-docs/similarity.csv
 
 # python3 dot-gen.py --png test-docs/dot-plot.png < test-docs/similarity.csv
