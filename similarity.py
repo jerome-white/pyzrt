@@ -37,33 +37,46 @@ def pairs(corpus_directory, fragment_file, distance=op.eq):
     log = logger.getlogger(True)
     
     with mp.Manager() as manager:
+        #
+        # Build the shared dictionary
+        #
         log.info('+ corpus')
-        path = Path(corpus_directory)
         corpus = manager.dict()
+        
+        path = Path(corpus_directory)
         for i in path.iterdir():
             with i.open() as fp:
                 corpus[i.name] = fp.read()
         log.info('- corpus {0}'.format(len(corpus)))
 
+        #
+        # Build the shared list
+        #
         log.info('+ fragments')
+        fragments = manager.list()
+        
         frames = []
         previous = None
-        fragments = manager.list()
+        peel = lambda x: [ y.pop() for y in sorted(x, key=op.itemgetter(0)) ]
         with open(fragment_file) as fp:
-            reader = csv.reader(fp)
-            for row in reader:
+            for row in csv.reader(fp):
                 (current, key) = map(int, row[:2])
                 
                 if previous is not None and previous != current:
-                    frames.sort(key=op.itemgetter(0))
-                    fragments.extend([ x[1:] for x in frames ])
+                    fragments.append(peel(frames))
                     frames = []
                     
                 fragment = Fragment(row[2], *map(int, row[3:]))
                 frames.append([ key, fragment ])
                 previous = current
+            # last line of the file doesn't get included
+            if frames:
+                fragments.append(peel(frames))
         log.info('- fragments {0}'.format(len(fragments)))
 
+        #
+        # Spawn the children
+        #
         log.info('+ similarity')
         with mp.Pool() as pool:
             iterable = enum(corpus, fragments, distance)
