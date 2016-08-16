@@ -1,9 +1,6 @@
-import csv
 import similarity
 
-from pathlib import Path
 from argparse import ArgumentParser
-from multiprocessing import Manager
 
 arguments = ArgumentParser()
 arguments.add_argument('--corpus-directory')
