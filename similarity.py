@@ -34,13 +34,18 @@ def enum(corpus, fragments, distance):
         yield Args(i, corpus, fragments, distance)
         
 def pairs(corpus_directory, fragment_file, distance=op.eq):
+    log = logger.getlogger(True)
+    
     with mp.Manager() as manager:
+        log.info('+ corpus')
         path = Path(corpus_directory)
         corpus = manager.dict()
         for i in path.iterdir():
             with i.open() as fp:
                 corpus[i.name] = fp.read()
+        log.info('- corpus {0}'.format(len(corpus)))
 
+        log.info('+ fragments')
         frames = []
         previous = None
         fragments = manager.list()
@@ -57,8 +62,11 @@ def pairs(corpus_directory, fragment_file, distance=op.eq):
                 fragment = Fragment(row[2], *map(int, row[3:]))
                 frames.append([ key, fragment ])
                 previous = current
+        log.info('- fragments {0}'.format(len(fragments)))
 
+        log.info('+ similarity')
         with mp.Pool() as pool:
             iterable = enum(corpus, fragments, distance)
             for _ in pool.imap_unordered(func, iterable):
                 pass
+        log.info('- similarity')
