@@ -1,6 +1,5 @@
 import re
 import sys
-import uuid
 import itertools
 
 import logger
@@ -51,7 +50,7 @@ class Parser():
 class TestParser(Parser):
     def func(self, doc):
         with doc.open() as fp:
-            return (str(uuid.uuid4()), fp.read())
+            return (doc.name, fp.read())
 
     def extract(self, path):
         yield from [ path ]
