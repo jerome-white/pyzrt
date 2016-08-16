@@ -8,9 +8,8 @@ arguments = ArgumentParser()
 arguments.add_argument('--png')
 args = arguments.parse_args()
 
-reader = csv.reader(sys.stdin)
 d = {}
-for (*key, value) in reader:
+for (*key, value) in csv.reader(sys.stdin):
     k = tuple(map(int, key))
     d[k] = float(value)
 
