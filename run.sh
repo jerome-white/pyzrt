@@ -27,7 +27,7 @@ case $task in
         for i in $SCRATCH/WSJ.fmt/*; do
             python3 $HOME/src/pyzrt/fragment.py \
                 --corpus-directory $i > \
-                $SCRATCH/fragments-`basename $i`.csv
+                $SCRATCH/fragments_`basename $i`.csv
         done
         ;;
     similarity)
