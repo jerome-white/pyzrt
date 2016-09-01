@@ -1,72 +1,54 @@
-import numpy as np
+from pathlib import Path
+from itertools import islice
 
-from collections import namedtuple, OrderedDict
-
-Document = namedtuple('Document', 'fpath, data')
-Fragment = namedtuple('Fragment', 'docno, start, end')
-
-class Corpus(OrderedDict):
-    def characters(self):
-        return sum([ len(data) for (_, data) in self.values() ])
-
-    def documents(self):
-        return len(self)
-
-class FragmentedCorpus(list):
-    def __init__(self, corpus, block_size=1):
-        self.corpus = corpus
+class Notebook:
+    def __init__(self, key=0):
+        self.key = key
+        self.length = 0
+        self.fragment = 0
+        self.reported = False
+        self.remaining = None
         
-        remaining = None
-        fragments = []
-        length = 0
+def orange(start, stop, step, offset=None):
+    i = start
+    while i < stop:
+        if offset is None:
+            j = i + step
+        else:
+            j = i + offset
+            offset = None
+        j = min(j, stop)
+            
+        yield (i, j)
+        i = j
+
+def fragment(corpus_listing, block_size=1):
+    n = Notebook()
     
-        for (docno, doc) in self.corpus.items():
-            for (i, j) in self.range_(0, len(doc.data), block_size, remaining):
-                f = Fragment(docno, *map(int, [ i, j ]))
-                fragments.append(f)
-                length += j - i
-                assert(length <= block_size)
+    for path in corpus_listing:
+        for (i, j) in orange(0, path.stat().st_size, block_size, n.remaining):
+            yield (n.key, n.fragment, path.name, i, j)
+            n.reported = True
+            
+            n.length += j - i
+            assert(n.length <= block_size)
                 
-                if length == block_size:
-                    self.append(fragments)
-                
-                    remaining = None
-                    fragments = []
-                    length = 0
-
-            if fragments:
-                remaining = block_size - length
-
-        if fragments:
-            self.append(fragments)
-
-    def range_(self, start, stop, step, offset=None):
-        i = start
-        while i < stop:
-            if offset is None:
-                j = i + step
+            if n.length == block_size:
+                n = Notebook(n.key + 1)
             else:
-                j = i + offset
-                offset = None
-            j = min(j, stop)
-            
-            yield (i, j)
-            i = j
+                n.fragment += 1
 
-    def at(self, i):
-        assert(0 <= i < len(self))
+        if n.fragment:
+            n.remaining = block_size - n.length
 
-        string = []
-        
-        for (docno, start, end) in self[i]:
-            document = self.corpus[docno]
-            s = document.data[start:end]
-            string.append(s)
-            
-        return ''.join(string)
-        
-    def strings(self, start=0, end=None):
-        if end is None:
-            end = len(self)
+    if n.fragment and not n.reported:
+        yield (n.key, n.fragment, path.name, i, j)
 
-        yield from [ self.at(x) for x in range(start, len(self)) ]
+def to_string(corpus, chunk):
+    string = []
+    
+    for (docno, start, end) in chunk:
+        data = corpus[docno]
+        string.append(data[start:end])
+
+    return ''.join(string)
