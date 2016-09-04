@@ -50,7 +50,7 @@ def func(args):
     writer = csv.writer(sys.stdout)
 
     for (i, fragment) in frag(args.fragment_file, args.offset):
-        s2 = to_string(corpus, fragment)
+        s2 = to_string(fragment, corpus)
         if s1 is None:
             s1 = s2
         else:

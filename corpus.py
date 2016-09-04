@@ -44,11 +44,20 @@ def fragment(corpus_listing, block_size=1):
     if n.fragment and not n.reported:
         yield (n.key, n.fragment, path.name, i, j)
 
-def to_string(corpus, chunk):
+def to_string(chunk, corpus=None, corpus_directory=None):
+    assert(corpus or corpus_directory)
+    
     string = []
     
     for (docno, start, end) in chunk:
-        data = corpus[docno]
-        string.append(data[start:end])
+        if corpus:
+            data = corpus[docno][start:end]
+        else:
+            path = Path(corpus_directory, docno)
+            with path.open() as fp:
+                fp.seek(start)
+                data = fp.read(end - start)
+
+        string.append(data)
 
     return ''.join(string)
