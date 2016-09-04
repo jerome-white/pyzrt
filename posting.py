@@ -1,15 +1,15 @@
-import collections
 import operator as op
+from collections import namedtuple, defaultdict
 
 import corpus
 import similarity
 
-IndexedFragment = collections.namedtuple('IndexedFragment',
-                                         [ 'index' ] + list(Fragment._fields))
+IndexedFragment = namedtuple('IndexedFragment',
+                             [ 'index' ] + list(similarity.Fragment._fields))
 
 class Posting:
     def __init__(self, fragment_file, corpus_directory=None):
-        self.posting = collections.defaultdict(list)
+        self.posting = defaultdict(list)
 
         if corpus_directory:
             corpus_ = dict(corpus.from_disk(corpus_directory))
