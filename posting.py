@@ -1,8 +1,10 @@
 import operator as op
 from collections import namedtuple, defaultdict
 
-import corpus
+import numpy as np
+
 import similarity
+from corpus import to_string
 
 IndexedFragment = namedtuple('IndexedFragment',
                              [ 'index' ] + list(similarity.Fragment._fields))
@@ -11,10 +13,12 @@ class Posting(defaultdict):
     def __init__(self, fragments, corpus=None):
         super().__init__(list)
 
-        for (i, frg) in enumerate(similarity.frag(fragments)):
-            token = to_string(frg, corpus)
-            value = IndexedFragment(i, *frg)
-            self[token].append(value)
+        index = 0
+        for (_, i) in map(list, similarity.frag(fragments)):
+            token = to_string(i, corpus)
+            for (j, k) in enumerate(i, index):
+                self[token].append(IndexedFragment(j, *k))
+            index = j + 1
     
     def frequency(self, token):
         return len(self[token]) if token in self else 0
@@ -28,7 +32,7 @@ class Posting(defaultdict):
         return freq / n
 
     def each(self, index):
-        yield from map(op.itemgetter(-1), self[index])
+        yield from map(op.itemgetter(0), self[index])
 
 class Dotplot:
     def __init__(self, total_elements, map_file=None, compression_ratio=1):
