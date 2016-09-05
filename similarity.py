@@ -5,7 +5,7 @@ import logger
 import operator as op
 import multiprocessing as mp
 
-from corpus import to_string
+from corpus import to_string, from_disk
 from pathlib import Path
 from itertools import islice
 from collections import namedtuple
@@ -13,50 +13,46 @@ from collections import namedtuple
 Args = namedtuple('Args', 'anchor, offset, corpus, fragments, distance')
 Fragment = namedtuple('Fragment', 'docno, start, end')
 
-def frag(fragment_file, offset=0):
+def frag(fp):
     frames = []
     previous = None
     peel = lambda x: map(op.itemgetter(-1), sorted(x, key=op.itemgetter(0)))
     
-    with open(fragment_file) as fp:
-        fp.seek(offset)
-        for row in csv.reader(fp):
-            (current, key) = map(int, row[:2])
+    for row in csv.reader(fp):
+        (current, key) = map(int, row[:2])
                 
-            if previous is not None and previous != current:
-                yield (previous, peel(frames))
-                frames.clear()
-                
-            fragment = Fragment(row[2], *map(int, row[3:]))
-            frames.append([ key, fragment ])
-            previous = current
-            
-        # since the last line of the file doesn't get included
-        if frames:
+        if previous is not None and previous != current:
             yield (previous, peel(frames))
+            frames.clear()
+                
+        fragment = Fragment(row[2], *map(int, row[3:]))
+        frames.append([ key, fragment ])
+        previous = current
+            
+    # since the last line of the file doesn't get included
+    if frames:
+        yield (previous, peel(frames))
     
 def func(args):
     log = logger.getlogger()
     log.info(args.anchor)
 
-    corpus = {}
-    path = Path(args.corpus)
-    for i in path.iterdir():
-        with i.open() as fp:
-            corpus[i.name] = fp.read()
+    corpus = dict(from_disk(args.corpus))
     log.debug('- corpus {0}'.format(len(corpus)))
     
     s1 = None
     writer = csv.writer(sys.stdout)
 
-    for (i, fragment) in frag(args.fragments, args.offset):
-        s2 = to_string(fragment, corpus)
-        if s1 is None:
-            s1 = s2
-            assert(s1 is not None)
-        else:
-            d = args.distance(s1, s2)
-            writer.writerow([ args.anchor, i, float(d) ])
+    with open(fragment_file) as fp:
+        fp.seek(args.offset)
+        for (i, fragment) in frag(fp):
+            s2 = to_string(fragment, corpus)
+            if s1 is None:
+                s1 = s2
+                assert(s1 is not None)
+            else:
+                d = args.distance(s1, s2)
+                writer.writerow([ args.anchor, i, float(d) ])
             
 def enum(corpus_directory, fragment_file, distance):
     offset = 0
