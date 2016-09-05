@@ -43,8 +43,7 @@ class Dotplot:
         shape = [ self.n ] * 2
         
         if map_file:
-            self.dots = np.memmap(map_file, dtype=np.float16, mode='w+',
-                                  shape=shape)
+            self.dots = np.memmap(map_file, dtype=np.float16, shape=shape)
         else:
             self.dots = np.zeros(shape)
 
