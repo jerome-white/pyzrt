@@ -16,7 +16,7 @@ Fragment = namedtuple('Fragment', 'docno, start, end')
 def frag(fp):
     frames = []
     previous = None
-    peel = lambda x: map(op.itemgetter(-1), sorted(x, key=op.itemgetter(0)))
+    peel = lambda x: [ x[-1] for x in sorted(x, key=op.itemgetter(0)) ]
     
     for row in csv.reader(fp):
         (current, key) = map(int, row[:2])
