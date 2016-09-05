@@ -7,26 +7,21 @@ import similarity
 IndexedFragment = namedtuple('IndexedFragment',
                              [ 'index' ] + list(similarity.Fragment._fields))
 
-class Posting:
-    def __init__(self, fragment_file, corpus_directory=None):
-        self.posting = defaultdict(list)
+class Posting(defaultdict):
+    def __init__(self, fragments, corpus=None):
+        super().__init__(list)
 
-        if corpus_directory:
-            corpus_ = dict(corpus.from_disk(corpus_directory))
-        else:
-            corpus_ = None
-            
-        for (i, fragment) in enumerate(similarity.frag(fragment_file)):
-            token = to_string(fragment, corpus_, corpus_directory)
-            value = IndexedFragment(i, *fragment)
-            self.posting[token].append(value)
+        for (i, frg) in enumerate(similarity.frag(fragments)):
+            token = to_string(frg, corpus)
+            value = IndexedFragment(i, *frg)
+            self[token].append(value)
     
     def frequency(self, token):
-        return len(self.posting[token]) if token in self.posting else 0
+        return len(self[token]) if token in self else 0
 
     def weight(self, token):
         freq = self.frequency(token)
-        keys = set(self.postings.keys())
+        keys = set(self.keys())
         
         n = max(map(self.frequency, keys.difference([ token ])))
 
@@ -34,3 +29,24 @@ class Posting:
 
     def each(self, index):
         yield from map(op.itemgetter(-1), self[index])
+
+class Dotplot:
+    def __init__(self, total_elements, map_file=None, compression_ratio=1):
+        assert(0 < compression_ratio <= 1)
+        
+        self.N = total_elements
+        self.n = round(self.N * compression_ratio)
+        shape = [ self.n ] * 2
+        
+        if map_file:
+            self.dots = np.memmap(map_file, dtype=np.float16, mode='w+',
+                                  shape=shape)
+        else:
+            self.dots = np.zeros(shape)
+
+    def cell(self, x):
+        return (x * self.n) / self.N
+    
+    def update(self, row, col, value):
+        coordinates = tuple(map(self.cell, [ row, col ]))
+        self.dots[coordinates] += value
