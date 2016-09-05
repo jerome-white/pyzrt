@@ -61,3 +61,9 @@ def to_string(chunk, corpus=None, corpus_directory=None):
         string.append(data)
 
     return ''.join(string)
+
+def from_disk(corpus_directory):
+    path = Path(corpus_directory)
+    for i in path.iterdir():
+        with i.open() as fp:
+            yield (i.name, fp.read())
