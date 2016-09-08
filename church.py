@@ -12,7 +12,21 @@ from posting import Posting, DistributedDotplot
 Args = namedtuple('Args', 'dotplot, weight, coordinates')
 
 def func(args):
-    args.dotplot.update(*args.coordinates, args.weight)
+    log.info('dotplot')
+    elements = posting.tokens()
+    c = args.max_elements / elements if args.max_elements > 0 else args.compression
+    
+    dp = DistributedDotplot(elements, c, args.mmap)
+    weight = posting.weight(token)
+
+    for (i, j) in filter(lambda x: op.ne(*x), combinations(posting.each(i), 2)):
+        dp.update(i, j, weight)
+
+def enumeration(posting, threshold):
+    for i in posting.keys():
+        if i.isalpha() and posting.mass(i) <= threshold:
+            elements = posting.tokens()
+            yield Args(posting)
 
 arguments = ArgumentParser()
 arguments.add_argument('--mmap')
@@ -26,31 +40,13 @@ args = arguments.parse_args()
 
 log = logger.getlogger(True)
 
-log.info('corpus')
-corpus = dict(from_disk(args.corpus_directory))
-
 log.info('postings')
 with open(args.fragment_file) as fp:
-    posting = Posting(fp, corpus)
-
-log.info('dotplot')
-elements = sum([ len(x) for x in corpus.values() ])
-c = args.max_elements / elements if args.max_elements > 0 else args.compression
-dp = DistributedDotplot(elements, c, args.mmap)
+    kwargs = { 'corpus_directory': args.corpus_directory }
+    posting = Posting(fp, **kwargs)
 
 with Pool() as pool:
-    for i in posting.keys():
-        if i.isalpha() and posting.mass(i) <= args.threshold:
-            log.info('+ {0}'.format(i))
-
-            weight = posting.weight(i)
-
-            iterable = map(lambda x: Args(dp, weight, x),
-                           filter(lambda x: op.ne(*x),
-                                  combinations(posting.each(i), 2)))
-            for _ in pool.map(func, iterable):
-                pass
-
-            log.info('- {0}'.format(i))
+    for _ pool.imap_unordered(func, enumeration(posting, args.threshold)):
+        pass
     
 dotplot(dp.dots, args.output_image)
