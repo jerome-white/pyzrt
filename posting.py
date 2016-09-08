@@ -1,4 +1,5 @@
 import operator as op
+from pathlib import Path
 from collections import namedtuple, defaultdict
 
 import numpy as np
@@ -11,12 +12,12 @@ IndexedFragment = namedtuple('IndexedFragment',
                              [ 'index' ] + list(Fragment._fields))
 
 class Posting(defaultdict):
-    def __init__(self, fragments, corpus=None):
+    def __init__(self, fragments, **kwargs):
         super().__init__(list)
 
         index = 0
         for (_, i) in map(list, frag(fragments)):
-            token = to_string(i, corpus)
+            token = to_string(i, **kwargs)
             for (j, k) in enumerate(i, index):
                 self[token].append(IndexedFragment(j, *k))
             index = j + 1
@@ -40,6 +41,9 @@ class Posting(defaultdict):
 
     def each(self, index):
         yield from map(op.itemgetter(0), self[index])
+
+    def tokens(self):
+        sum([ len(x) * len(y) for (x, y) in self.items() ])
 
 class Dotplot:
     def __init__(self, total_elements, compression_ratio=1):
