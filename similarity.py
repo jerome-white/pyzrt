@@ -11,27 +11,35 @@ from itertools import islice
 from collections import namedtuple
 
 Args = namedtuple('Args', 'anchor, offset, corpus, fragments, distance')
-Fragment = namedtuple('Fragment', 'docno, start, end')
+
+class Fragment:
+    def __init__(self, docno, start, end):
+        self.docno = docno
+        self.start = start
+        self.end = end
+
+    def __lt__(self, other):
+        return self.start < other.start
 
 def frag(fp):
     frames = []
     previous = None
-    peel = lambda x: [ x[-1] for x in sorted(x, key=op.itemgetter(0)) ]
     
     for row in csv.reader(fp):
-        (current, key) = map(int, row[:2])
-                
+        docno = row.pop(1)
+        (current, start, end) = map(int, row)
+        
         if previous is not None and previous != current:
-            yield (previous, peel(frames))
-            frames.clear()
-                
-        fragment = Fragment(row[2], *map(int, row[3:]))
-        frames.append([ key, fragment ])
+            yield (previous, sorted(frames))
+            frames = []
+            
+        fragment = Fragment(docno, start, end)
+        frames.append(fragment)
         previous = current
             
     # since the last line of the file doesn't get included
     if frames:
-        yield (previous, peel(frames))
+        yield (previous, sorted(frames))
     
 def func(args):
     log = logger.getlogger()
