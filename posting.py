@@ -8,22 +8,18 @@ import logger
 from corpus import to_string
 from similarity import Fragment, frag
 
-IndexedFragment = namedtuple('IndexedFragment',
-                             [ 'index' ] + list(Fragment._fields))
+IndexedFragment = namedtuple('IndexedFragment', 'index, fragment')
 
 class Posting(defaultdict):
     def __init__(self, fragments, **kwargs):
         super().__init__(list)
 
-        index = 0
-        for (_, i) in map(list, frag(fragments)):
-            token = to_string(i, **kwargs)
-            for (j, k) in enumerate(i, index):
-                self[token].append(IndexedFragment(j, *k))
-            index = j + 1
+        for (i, (_, chunk)) in enumerate(frag(fragments)):
+            token = to_string(chunk, **kwargs)
+            self[token].append(IndexedFragment(i, chunk))
     
     def frequency(self, token):
-        return len(self[token]) if token in self else 0
+        return len(self[token])
 
     def mass(self, token, relative=True):
         counter = { x: sum([ len(z) for z in y ]) for (x, y) in self.items() }
@@ -40,7 +36,7 @@ class Posting(defaultdict):
         return freq / n
 
     def each(self, index):
-        yield from map(op.itemgetter(0), self[index])
+        yield from map(op.attrgetter('index'), self[index])
 
     def tokens(self):
         sum([ len(x) * len(y) for (x, y) in self.items() ])
