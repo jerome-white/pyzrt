@@ -1,69 +1,139 @@
+import sys
+import csv
 from pathlib import Path
-from itertools import islice
 
 class Notebook:
     def __init__(self, key=0):
         self.key = key
         self.length = 0
-        self.fragment = 0
         self.reported = False
         self.remaining = None
         
-def orange(start, stop, step, offset=None):
-    i = start
-    while i < stop:
-        if offset is None:
-            j = i + step
-        else:
-            j = i + offset
-            offset = None
-        j = min(j, stop)
-            
-        yield (i, j)
-        i = j
+class Token:
+    def __init__(self, docno, start, end):
+        self.docno = docno
+        self.start = start
+        self.end = end
 
-def fragment(corpus_listing, block_size=1):
-    n = Notebook()
-    
-    for path in corpus_listing:
-        for (i, j) in orange(0, path.stat().st_size, block_size, n.remaining):
-            yield (n.key, n.fragment, path.name, i, j)
-            n.reported = True
-            
-            n.length += j - i
-            assert(n.length <= block_size)
-                
-            if n.length == block_size:
-                n = Notebook(n.key + 1)
+    def __lt__(self, other):
+        return self.start < other.start
+
+####
+
+class Tokenizer():
+    def __init__(self, corpus):
+        self.corpus = corpus
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        raise StopIteration()
+
+class CharacterTokenizer(Tokenizer):
+    def __init__(self, corpus, characters=1):
+        super().__init__(corpus)
+        self.characters = characters
+        
+    def range(self, start, stop, step, offset=None):
+        i = start
+        while i < stop:
+            if offset is None:
+                j = i + step
             else:
-                n.fragment += 1
+                j = i + offset
+                offset = None
+            j = min(j, stop)
+            
+            yield (i, j)
+            i = j
 
-        if n.fragment:
-            n.remaining = block_size - n.length
+    def __next__(self):
+        n = Notebook()
+        
+        for c in self.corpus:
+            stop = c.stat().st_size
+            for (i, j) in self.range(0, stop, self.characters, n.remaining):
+                assert(i < j)
+                yield (n.key, c.name, i, j)
+                n.reported = True
+                
+                n.length += j - i
+                assert(n.length <= self.characters)
+                
+                if n.length == self.characters:
+                    n = Notebook(n.key + 1)
+                    
+            if not n.reported:
+                n.remaining = self.characters - n.length
 
-    if n.fragment and not n.reported:
-        yield (n.key, n.fragment, path.name, i, j)
+        if not n.reported:
+            yield (n.key, c.name, i, j)
 
-def to_string(chunk, corpus=None, corpus_directory=None):
-    assert(corpus or corpus_directory)
+        raise StopIteration()
+
+###
+
+class TokenBuilder:
+    def __init__(self, tokens):
+        self.tokens = tokens
+        
+    def __str__(self):
+        return ''.join(map(self.build, self.tokens))
+
+    def build(self, token):
+        raise NotImplementedError
+
+class CorpusTokenBuilder(TokenBuilder):
+    def __init__(self, tokens, corpus):
+        '''
+        corpus: dictionary of file offset pointers
+        '''
+        super().__init__(tokens)
+        self.corpus = corpus
+        
+    def build(self, token):
+        document = self.corpus[token.docno]
+        return document[token.start:token.end]
     
-    string = []
-    
-    for (docno, start, end) in chunk:
-        if corpus:
-            data = corpus[docno][start:end]
-        else:
-            path = Path(corpus_directory, docno)
-            with path.open() as fp:
-                fp.seek(start)
-                data = fp.read(end - start)
+class FileTokenBuilder(TokenBuilder):
+    def __init__(self, tokens, corpus):
+        '''
+        corpus: top level corpus directory
+        '''
+        super().__init__(tokens)
+        self.corpus = corpus
+        
+    def build(self, token):
+        path = self.corpus.joinpath(token.docno)
+        with path.open() as fp:
+            fp.seek(start)
+            return fp.read(end - start)
 
-        string.append(data)
+###
 
-    return ''.join(string)
+class TokenIO:
+    def read(self, token_fp=sys.stdin):
+        frames = []
+        previous = None
+        
+        for row in csv.reader(token_fp):
+            docno = row.pop(1)
+            (current, start, end) = map(int, row)
+        
+            if previous is not None and previous != current:
+                yield (previous, sorted(frames))
+                frames = []
+            
+            fragment = Token(docno, start, end)
+            frames.append(fragment)
+            previous = current
+            
+        # since the last line of the file doesn't get included
+        if frames:
+            yield (previous, sorted(frames))
 
-def from_disk(corpus_directory):
-    path = Path(corpus_directory)
-    for i in path.iterdir():
-        with i.open() as fp:
-            yield (i.name, fp.read())
+    def write(self, token_fp=sys.stdout, tokenizer):
+        writer = csv.writer(token_fp)
+        for row in tokenizer:
+            writer.writerow(row)
