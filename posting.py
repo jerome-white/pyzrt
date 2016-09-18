@@ -5,18 +5,16 @@ from collections import namedtuple, defaultdict
 import numpy as np
 
 import logger
-from corpus import to_string
-from similarity import Fragment, frag
 
-IndexedFragment = namedtuple('IndexedFragment', 'index, fragment')
+IndexedToken = namedtuple('IndexedToken', 'index, tokens')
 
 class Posting(defaultdict):
-    def __init__(self, fragments, **kwargs):
+    def __init__(self, token_stream, to_string):
         super().__init__(list)
 
-        for (i, (_, chunk)) in enumerate(frag(fragments)):
-            token = to_string(chunk, **kwargs)
-            self[token].append(IndexedFragment(i, chunk))
+        for (i, tokens) in enumerate(token_stream):
+            tok = to_string(tokens)
+            self[tok].append(IndexedToken(i, tokens))
     
     def frequency(self, token):
         return len(self[token])
