@@ -1,17 +1,18 @@
 import sys
 import csv
-import corpus
-
-from parser import NameSortedCorpus
 from pathlib import Path
 from argparse import ArgumentParser
+
+from corpus import NameSortedCorpus
 
 arguments = ArgumentParser()
 arguments.add_argument('--corpus-directory')
 arguments.add_argument('--block-size', default=1, type=int)
 args = arguments.parse_args()
 
-corpus_listing = NameSortedCorpus(args.corpus_directory)
+path = Path(corpus_directory)
+assert(path.is_dir())
 writer = csv.writer(sys.stdout)
-for row in corpus.fragment(corpus_listing, args.block_size):
-    writer.writerow(row)
+tokenizer = CharacterTokenizer(path.iterdir(), args.block_size)
+for (key, token) in tokenizer:
+    writer.writerow([ key ] + list(token))
