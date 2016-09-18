@@ -18,6 +18,9 @@ class Token:
     def __lt__(self, other):
         return self.start < other.start
 
+    def __list__(self):
+        return [ self.docno, self.start, self.end ]
+
 ####
 
 class Tokenizer:
@@ -54,7 +57,7 @@ class CharacterTokenizer(Tokenizer):
         for c in self.corpus:
             stop = c.stat().st_size
             for (i, j) in self.range(0, stop, self.characters, n.remaining):
-                yield (n.key, c.name, i, j)
+                yield (n.key, Token(c.name, i, j))
                 n.reported = True
                 
                 n.length += j - i
@@ -67,7 +70,7 @@ class CharacterTokenizer(Tokenizer):
                 n.remaining = self.characters - n.length
 
         if not n.reported:
-            yield (n.key, c.name, i, j)
+            yield (n.key, Token(c.name, i, j))
 
         raise StopIteration()
 
@@ -149,7 +152,7 @@ class TokenReader:
         if frames:
             yield (previous, sorted(frames))
 
-    def write(self, token_fp=sys.stdout, tokenizer):
-        writer = csv.writer(token_fp)
-        for row in tokenizer:
-            writer.writerow(row)
+    # def write(self, token_fp=sys.stdout, tokenizer):
+    #     writer = csv.writer(token_fp)
+    #     for row in tokenizer:
+    #         writer.writerow(row)
