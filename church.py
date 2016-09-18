@@ -6,27 +6,31 @@ from multiprocessing import Pool
 
 import logger
 from dots import dotplot
-from corpus import from_disk
 from posting import Posting, DistributedDotplot
 
-Args = namedtuple('Args', 'dotplot, weight, coordinates')
-
 def func(args):
-    log.info('dotplot')
-    elements = posting.tokens()
-    c = args.max_elements / elements if args.max_elements > 0 else args.compression
+    (posting, index, cli) = args
     
-    dp = DistributedDotplot(elements, c, args.mmap)
+    log = logger.getlogger()
+    log.info('dotplot')
+    
+    elements = posting.tokens()
+    
+    if cli.max_elements > 0:
+        compression_ratio = cli.max_elements / elements
+    else:
+        compression_ratio = cli.compression
+        
+    dp = DistributedDotplot(elements, compression_ratio, cli.mmap)
     weight = posting.weight(token)
 
-    for (i, j) in filter(lambda x: op.ne(*x), combinations(posting.each(i), 2)):
-        dp.update(i, j, weight)
+    for i in filter(lambda x: op.ne(*x), combinations(posting.each(index), 2)):
+        dp.update(*i, weight)
 
-def enumeration(posting, threshold):
+def enumeration(posting, args):
     for i in posting.keys():
-        if i.isalpha() and posting.mass(i) <= threshold:
-            elements = posting.tokens()
-            yield Args(posting)
+        if i.isalpha() and posting.mass(i) <= args.threshold:
+            yield (posting, i, args)
 
 arguments = ArgumentParser()
 arguments.add_argument('--mmap')
@@ -41,12 +45,13 @@ args = arguments.parse_args()
 log = logger.getlogger(True)
 
 log.info('postings')
+
 with open(args.fragment_file) as fp:
     kwargs = { 'corpus_directory': args.corpus_directory }
     posting = Posting(fp, **kwargs)
 
 with Pool() as pool:
-    for _ pool.imap_unordered(func, enumeration(posting, args.threshold)):
+    for _ pool.imap_unordered(func, enumeration(args)):
         pass
     
 dotplot(dp.dots, args.output_image)
