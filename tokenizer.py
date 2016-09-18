@@ -20,7 +20,7 @@ class Token:
 
 ####
 
-class Tokenizer():
+class Tokenizer:
     def __init__(self, corpus):
         self.corpus = corpus
 
@@ -54,7 +54,6 @@ class CharacterTokenizer(Tokenizer):
         for c in self.corpus:
             stop = c.stat().st_size
             for (i, j) in self.range(0, stop, self.characters, n.remaining):
-                assert(i < j)
                 yield (n.key, c.name, i, j)
                 n.reported = True
                 
@@ -82,7 +81,7 @@ class TokenBuilder:
         return ''.join(map(self.build, self.tokens))
 
     def build(self, token):
-        raise NotImplementedError
+        raise NotImplementedError()
 
 class CorpusTokenBuilder(TokenBuilder):
     def __init__(self, tokens, corpus):
@@ -107,17 +106,34 @@ class FileTokenBuilder(TokenBuilder):
     def build(self, token):
         path = self.corpus.joinpath(token.docno)
         with path.open() as fp:
-            fp.seek(start)
-            return fp.read(end - start)
+            fp.seek(token.start)
+            return fp.read(token.end - token.start)
 
 ###
 
-class TokenIO:
-    def read(self, token_fp=sys.stdin):
+class TokenReader:
+    # def __init__(self, fp=sys.stdin, offset=0):
+    #     self.fp = fp
+    #     self.fp.seek(offset)
+
+    # def __enter__(self):
+    #     self.reader = csv.reader(self.fp)
+
+    # def __exit__(self, exc_type, exc_value, traceback):
+    #     if self.fp != sys.stdin:
+    #         self.fp.close()
+
+    def __init__(self, stream):
+        self.stream = stream
+    
+    def __iter__(self):
+        return self
+
+    def __next__(self):
         frames = []
         previous = None
         
-        for row in csv.reader(token_fp):
+        for row in self.stream:
             docno = row.pop(1)
             (current, start, end) = map(int, row)
         
