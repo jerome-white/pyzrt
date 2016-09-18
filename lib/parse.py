@@ -1,13 +1,11 @@
 import re
 import sys
 import itertools
-
-import logger
-
 import multiprocessing as mp
 import xml.etree.ElementTree as et
-
 from pathlib import Path
+
+import logger
 
 class Parser():
     def func(self, doc):
