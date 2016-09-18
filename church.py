@@ -35,8 +35,8 @@ def enumeration(posting, args):
 arguments = ArgumentParser()
 arguments.add_argument('--mmap')
 arguments.add_argument('--output-image')
-arguments.add_argument('--fragment-file')
-arguments.add_argument('--corpus-directory')
+arguments.add_argument('--tokens')
+arguments.add_argument('--corpus')
 arguments.add_argument('--threshold', default=1, type=float)
 arguments.add_argument('--compression', default=1, type=float)
 arguments.add_argument('--max-elements', type=float)
@@ -46,9 +46,10 @@ log = logger.getlogger(True)
 
 log.info('postings')
 
-with open(args.fragment_file) as fp:
-    kwargs = { 'corpus_directory': args.corpus_directory }
-    posting = Posting(fp, **kwargs)
+with open(args.tokens) as fp:
+    reader = TokenReader(csv.reader(fp))
+    builder = lambda x: str(FileTokenBuilder(x, args.corpus))
+    posting = Posting(reader, builder)
 
 with Pool() as pool:
     for _ pool.imap_unordered(func, enumeration(args)):
