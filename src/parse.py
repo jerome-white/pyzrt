@@ -1,20 +1,21 @@
-import parser
-
 from pathlib import Path
 from argparse import ArgumentParser
+
+import parser
 
 parsers = {
     'WSJ': parser.WSJParser,
     'test': parser.TestParser,
-    }
+}
 
 arguments = ArgumentParser()
 arguments.add_argument('--archive-type')
-arguments.add_argument('--output-directory')
+arguments.add_argument('--output-directory', type=Path)
 args = arguments.parse_args()
-assert(args.archive_type in parsers)
-
+exit()
 path = Path(args.output_directory)
+path.mkdir(parents=True, exists_ok=True)
+
 parser = parsers[args.archive_type]()
 
 for (i, data) in parser.parse():
