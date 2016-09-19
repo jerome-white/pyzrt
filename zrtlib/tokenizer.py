@@ -18,8 +18,17 @@ class Token:
     def __lt__(self, other):
         return self.start < other.start
 
-    def __list__(self):
-        return [ self.docno, self.start, self.end ]
+    def __iter__(self):
+        self.items = [ self.docno, self.start, self.end ]
+        self.items.reverse()
+        
+        return self
+
+    def __next__(self):
+        if not self.items:
+            raise StopIteration()
+        
+        return self.items.pop()
 
 ####
 
@@ -27,10 +36,7 @@ class Tokenizer:
     def __init__(self, corpus):
         self.corpus = corpus
 
-    def __iter__(self):
-        return self
-
-    def __next__(self):
+    def tokenize(self):
         raise StopIteration()
 
 class CharacterTokenizer(Tokenizer):
@@ -51,7 +57,7 @@ class CharacterTokenizer(Tokenizer):
             yield (i, j)
             i = j
 
-    def __next__(self):
+    def tokenize(self):
         n = Notebook()
         
         for c in self.corpus:
@@ -71,8 +77,6 @@ class CharacterTokenizer(Tokenizer):
 
         if not n.reported:
             yield (n.key, Token(c.name, i, j))
-
-        raise StopIteration()
 
 ###
 
