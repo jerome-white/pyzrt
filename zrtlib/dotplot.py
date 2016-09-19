@@ -1,6 +1,6 @@
 import numpy as np
 
-import logger
+from zrtlib import logger
 
 class Dotplot:
     def __init__(self, total_elements, compression_ratio=1):
@@ -29,3 +29,12 @@ class DistributedDotplot(Dotplot):
         log = logger.getlogger(True)
         log.debug('{0} {1}'.format(self.mmap, shape))
         return np.memmap(self.mmap, dtype=np.float16, mode='w+', shape=shape)
+
+def plot(dots, output):
+    extent = [ 0, len(dots) ] * 2
+    plt.imshow(dots, interpolation='none', extent=extent)
+        
+    plt.grid('off')
+    plt.tight_layout()
+        
+    plt.savefig(output)
