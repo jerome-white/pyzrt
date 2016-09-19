@@ -4,9 +4,8 @@ from itertools import combinations
 from collections import namedtuple
 from multiprocessing import Pool
 
-import logger
-from dots import dotplot
-from posting import Posting, DistributedDotplot
+from zrtlib import logger
+from zrtlib.posting import Posting, DistributedDotplot
 
 def func(args):
     (posting, index, cli) = args
@@ -54,5 +53,5 @@ with open(args.tokens) as fp:
 with Pool() as pool:
     for _ pool.imap_unordered(func, enumeration(args)):
         pass
-    
-dotplot(dp.dots, args.output_image)
+
+# dots = np.memmap(args.mmap, dtype=np.float16, mode='r', sha

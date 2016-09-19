@@ -1,24 +1,22 @@
 from pathlib import Path
 from argparse import ArgumentParser
 
-from zrtlib import parser
+from zrtlib import corpus
 
 parsers = {
-    'WSJ': parser.WSJParser,
-    'test': parser.TestParser,
+    'WSJ': corpus.WSJParser,
+    'test': corpus.TestParser,
 }
 
 arguments = ArgumentParser()
 arguments.add_argument('--archive-type')
 arguments.add_argument('--output-directory', type=Path)
 args = arguments.parse_args()
-exit()
-path = Path(args.output_directory)
-path.mkdir(parents=True, exists_ok=True)
 
+args.output_directory.mkdir(parents=True, exist_ok=True)
 parser = parsers[args.archive_type]()
 
 for (i, data) in parser.parse():
-    p = path.joinpath(i)
+    p = args.output_directory.joinpath(i)
     with p.open('w') as fp:
         fp.write(data)

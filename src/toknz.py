@@ -3,16 +3,15 @@ import csv
 from pathlib import Path
 from argparse import ArgumentParser
 
-from corpus import NameSortedCorpus
+from zrtlib.tokenizer import CharacterTokenizer
 
 arguments = ArgumentParser()
-arguments.add_argument('--corpus-directory')
+arguments.add_argument('--corpus-directory', type=Path)
 arguments.add_argument('--block-size', default=1, type=int)
 args = arguments.parse_args()
 
-path = Path(corpus_directory)
-assert(path.is_dir())
+corpus = sorted(args.corpus_directory.iterdir())
+tokenizer = CharacterTokenizer(corpus, args.block_size)
 writer = csv.writer(sys.stdout)
-tokenizer = CharacterTokenizer(path.iterdir(), args.block_size)
-for (key, token) in tokenizer:
+for (key, token) in tokenizer.tokenize():
     writer.writerow([ key ] + list(token))
