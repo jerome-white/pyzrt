@@ -1,7 +1,7 @@
 from pathlib import Path
 from argparse import ArgumentParser
 
-import parser
+from zrtlib import parser
 
 parsers = {
     'WSJ': parser.WSJParser,

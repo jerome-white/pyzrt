@@ -1,11 +1,11 @@
 import re
 import sys
 import itertools
-import multiprocessing as mp
 import xml.etree.ElementTree as et
 from pathlib import Path
+from multiprocessing import Pool
 
-import logger
+from zrtlib import logger
 
 class Parser():
     def func(self, doc):
@@ -17,7 +17,7 @@ class Parser():
     def parse(self, file_list=sys.stdin):
         log = logger.getlogger(True)
         
-        with mp.Pool() as pool:
+        with Pool() as pool:
             for i in file_list:
                 path = Path(i.strip())
                 log.info(str(path))
