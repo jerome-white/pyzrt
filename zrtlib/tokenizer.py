@@ -137,7 +137,7 @@ class TokenReader:
         return self
 
     def __next__(self):
-        frames = []
+        tokens = []
         previous = None
         
         for row in self.stream:
@@ -145,16 +145,16 @@ class TokenReader:
             (current, start, end) = map(int, row)
         
             if previous is not None and previous != current:
-                yield (previous, sorted(frames))
-                frames = []
+                yield (previous, sorted(tokens))
+                tokens = []
             
-            fragment = Token(docno, start, end)
-            frames.append(fragment)
+            token = Token(docno, start, end)
+            tokens.append(token)
             previous = current
             
         # since the last line of the file doesn't get included
-        if frames:
-            yield (previous, sorted(frames))
+        if tokens:
+            yield (previous, sorted(tokens))
 
     # def write(self, token_fp=sys.stdout, tokenizer):
     #     writer = csv.writer(token_fp)
