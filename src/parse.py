@@ -10,7 +10,7 @@ parsers = {
 
 arguments = ArgumentParser()
 arguments.add_argument('--archive-type')
-arguments.add_argument('--output-directory', type=Path)
+arguments.add_argument('--corpus', type=Path)
 args = arguments.parse_args()
 
 args.output_directory.mkdir(parents=True, exist_ok=True)
