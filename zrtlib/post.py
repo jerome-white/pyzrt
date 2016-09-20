@@ -1,36 +1,39 @@
+import sys
 import operator as op
 from pathlib import Path
 from collections import namedtuple, defaultdict
 
-IndexedToken = namedtuple('IndexedToken', 'index, tokens')
+IndexedToken = namedtuple('IndexedToken', 'index, segment')
 
 class Posting(defaultdict):
-    def __init__(self, token_stream, to_string):
+    def __init__(self, segmenter, to_string):
         super().__init__(list)
 
-        for (i, tokens) in enumerate(token_stream):
-            tok = to_string(tokens)
-            self[tok].append(IndexedToken(i, tokens))
-    
-    def frequency(self, token):
-        return len(self[token])
+        for (i, segment) in enumerate(map(op.itemgetter(1), segmenter.each())):
+            segment_string = to_string(segment)
+            self[segment_string].append(IndexedToken(i, segment))
 
-    def mass(self, token, relative=True):
-        counter = { x: sum([ len(z) for z in y ]) for (x, y) in self.items() }
-        c = counter[token]
+    def mass(self, segment_string, relative=True):
+        counter = { x: sum(map(sys.getsizeof, y)) for (x, y) in self.items() }
+        c = counter[segment_string]
 
         return c / sum(counter.values()) if relative else c
 
-    def weight(self, token):
-        freq = self.frequency(token)
-        keys = set(self.keys())
-        
-        n = max(map(self.frequency, keys.difference([ token ])))
+    def frequency(self, segment_string):
+        return len(self[segment_string])
 
-        return freq / n
+    def weight(self, segment_string):
+        max_freq = None
+        segment_freq = 0
 
-    def each(self, index):
-        yield from map(op.attrgetter('index'), self[index])
+        for i in self.keys():
+            freq = self.frequency(i)
+            if max_freq is None or max_freq < freq:
+                max_freq = freq
+            if i == segment_string:
+                segment_freq = freq
 
-    def tokens(self):
-        sum([ len(x) * len(y) for (x, y) in self.items() ])
+        return segment_freq / max_freq
+
+    def each(self, segment_string):
+        yield from map(op.attrgetter('index'), self[segment_string])
