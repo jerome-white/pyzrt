@@ -18,17 +18,12 @@ class Token:
     def __lt__(self, other):
         return self.start < other.start
 
-    def __iter__(self):
+    def __dir__(self):
         self.items = [ self.docno, self.start, self.end ]
-        self.items.reverse()
-        
-        return self
 
-    def __next__(self):
-        if not self.items:
-            raise StopIteration()
-        
-        return self.items.pop()
+class Segment(list):
+    def __sizeof__(self):
+        return sum([ x.end - x.start for x in self ])
 
 ####
 
@@ -81,35 +76,24 @@ class CharacterTokenizer(Tokenizer):
 ###
 
 class TokenBuilder:
-    def __init__(self, tokens):
-        self.tokens = tokens
+    def __init__(self, segment, corpus):
+        self.segment = segment
+        self.corpus = corpus
         
     def __str__(self):
-        return ''.join(map(self.build, self.tokens))
+        return ''.join(map(self.build, self.segment))
 
     def build(self, token):
         raise NotImplementedError()
 
+# corpus is a dictionary of file offset pointers
 class CorpusTokenBuilder(TokenBuilder):
-    def __init__(self, tokens, corpus):
-        '''
-        corpus: dictionary of file offset pointers
-        '''
-        super().__init__(tokens)
-        self.corpus = corpus
-        
     def build(self, token):
         document = self.corpus[token.docno]
         return document[token.start:token.end]
     
+# corpus: top level corpus directory
 class FileTokenBuilder(TokenBuilder):
-    def __init__(self, tokens, corpus):
-        '''
-        corpus: top level corpus directory
-        '''
-        super().__init__(tokens)
-        self.corpus = corpus
-        
     def build(self, token):
         path = self.corpus.joinpath(token.docno)
         with path.open() as fp:
@@ -118,26 +102,12 @@ class FileTokenBuilder(TokenBuilder):
 
 ###
 
-class TokenReader:
-    # def __init__(self, fp=sys.stdin, offset=0):
-    #     self.fp = fp
-    #     self.fp.seek(offset)
-
-    # def __enter__(self):
-    #     self.reader = csv.reader(self.fp)
-
-    # def __exit__(self, exc_type, exc_value, traceback):
-    #     if self.fp != sys.stdin:
-    #         self.fp.close()
-
+class Segmenter:
     def __init__(self, stream):
         self.stream = stream
     
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        tokens = []
+    def each(self):
+        segment = Segment()
         previous = None
         
         for row in self.stream:
@@ -145,16 +115,15 @@ class TokenReader:
             (current, start, end) = map(int, row)
         
             if previous is not None and previous != current:
-                yield (previous, sorted(tokens))
-                tokens = []
+                yield (previous, sorted(segment))
+                segment = Segment()
             
-            token = Token(docno, start, end)
-            tokens.append(token)
+            segment.append(Token(docno, start, end))
             previous = current
             
         # since the last line of the file doesn't get included
-        if tokens:
-            yield (previous, sorted(tokens))
+        if segment:
+            yield (previous, sorted(segment))
 
     # def write(self, token_fp=sys.stdout, tokenizer):
     #     writer = csv.writer(token_fp)
