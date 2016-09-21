@@ -8,13 +8,12 @@ from multiprocessing import Pool
 
 from zrtlib import logger
 
-# # http://stackoverflow.com/a/24602374
-# class Corpus(dict):
-#     def __init__(self, path):
-#         for i in path.iterdir():
-#             with i.open() as fp:
-#                 self[i.name] = fp.read()
-
+class Corpus(dict):
+    def __init__(self, path):
+        for i in path.iterdir():
+            with i.open() as fp:
+                self[i.name] = fp.read()
+# http://stackoverflow.com/a/24602374
 #     def __init__(self, parser):
 #         super().__init__(parser.parse())
 
