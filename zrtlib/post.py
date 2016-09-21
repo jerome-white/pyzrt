@@ -35,10 +35,7 @@ class Posting(defaultdict):
         return 1 / self.frequency(i)
 
     def mass(self, segment_string):
-        f = op.attrgetter('segment')
-        counter = { x: sum(map(int, map(f, y))) for (x, y) in self.items() }
-
-        return counter[segment_string] / sum(counter.values())
+        return self.frequency(segment_string) / int(self)
 
     def each(self, segment_string):
         yield from map(op.attrgetter('index'), self[segment_string])
