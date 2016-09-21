@@ -8,8 +8,9 @@ from multiprocessing import Pool
 
 from zrtlib import logger
 from zrtlib.post import Posting
+from zrtlib.corpus import Corpus
 from zrtlib.dotplot import DistributedDotplot
-from zrtlib.tokenizer import Segmenter, FileTokenBuilder
+from zrtlib.tokenizer import Segmenter, CorpusTokenBuilder
 
 def func(args):
     (posting, index, cli) = args
@@ -17,7 +18,7 @@ def func(args):
     log = logger.getlogger()
     log.info(index)
     
-    elements = posting.tokens()
+    elements = int(posting)
     
     if cli.max_elements > 0:
         compression_ratio = cli.max_elements / elements
@@ -48,14 +49,18 @@ args = arguments.parse_args()
 log = logger.getlogger(True)
 
 log.info('postings')
-
 with args.tokens.open() as fp:
     reader = Segmenter(csv.reader(fp))
-    builder = lambda x: str(FileTokenBuilder(x, args.corpus))
+
+    # builder = lambda x: str(FileTokenBuilder(x, args.corpus))
+    corpus = Corpus(args.corpus)
+    builder = lambda x: str(CorpusTokenBuilder(x, corpus))
+
     posting = Posting(reader, builder)
 
+log.info('working')
 with Pool() as pool:
-    for _ in pool.imap_unordered(func, enumeration(args)):
+    for _ in pool.imap_unordered(func, enumeration(posting, args)):
         pass
 
 # dots = np.memmap(args.mmap, dtype=np.float16, mode='r', sha
