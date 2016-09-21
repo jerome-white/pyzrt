@@ -1,4 +1,3 @@
-import sys
 import csv
 from pathlib import Path
 
@@ -22,7 +21,7 @@ class Token:
         self.items = [ self.docno, self.start, self.end ]
 
 class Segment(list):
-    def __sizeof__(self):
+    def __int__(self):
         return sum([ x.end - x.start for x in self ])
 
 ####
