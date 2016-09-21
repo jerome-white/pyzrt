@@ -13,11 +13,13 @@ class Posting(defaultdict):
             segment_string = to_string(segment)
             self[segment_string].append(IndexedToken(i, segment))
 
-    def mass(self, segment_string, relative=True):
-        counter = { x: sum(map(sys.getsizeof, y)) for (x, y) in self.items() }
-        c = counter[segment_string]
+    def __int__(self):
+        return sum(map(len, self.values()))
 
-        return c / sum(counter.values()) if relative else c
+    def mass(self, segment_string):
+        counter = { x: sum(map(int, y)) for (x, y) in self.items() }
+
+        return counter[segment_string] / sum(counter.values())
 
     def frequency(self, segment_string):
         return len(self[segment_string])
