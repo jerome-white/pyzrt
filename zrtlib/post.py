@@ -16,26 +16,29 @@ class Posting(defaultdict):
     def __int__(self):
         return sum(map(len, self.values()))
 
-    def mass(self, segment_string):
-        counter = { x: sum(map(int, y)) for (x, y) in self.items() }
-
-        return counter[segment_string] / sum(counter.values())
-
     def frequency(self, segment_string):
         return len(self[segment_string])
 
     def weight(self, segment_string):
-        max_freq = None
-        segment_freq = 0
+        # max_freq = None
+        # segment_freq = 0
 
-        for i in self.keys():
-            freq = self.frequency(i)
-            if max_freq is None or max_freq < freq:
-                max_freq = freq
-            if i == segment_string:
-                segment_freq = freq
+        # for i in self.keys():
+        #     freq = self.frequency(i)
+        #     if max_freq is None or max_freq < freq:
+        #         max_freq = freq
+        #     if i == segment_string:
+        #         segment_freq = freq
 
-        return segment_freq / max_freq
+        # return segment_freq / max_freq
+
+        return 1 / self.frequency(i)
+
+    def mass(self, segment_string):
+        f = op.attrgetter('segment')
+        counter = { x: sum(map(int, map(f, y))) for (x, y) in self.items() }
+
+        return counter[segment_string] / sum(counter.values())
 
     def each(self, segment_string):
         yield from map(op.attrgetter('index'), self[segment_string])
