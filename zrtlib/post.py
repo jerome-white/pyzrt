@@ -32,7 +32,7 @@ class Posting(defaultdict):
 
         # return segment_freq / max_freq
 
-        return 1 / self.frequency(i)
+        return 1 / self.frequency(segment_string)
 
     def mass(self, segment_string):
         return self.frequency(segment_string) / int(self)
