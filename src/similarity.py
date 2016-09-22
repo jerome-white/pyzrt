@@ -12,29 +12,28 @@ from zrtlib.corpus import Corpus
 from zrtlib.dotplot import DistributedDotplot
 from zrtlib.tokenizer import Segmenter, CorpusTokenBuilder
 
-def func(args):
-    (posting, index, cli) = args
-    
-    log = logger.getlogger()
-    log.info(index)
-    
-    elements = int(posting)
-    
-    if cli.max_elements > 0:
-        compression_ratio = cli.max_elements / elements
-    else:
-        compression_ratio = cli.compression
-        
-    dp = DistributedDotplot(elements, compression_ratio, cli.mmap)
-    weight = posting.weight(index)
+Args = namedtuple('Args', 'index, elements, weight, indices, opts')
 
-    for i in filter(lambda x: op.ne(*x), combinations(posting.each(index), 2)):
-        dp.update(*i, weight)
+def func(args):
+    log = logger.getlogger()
+    log.info(args.index)
+    
+    o = args.opts
+    c = o.max_elements / args.elements if o.max_elements > 0 else o.compression
+    dp = DistributedDotplot(args.elements, c, args.opts.mmap)
+
+    for (i, j) in filter(lambda x: op.ne(*x), combinations(args.indices, 2)):
+        dp.update(i, j, args.weight)
 
 def enumeration(posting, args):
+    elements = int(posting)
+
     for i in posting.keys():
         if i.isalpha() and posting.mass(i) < args.threshold:
-            yield (posting, i, args)
+            weight = posting.weight(i)
+            indices = list(posting.each(i))
+
+            yield Args(i, elements, weight, indices, args)
 
 arguments = ArgumentParser()
 arguments.add_argument('--mmap')
@@ -43,7 +42,7 @@ arguments.add_argument('--tokens', type=Path)
 arguments.add_argument('--corpus', type=Path)
 arguments.add_argument('--threshold', default=1, type=float)
 arguments.add_argument('--compression', default=1, type=float)
-arguments.add_argument('--max-elements', type=float)
+arguments.add_argument('--max-elements', default=0, type=float)
 args = arguments.parse_args()
 
 log = logger.getlogger(True)
