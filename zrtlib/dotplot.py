@@ -1,4 +1,7 @@
+import random
 import numpy as np
+import matplotlib.pyplot as plt
+from uuid import uuid4
 
 from zrtlib import logger
 
@@ -26,13 +29,21 @@ class DistributedDotplot(Dotplot):
         super().__init__(total_elements, compression_ratio)
 
     def mkdots(self, shape):
-        log = logger.getlogger(True)
-        log.debug('{0} {1}'.format(self.mmap, shape))
-        return np.memmap(self.mmap, dtype=np.float16, mode='w+', shape=shape)
+        (*parts, name) = self.mmap.parts
+
+        while True:
+            (c, _) = str(uuid4()).split('-', 1)
+            fname = name + '-' + c
+            path = Path(*parts, fname).with_suffix(str(self.n))
+            if not path.exists():
+                break
+            log.debug('{0} exists!'.format(path))
+
+        return np.memmap(str(path), dtype=np.float16, mode='w+', shape=shape)
 
 def plot(dots, output):
     extent = [ 0, len(dots) ] * 2
-    plt.imshow(dots, interpolation='none', extent=extent)
+    plt.imshow(dots, cmap='Greys', interpolation='none', extent=extent)
         
     plt.grid('off')
     plt.tight_layout()
