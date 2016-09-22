@@ -16,7 +16,7 @@ Args = namedtuple('Args', 'index, elements, weight, indices, opts')
 
 def func(args):
     log = logger.getlogger()
-    log.info(args.index)
+    log.info('{0}: {1}'.format(args.index, args.elements))
     
     o = args.opts
     c = o.max_elements / args.elements if o.max_elements > 0 else o.compression
@@ -24,6 +24,8 @@ def func(args):
 
     for (i, j) in filter(lambda x: op.ne(*x), combinations(args.indices, 2)):
         dp.update(i, j, args.weight)
+
+    dp.dots.flush()
 
 def enumeration(posting, args):
     elements = int(posting)
@@ -36,8 +38,7 @@ def enumeration(posting, args):
             yield Args(i, elements, weight, indices, args)
 
 arguments = ArgumentParser()
-arguments.add_argument('--mmap')
-arguments.add_argument('--output-image')
+arguments.add_argument('--mmap', type=Path)
 arguments.add_argument('--tokens', type=Path)
 arguments.add_argument('--corpus', type=Path)
 arguments.add_argument('--threshold', default=1, type=float)
@@ -61,5 +62,3 @@ log.info('working')
 with Pool() as pool:
     for _ in pool.imap_unordered(func, enumeration(posting, args)):
         pass
-
-# dots = np.memmap(args.mmap, dtype=np.float16, mode='r', sha
