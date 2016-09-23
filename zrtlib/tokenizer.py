@@ -34,10 +34,6 @@ class Sequencer:
         self.corpus = corpus
         self.block_size = block_size
 
-    def sequence(self):
-        raise StopIteration()
-
-class CharacterSequencer(Sequencer):
     def range(self, start, stop, step, offset=None):
         i = start
         while i < stop:
@@ -49,7 +45,7 @@ class CharacterSequencer(Sequencer):
             j = min(j, stop)
             
             yield (i, j)
-            i = j
+            i = self.slide(i, j)
 
     def sequence(self):
         n = Notebook()
@@ -72,9 +68,16 @@ class CharacterSequencer(Sequencer):
         if not n.reported:
             yield (n.key, Gram(c.name, i, j))
 
+    def slide(self, i, j):
+        raise NotImplementedError()
+
+class CharacterSequencer(Sequencer):
+    def slide(self, i, j):
+        return j
+
 class WindowedSequencer(Sequencer):
-    def sequence(self):
-        pass
+    def slide(self, i, j):
+        return i + 1
     
 ###########################################################################
 
