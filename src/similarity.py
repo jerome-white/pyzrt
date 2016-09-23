@@ -12,22 +12,21 @@ from zrtlib.dotplot import DistributedDotplot
 from zrtlib.tokenizer import Segmenter, CorpusTokenBuilder
 
 def func(args):
-    (indices, elements, weight, opts) = args
+    (indices, weight, *dpopts) = args
 
-    if opts.max_elements > 0:
-        compression = opts.max_elements / elements
-    else:
-        compression = opts.compression
-    dp = DistributedDotplot(elements, compression, opts.mmap)
-
+    dp = DistributedDotplot(*dpopts)
     for (i, j) in indices:
         dp.update(i, j, weight)
-
     dp.dots.flush()
 
 def enumeration(posting, args):
     cpus = mp.cpu_count()
     elements = int(posting)
+
+    if args.max_elements > 0:
+        compression = args.max_elements / elements
+    else:
+        compression = args.compression
 
     #
     # Divide the keys across the nodes
@@ -43,9 +42,9 @@ def enumeration(posting, args):
             #
             for j in range(cpus):
                 k = list(islice(pairs, j, None, cpus))
-                log.info('partitiona: {0} {1} {2}'.format(i, j, len(k)))
+                log.info('partition: {0} {1} {2}'.format(i, j, len(k)))
 
-                yield (k, elements, weight, args)
+                yield (k, weight, elements, compression, args.mmap)
 
 arguments = ArgumentParser()
 arguments.add_argument('--tokens', type=Path)
