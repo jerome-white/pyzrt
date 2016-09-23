@@ -1,6 +1,7 @@
 import re
 import sys
 import itertools
+import operator as op
 import xml.etree.ElementTree as et
 from pathlib import Path
 from functools import singledispatch
@@ -17,6 +18,25 @@ class Corpus(dict):
 #     def __init__(self, parser):
 #         super().__init__(parser.parse())
 
+###########################################################################
+
+class Strainer:
+    def strain(self, data):
+        raise NotImplementedError()
+
+class AlphaNumericStrainer(Strainer):
+    def __init__(self, spaces=True):
+        self.table = {}
+        for i in range(2 ** 8):
+            c = chr(i)
+            keep = c.isalnum() or spaces and c == ' '
+            self.table[i] = c if keep else None
+
+    def strain(self, data):
+        return data.translate(self.table)
+
+###########################################################################
+
 class Parser():
     def func(self, doc):
         raise NotImplementedError()
@@ -24,7 +44,7 @@ class Parser():
     def extract(self, path):
         raise NotImplementedError()
     
-    def parse(self, file_list=sys.stdin):
+    def parse(self, strainer=None, file_list=sys.stdin):
         log = logger.getlogger(True)
         
         with Pool() as pool:
@@ -38,8 +58,12 @@ class Parser():
                     msg = '{0}: line {1} col {2}'
                     log.error(msg.format(str(path), *e.position))
                     continue
+
+                for (docno, text) in pool.imap_unordered(self.func, relevant):
+                    if strainer:
+                        text = strainer.strain(text)
                     
-                yield from pool.imap_unordered(self.func, relevant)
+                    yield (docno, text)
 
 class TestParser(Parser):
     def func(self, doc):
