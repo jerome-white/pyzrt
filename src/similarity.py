@@ -2,7 +2,7 @@ import csv
 import operator as op
 from pathlib import Path
 from argparse import ArgumentParser
-from itertools import combinations
+from itertools import islice, combinations
 from collections import namedtuple
 from multiprocessing import Pool
 
@@ -30,7 +30,7 @@ def func(args):
 def enumeration(posting, args):
     elements = int(posting)
 
-    for i in posting.keys():
+    for i in islice(posting.keys(), args.node, None, args.total_nodes):
         if i.isalpha() and posting.mass(i) < args.threshold:
             weight = posting.weight(i)
             indices = list(posting.each(i))
@@ -38,12 +38,16 @@ def enumeration(posting, args):
             yield Args(i, elements, weight, indices, args)
 
 arguments = ArgumentParser()
-arguments.add_argument('--mmap', type=Path)
 arguments.add_argument('--tokens', type=Path)
 arguments.add_argument('--corpus', type=Path)
+
+arguments.add_argument('--mmap', type=Path)
 arguments.add_argument('--threshold', default=1, type=float)
 arguments.add_argument('--compression', default=1, type=float)
 arguments.add_argument('--max-elements', default=0, type=float)
+
+arguments.add_argument('--node', type=int, default=0)
+arguments.add_argument('--total-nodes', type=int, default=1)
 args = arguments.parse_args()
 
 log = logger.getlogger(True)
