@@ -18,6 +18,6 @@ parser = parsers[args.archive_type]()
 strainer = corpus.AlphaNumericStrainer()
 
 for (i, data) in parser.parse(strainer):
-    p = args.output_directory.joinpath(i)
+    p = args.corpus.joinpath(i)
     with p.open('w') as fp:
         fp.write(data)
