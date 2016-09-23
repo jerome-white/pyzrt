@@ -1,10 +1,9 @@
 import csv
 import operator as op
+import multiprocessing as mp
 from pathlib import Path
 from argparse import ArgumentParser
 from itertools import islice, combinations
-from collections import namedtuple
-from multiprocessing import Pool
 
 from zrtlib import logger
 from zrtlib.post import Posting
@@ -12,30 +11,41 @@ from zrtlib.corpus import Corpus
 from zrtlib.dotplot import DistributedDotplot
 from zrtlib.tokenizer import Segmenter, CorpusTokenBuilder
 
-Args = namedtuple('Args', 'index, elements, weight, indices, opts')
-
 def func(args):
-    log = logger.getlogger()
-    log.info('{0}: {1}'.format(args.index, args.elements))
-    
-    o = args.opts
-    c = o.max_elements / args.elements if o.max_elements > 0 else o.compression
-    dp = DistributedDotplot(args.elements, c, args.opts.mmap)
+    (indices, elements, weight, opts) = args
 
-    for (i, j) in filter(lambda x: op.ne(*x), combinations(args.indices, 2)):
-        dp.update(i, j, args.weight)
+    if opts.max_elements > 0:
+        compression = opts.max_elements / elements
+    else:
+        compression = opts.compression
+    dp = DistributedDotplot(elements, compression, opts.mmap)
+
+    for (i, j) in indices:
+        dp.update(i, j, weight)
 
     dp.dots.flush()
 
 def enumeration(posting, args):
+    cpus = mp.cpu_count()
     elements = int(posting)
 
+    #
+    # Divide the keys across the nodes
+    #
     for i in islice(posting.keys(), args.node, None, args.total_nodes):
         if i.isalpha() and posting.mass(i) < args.threshold:
             weight = posting.weight(i)
-            indices = list(posting.each(i))
+            pairs = filter(lambda x: op.ne(*x),
+                           combinations(posting.each(i), 2))
 
-            yield Args(i, elements, weight, indices, args)
+            #
+            # Divide the regions of the matrix across the processors
+            #
+            for j in range(cpus):
+                k = list(islice(pairs, j, None, cpus))
+                log.info('partitiona: {0} {1} {2}'.format(i, j, len(k)))
+
+                yield (k, elements, weight, args)
 
 arguments = ArgumentParser()
 arguments.add_argument('--tokens', type=Path)
@@ -63,6 +73,6 @@ with args.tokens.open() as fp:
     posting = Posting(reader, builder)
 
 log.info('working')
-with Pool() as pool:
+with mp.Pool() as pool:
     for _ in pool.imap_unordered(func, enumeration(posting, args)):
         pass
