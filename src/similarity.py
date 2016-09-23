@@ -9,7 +9,7 @@ from zrtlib import logger
 from zrtlib.post import Posting
 from zrtlib.corpus import Corpus
 from zrtlib.dotplot import DistributedDotplot
-from zrtlib.tokenizer import Segmenter, CorpusTokenBuilder
+from zrtlib.tokenizer import Tokenizer, CorpusTranscriber
 
 def func(args):
     (indices, weight, *dpopts) = args
@@ -63,11 +63,11 @@ log = logger.getlogger(True)
 
 log.info('postings')
 with args.tokens.open() as fp:
-    reader = Segmenter(csv.reader(fp))
+    reader = Tokenizer(csv.reader(fp))
 
-    # builder = lambda x: str(FileTokenBuilder(x, args.corpus))
+    # builder = lambda x: str(FileTranscriber(x, args.corpus))
     corpus = Corpus(args.corpus)
-    builder = lambda x: str(CorpusTokenBuilder(x, corpus))
+    builder = lambda x: str(CorpusTranscriber(x, corpus))
 
     posting = Posting(reader, builder)
 

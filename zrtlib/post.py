@@ -3,23 +3,23 @@ import operator as op
 from pathlib import Path
 from collections import namedtuple, defaultdict
 
-IndexedToken = namedtuple('IndexedToken', 'index, segment')
+IndexedToken = namedtuple('IndexedToken', 'index, token')
 
 class Posting(defaultdict):
-    def __init__(self, segmenter, to_string):
+    def __init__(self, tokenizer, transcribe):
         super().__init__(list)
 
-        for (i, segment) in enumerate(map(op.itemgetter(1), segmenter.each())):
-            segment_string = to_string(segment)
-            self[segment_string].append(IndexedToken(i, segment))
+        for (i, token) in enumerate(map(op.itemgetter(1), tokenizer.each())):
+            key = transcribe(segment)
+            self[key].append(IndexedToken(i, token))
 
     def __int__(self):
         return sum(map(len, self.values()))
 
-    def frequency(self, segment_string):
-        return len(self[segment_string])
+    def frequency(self, key):
+        return len(self[key])
 
-    def weight(self, segment_string):
+    def weight(self, key):
         # max_freq = None
         # segment_freq = 0
 
@@ -32,10 +32,10 @@ class Posting(defaultdict):
 
         # return segment_freq / max_freq
 
-        return 1 / self.frequency(segment_string)
+        return 1 / self.frequency(key)
 
-    def mass(self, segment_string):
-        return self.frequency(segment_string) / int(self)
+    def mass(self, key):
+        return self.frequency(key) / int(self)
 
-    def each(self, segment_string):
-        yield from map(op.attrgetter('index'), self[segment_string])
+    def each(self, key):
+        yield from map(op.attrgetter('index'), self[key])

@@ -7,8 +7,8 @@ class Notebook:
         self.length = 0
         self.reported = False
         self.remaining = None
-        
-class Token:
+
+class Gram:
     def __init__(self, docno, start, end):
         self.docno = docno
         self.start = start
@@ -20,20 +20,23 @@ class Token:
     def __dir__(self):
         self.items = [ self.docno, self.start, self.end ]
 
-class Segment(list):
+class Token(list):
+    '''
+    A collection of grams
+    '''
     def __int__(self):
         return sum([ x.end - x.start for x in self ])
 
 ####
 
-class Tokenizer:
+class Sequencer:
     def __init__(self, corpus):
         self.corpus = corpus
 
-    def tokenize(self):
+    def sequence(self):
         raise StopIteration()
 
-class CharacterTokenizer(Tokenizer):
+class CharacterSequencer(Sequencer):
     def __init__(self, corpus, characters=1):
         super().__init__(corpus)
         self.characters = characters
@@ -51,13 +54,13 @@ class CharacterTokenizer(Tokenizer):
             yield (i, j)
             i = j
 
-    def tokenize(self):
+    def sequence(self):
         n = Notebook()
         
         for c in self.corpus:
             stop = c.stat().st_size
             for (i, j) in self.range(0, stop, self.characters, n.remaining):
-                yield (n.key, Token(c.name, i, j))
+                yield (n.key, Gram(c.name, i, j))
                 n.reported = True
                 
                 n.length += j - i
@@ -70,59 +73,60 @@ class CharacterTokenizer(Tokenizer):
                 n.remaining = self.characters - n.length
 
         if not n.reported:
-            yield (n.key, Token(c.name, i, j))
+            yield (n.key, Gram(c.name, i, j))
 
 ###
 
-class TokenBuilder:
-    def __init__(self, segment, corpus):
-        self.segment = segment
+class Transcriber:
+    def __init__(self, token, corpus):
+        self.token = token
         self.corpus = corpus
         
     def __str__(self):
-        return ''.join(map(self.build, self.segment))
+        return ''.join(map(self.build, self.token))
 
-    def build(self, token):
+    def transcribe(self, gram):
         raise NotImplementedError()
 
 # corpus is a dictionary of file offset pointers
-class CorpusTokenBuilder(TokenBuilder):
-    def build(self, token):
-        document = self.corpus[token.docno]
-        return document[token.start:token.end]
+class CorpusTranscriber(Transcriber):
+    def transcribe(self, gram):
+        document = self.corpus[gram.docno]
+        return document[gram.start:gram.end]
     
 # corpus: top level corpus directory
-class FileTokenBuilder(TokenBuilder):
-    def build(self, token):
-        path = self.corpus.joinpath(token.docno)
+class FileTranscriber(Transcriber):
+    def transcribe(self, gram):
+        path = self.corpus.joinpath(gram.docno)
         with path.open() as fp:
-            fp.seek(token.start)
-            return fp.read(token.end - token.start)
+            fp.seek(gram.start)
+            return fp.read(gram.end - gram.start)
 
 ###
 
-class Segmenter:
+class Tokenizer:
     def __init__(self, stream):
         self.stream = stream
     
     def each(self):
-        segment = Segment()
+        token = Token()
         previous = None
         
         for row in self.stream:
             docno = row.pop(1)
             (current, start, end) = map(int, row)
-        
-            if previous is not None and previous != current:
-                yield (previous, sorted(segment))
-                segment = Segment()
             
-            segment.append(Token(docno, start, end))
+            if previous is not None and previous != current:
+                yield (previous, sorted(token))
+                token = Token()
+
+            gram = Gram(docno, start, end)
+            token.append(gram)
             previous = current
             
         # since the last line of the file doesn't get included
-        if segment:
-            yield (previous, sorted(segment))
+        if token:
+            yield (previous, sorted(token))
 
     # def write(self, token_fp=sys.stdout, tokenizer):
     #     writer = csv.writer(token_fp)
