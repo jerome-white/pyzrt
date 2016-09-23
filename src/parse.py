@@ -13,10 +13,11 @@ arguments.add_argument('--archive-type')
 arguments.add_argument('--corpus', type=Path)
 args = arguments.parse_args()
 
-args.output_directory.mkdir(parents=True, exist_ok=True)
+args.corpus.mkdir(parents=True, exist_ok=True)
 parser = parsers[args.archive_type]()
+strainer = corpus.AlphaNumericStrainer()
 
-for (i, data) in parser.parse():
+for (i, data) in parser.parse(strainer):
     p = args.output_directory.joinpath(i)
     with p.open('w') as fp:
         fp.write(data)
