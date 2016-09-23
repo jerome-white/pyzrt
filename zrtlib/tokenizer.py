@@ -1,6 +1,8 @@
 import csv
 from pathlib import Path
 
+import numpy as np
+
 class Notebook:
     def __init__(self, key=0):
         self.key = key
@@ -8,7 +10,10 @@ class Notebook:
         self.reported = False
         self.remaining = None
 
-class Gram:
+class Character:
+    '''
+    Portion of a token within a single file
+    '''
     def __init__(self, docno, start, end):
         self.docno = docno
         self.start = start
@@ -22,7 +27,7 @@ class Gram:
 
 class Token(list):
     '''
-    A collection of grams
+    A collection of characters
     '''
     def __int__(self):
         return sum([ x.end - x.start for x in self ])
@@ -30,30 +35,35 @@ class Token(list):
 ###########################################################################
 
 class Sequencer:
-    def __init__(self, corpus, block_size):
+    def __init__(self, corpus, block_size=1, skip=1):
         self.corpus = corpus
         self.block_size = block_size
+        self.skip = skip
 
-    def range(self, start, stop, step, offset=None):
+    def window(self, start=0, stop=np.inf, step=1, offset=None):
         i = start
         while i < stop:
-            if offset is None:
-                j = i + step
-            else:
-                j = i + offset
+            j = i
+            if offset is not None:
+                j += offset
                 offset = None
+            else:
+                j += step
             j = min(j, stop)
             
             yield (i, j)
-            i = self.slide(i, j)
+            
+            if j >= stop:
+                break
+            i = self.slide(i, j) + self.skip
 
     def sequence(self):
         n = Notebook()
-        
+
         for c in self.corpus:
-            stop = c.stat().st_size
-            for (i, j) in self.range(0, stop, self.block_size, n.remaining):
-                yield (n.key, Gram(c.name, i, j))
+            stop = c.stat().st_size + 1
+            for (i, j) in self.window(0, stop, self.block_size, n.remaining):
+                yield (n.key, Character(c.name, i, j))
                 n.reported = True
                 
                 n.length += j - i
@@ -66,7 +76,7 @@ class Sequencer:
                 n.remaining = self.block_size - n.length
 
         if not n.reported:
-            yield (n.key, Gram(c.name, i, j))
+            yield (n.key, Character(c.name, i, j))
 
     def slide(self, i, j):
         raise NotImplementedError()
@@ -89,22 +99,22 @@ class Transcriber:
     def __str__(self):
         return ''.join(map(self.build, self.token))
 
-    def transcribe(self, gram):
+    def transcribe(self, char):
         raise NotImplementedError()
 
 # corpus is a dictionary of file offset pointers
 class CorpusTranscriber(Transcriber):
-    def transcribe(self, gram):
-        document = self.corpus[gram.docno]
-        return document[gram.start:gram.end]
+    def transcribe(self, char):
+        document = self.corpus[char.docno]
+        return document[char.start:char.end]
     
 # corpus: top level corpus directory
 class FileTranscriber(Transcriber):
-    def transcribe(self, gram):
-        path = self.corpus.joinpath(gram.docno)
+    def transcribe(self, char):
+        path = self.corpus.joinpath(char.docno)
         with path.open() as fp:
-            fp.seek(gram.start)
-            return fp.read(gram.end - gram.start)
+            fp.seek(char.start)
+            return fp.read(char.end - char.start)
 
 ###########################################################################
 
@@ -124,8 +134,8 @@ class Tokenizer:
                 yield (previous, sorted(token))
                 token = Token()
 
-            gram = Gram(docno, start, end)
-            token.append(gram)
+            c = Character(docno, start, end)
+            token.append(c)
             previous = current
             
         # since the last line of the file doesn't get included
