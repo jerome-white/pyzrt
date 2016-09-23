@@ -27,20 +27,17 @@ class Token(list):
     def __int__(self):
         return sum([ x.end - x.start for x in self ])
 
-####
+###########################################################################
 
 class Sequencer:
-    def __init__(self, corpus):
+    def __init__(self, corpus, block_size):
         self.corpus = corpus
+        self.block_size = block_size
 
     def sequence(self):
         raise StopIteration()
 
 class CharacterSequencer(Sequencer):
-    def __init__(self, corpus, characters=1):
-        super().__init__(corpus)
-        self.characters = characters
-        
     def range(self, start, stop, step, offset=None):
         i = start
         while i < stop:
@@ -59,23 +56,27 @@ class CharacterSequencer(Sequencer):
         
         for c in self.corpus:
             stop = c.stat().st_size
-            for (i, j) in self.range(0, stop, self.characters, n.remaining):
+            for (i, j) in self.range(0, stop, self.block_size, n.remaining):
                 yield (n.key, Gram(c.name, i, j))
                 n.reported = True
                 
                 n.length += j - i
-                assert(n.length <= self.characters)
+                assert(n.length <= self.block_size)
                 
-                if n.length == self.characters:
+                if n.length == self.block_size:
                     n = Notebook(n.key + 1)
                     
             if not n.reported:
-                n.remaining = self.characters - n.length
+                n.remaining = self.block_size - n.length
 
         if not n.reported:
             yield (n.key, Gram(c.name, i, j))
 
-###
+class WindowedSequencer(Sequencer):
+    def sequence(self):
+        pass
+    
+###########################################################################
 
 class Transcriber:
     def __init__(self, token, corpus):
@@ -102,7 +103,7 @@ class FileTranscriber(Transcriber):
             fp.seek(gram.start)
             return fp.read(gram.end - gram.start)
 
-###
+###########################################################################
 
 class Tokenizer:
     def __init__(self, stream):
