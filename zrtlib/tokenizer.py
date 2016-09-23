@@ -22,8 +22,8 @@ class Character:
     def __lt__(self, other):
         return self.start < other.start
 
-    def __dir__(self):
-        self.items = [ self.docno, self.start, self.end ]
+    def tolist(self):
+        return [ self.docno, self.start, self.end ]
 
 class Token(list):
     '''
