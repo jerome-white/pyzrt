@@ -3,7 +3,7 @@ from pathlib import Path
 
 import numpy as np
 
-# from zrtlib import logger
+from zrtlib import logger
 
 class Notebook:
     def __init__(self, key=0):
@@ -59,14 +59,17 @@ class Sequencer:
             i = self.slide(i, j) + self.skip
 
     def sequence(self):
+        log = logger.getlogger()
         n = Notebook()
 
         for c in self.corpus:
-            stop = c.stat().st_size + 1
+            stop = c.stat().st_size
+            log.debug('{0} {1}'.format(c, stop))
             for (i, j) in self.window(0, stop, self.block_size, n.remaining):
                 yield (n.key, Character(c.name, i, j))
                 
                 n.length += j - i
+                log.debug('{0} {1} {2}'.format(i, j, n.length, n.remaining))
                 assert(n.length <= self.block_size)
                 
                 if n.length == self.block_size:
