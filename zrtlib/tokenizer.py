@@ -3,7 +3,7 @@ from pathlib import Path
 
 import numpy as np
 
-import logger
+from zrtlib import logger
 
 class Notebook:
     def __init__(self, key=0):
