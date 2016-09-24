@@ -9,9 +9,10 @@ class Posting(defaultdict):
     def __init__(self, tokenizer, transcribe):
         super().__init__(list)
 
-        for (i, token) in enumerate(map(op.itemgetter(1), tokenizer.each())):
-            key = transcribe(segment)
-            self[key].append(IndexedToken(i, token))
+        for (i, token) in tokenizer.each():
+            key = transcribe(token)
+            value = self.mkentry(i, token)
+            self[key].append(value)
 
     def __int__(self):
         return sum(map(len, self.values()))
@@ -36,6 +37,19 @@ class Posting(defaultdict):
 
     def mass(self, key):
         return self.frequency(key) / int(self)
+
+    def mkentry(self, i, token):
+        return i
+
+    def each(self, key):
+        yield from self[key]
+
+    def invert(self):
+        yield from [ (y, x) for (x, y) in self.items() ]
+
+class ExtendedPosting(Posting):
+    def mkentry(self, i, token):
+        return IndexedToken(i, token)
 
     def each(self, key):
         yield from map(op.attrgetter('index'), self[key])
