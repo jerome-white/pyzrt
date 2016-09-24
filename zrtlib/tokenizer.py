@@ -3,6 +3,8 @@ from pathlib import Path
 
 import numpy as np
 
+import logger
+
 class Notebook:
     def __init__(self, key=0):
         self.key = key
@@ -35,7 +37,7 @@ class Token(list):
 ###########################################################################
 
 class Sequencer:
-    def __init__(self, corpus, block_size=1, skip=1):
+    def __init__(self, corpus, block_size=1, skip=0):
         self.corpus = corpus
         self.block_size = block_size
         self.skip = skip
@@ -59,8 +61,10 @@ class Sequencer:
 
     def sequence(self):
         n = Notebook()
+        log = logger.getlogger()
 
         for c in self.corpus:
+            log.debug(str(c))
             stop = c.stat().st_size + 1
             for (i, j) in self.window(0, stop, self.block_size, n.remaining):
                 yield (n.key, Character(c.name, i, j))
