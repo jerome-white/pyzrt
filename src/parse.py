@@ -19,5 +19,6 @@ strainer = corpus.AlphaNumericStrainer()
 
 for (i, data) in parser.parse(strainer):
     p = args.corpus.joinpath(i)
+    assert(not p.exists())
     with p.open('w') as fp:
         fp.write(data)
