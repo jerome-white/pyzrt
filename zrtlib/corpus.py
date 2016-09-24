@@ -1,4 +1,3 @@
-import re
 import sys
 import itertools
 import operator as op
@@ -8,6 +7,17 @@ from functools import singledispatch
 from multiprocessing import Pool
 
 from zrtlib import logger
+
+@singledispatch
+def normalize(string, lower=True):
+    s = ' '.join(string.split())
+    return s.lower() if lower else s
+
+@normalize.register(list)
+def _(string, lower=True):
+    return normalize(' '.join(string), lower)
+
+###########################################################################
 
 class Corpus(dict):
     def __init__(self, path):
@@ -25,15 +35,14 @@ class Strainer:
         raise NotImplementedError()
 
 class AlphaNumericStrainer(Strainer):
-    def __init__(self, spaces=True):
+    def __init__(self):
         self.table = {}
         for i in range(2 ** 8):
             c = chr(i)
-            keep = c.isalnum() or spaces and c == ' '
-            self.table[i] = c if keep else None
+            self.table[i] = c if c.isalnum() else ' '
 
     def strain(self, data):
-        return data.translate(self.table)
+        return normalize(data.translate(self.table))
 
 ###########################################################################
 
@@ -83,12 +92,12 @@ class WSJParser(Parser):
         for i in [ 'LP', 'TEXT' ]:
             for j in doc.findall(i):
                 text.append(j.text)
-        text = ' '.join(' '.join(text).split()).lower()
         
-        return (docno, text)
+        return (docno, normalize(text, False))
     
     def extract(self, path):
-        xml = re.sub('&', ' ', path.read_text())
+        xml = path.read_text().replace('&', ' ')
+
         # overcome pooly formed XML (http://stackoverflow.com/a/23891895)
         combos = itertools.chain('<root>', xml, '</root>')
         root = et.fromstringlist(combos)
