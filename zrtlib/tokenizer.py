@@ -1,9 +1,10 @@
 import csv
+import collections
 from pathlib import Path
 
 import numpy as np
 
-from zrtlib import logger
+# from zrtlib import logger
 
 class Notebook:
     def __init__(self, key=0):
@@ -41,54 +42,40 @@ class Sequencer:
         self.block_size = block_size
         self.skip = skip
 
-    def window(self, start=0, stop=np.inf, step=1, offset=None):
-        i = start
-        while i < stop:
-            j = i
-            if offset is not None:
-                j += offset
-                offset = None
-            else:
-                j += step
-            j = min(j, stop)
-            
-            yield (i, j)
-            
-            if j >= stop:
-                break
-            i = self.slide(i, j) + self.skip
+    def stream(self):
+        for c in self.corpus:
+            yield from map(lambda x: (c.name, x), range(c.stat().st_size))
 
     def sequence(self):
-        log = logger.getlogger()
-        n = Notebook()
+        key = 0
+        segment = collections.deque(maxlen=self.block_size)
 
-        for c in self.corpus:
-            stop = c.stat().st_size
-            log.debug('{0} {1}'.format(c, stop))
-            for (i, j) in self.window(0, stop, self.block_size, n.remaining):
-                yield (n.key, Character(c.name, i, j))
+        for i in self.stream():
+            segment.append(i)
+            if len(segment) == segment.maxlen:
+                d = collections.OrderedDict()
                 
-                n.length += j - i
-                log.debug('{0} {1} {2}'.format(i, j, n.length, n.remaining))
-                assert(n.length <= self.block_size)
+                for (name, order) in segment:
+                    if name not in d:
+                        d[name] = []
+                    d[name].append(order)
                 
-                if n.length == self.block_size:
-                    n = Notebook(n.key + 1)
-            n.remaining = self.block_size - n.length
+                for (name, value) in d.items():
+                    (start, stop) = [ f(value) for f in (min, max) ]
+                    character = Character(name, start, stop + 1)
 
-        if n.length > 0:
-            yield (n.key, Character(c.name, i, j))
+                    yield (key, character)
 
-    def slide(self, i, j):
-        raise NotImplementedError()
+                key += 1
+                self.slide(segment)
 
 class CharacterSequencer(Sequencer):
-    def slide(self, i, j):
-        return j
+    def slide(self, segment):
+        segment.clear()
 
 class WindowedSequencer(Sequencer):
-    def slide(self, i, j):
-        return i + 1
+    def slide(self, segment):
+        segment.popleft()
     
 ###########################################################################
 

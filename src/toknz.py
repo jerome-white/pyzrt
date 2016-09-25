@@ -14,4 +14,5 @@ corpus = sorted(args.corpus.iterdir())
 sequencer = WindowedSequencer(corpus, args.block_size)
 writer = csv.writer(sys.stdout)
 for (key, char) in sequencer.sequence():
-    writer.writerow([ key ] + char.tolist())
+    row = [ key ] + char.tolist()
+    writer.writerow(row)
