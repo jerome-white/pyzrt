@@ -32,7 +32,7 @@ def enumeration(posting, args):
     # Divide the keys across the nodes
     #
     for i in islice(posting.keys(), args.node, None, args.total_nodes):
-        if i.isalpha() and posting.mass(i) < args.threshold:
+        if posting.mass(i) < args.threshold:
             weight = posting.weight(i)
             pairs = filter(lambda x: op.ne(*x),
                            combinations(posting.each(i), 2))
