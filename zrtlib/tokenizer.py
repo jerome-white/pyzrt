@@ -95,7 +95,7 @@ class Transcriber:
         self.corpus = corpus
         
     def __str__(self):
-        return ''.join(map(self.build, self.token))
+        return ''.join(map(self.transcribe, self.token))
 
     def transcribe(self, char):
         raise NotImplementedError()
