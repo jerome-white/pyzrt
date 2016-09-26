@@ -19,12 +19,6 @@ class Deque(collections.deque):
     def visible(self):
         yield from itertools.islice(self, 0, self.exposed)
 
-class Notebook:
-    def __init__(self, key=0):
-        self.key = key
-        self.length = 0
-        self.remaining = None
-
 class Character:
     '''
     Portion of a token within a single file
