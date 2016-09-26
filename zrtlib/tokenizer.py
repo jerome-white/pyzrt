@@ -65,7 +65,7 @@ class Sequencer:
 
         for i in self.stream():
             segment.append(i)
-            if len(segment) == segment.maxlen:
+            if segment.full():
                 d = collections.OrderedDict()
                 
                 for (name, order) in segment.visible():
