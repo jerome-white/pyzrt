@@ -1,10 +1,23 @@
 import csv
+import itertools
 import collections
 from pathlib import Path
 
 import numpy as np
 
 # from zrtlib import logger
+
+class Deque(collections.deque):
+    def __init__(self, block_size, skip):
+        self.exposed = block_size
+        maxlen = self.exposed + skip
+        super().__init__(maxlen=maxlen)
+
+    def full(self):
+        return len(self) == self.maxlen
+
+    def visible(self):
+        yield from itertools.islice(self, 0, self.exposed)
 
 class Notebook:
     def __init__(self, key=0):
@@ -48,14 +61,14 @@ class Sequencer:
 
     def sequence(self):
         key = 0
-        segment = collections.deque(maxlen=self.block_size)
+        segment = Deque(self.block_size, self.skip)
 
         for i in self.stream():
             segment.append(i)
             if len(segment) == segment.maxlen:
                 d = collections.OrderedDict()
                 
-                for (name, order) in segment:
+                for (name, order) in segment.visible():
                     if name not in d:
                         d[name] = []
                     d[name].append(order)
@@ -73,9 +86,10 @@ class CharacterSequencer(Sequencer):
     def slide(self, segment):
         segment.clear()
 
-class WindowedSequencer(Sequencer):
+class WindowSequencer(Sequencer):
     def slide(self, segment):
-        segment.popleft()
+        for _ in range(self.skip + 1):
+            segment.popleft()
     
 ###########################################################################
 
