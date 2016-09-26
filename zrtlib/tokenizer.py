@@ -137,8 +137,3 @@ class Tokenizer:
         # since the last line of the file doesn't get included
         if token:
             yield (previous, sorted(token))
-
-    # def write(self, token_fp=sys.stdout, tokenizer):
-    #     writer = csv.writer(token_fp)
-    #     for row in tokenizer:
-    #         writer.writerow(row)
