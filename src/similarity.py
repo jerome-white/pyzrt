@@ -75,3 +75,4 @@ log.info('working')
 with mp.Pool() as pool:
     for _ in pool.imap_unordered(func, enumeration(posting, args)):
         pass
+log.info('finished')
