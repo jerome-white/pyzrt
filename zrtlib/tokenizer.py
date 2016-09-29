@@ -50,8 +50,8 @@ class Sequencer:
         self.skip = skip
 
     def stream(self):
-        for c in self.corpus:
-            yield from map(lambda x: (c.name, x), range(c.stat().st_size))
+        for i in self.corpus:
+            yield from map(lambda x: (i.name, x), range(i.stat().st_size))
 
     def sequence(self):
         key = 0
@@ -70,11 +70,13 @@ class Sequencer:
                 for (name, value) in d.items():
                     (start, stop) = [ f(value) for f in (min, max) ]
                     character = Character(name, start, stop + 1)
-
                     yield (key, character)
 
                 key += 1
                 self.slide(segment)
+
+    def slide(self, segment):
+        raise NotImplementedError()
 
 class CharacterSequencer(Sequencer):
     def slide(self, segment):
@@ -130,8 +132,8 @@ class Tokenizer:
                 yield (previous, sorted(token))
                 token = Token()
 
-            c = Character(docno, start, end)
-            token.append(c)
+            character = Character(docno, start, end)
+            token.append(character)
             previous = current
             
         # since the last line of the file doesn't get included
