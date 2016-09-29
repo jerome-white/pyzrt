@@ -30,17 +30,10 @@ class DistributedDotplot(Dotplot):
         super().__init__(total_elements, compression_ratio)
 
     def mkdots(self, shape):
-        (*parts, name) = self.mmap.parts
+        suffix = '.' + str(self.n)
+        fname = self.mmap.with_suffix(suffix)
 
-        while True:
-            (c, _) = str(uuid4()).split('-', 1)
-            fname = name + '-' + c
-            path = Path(*parts, fname).with_suffix(str(self.n))
-            if not path.exists():
-                break
-            log.debug('{0} exists!'.format(path))
-
-        return np.memmap(str(path), dtype=np.float16, mode='w+', shape=shape)
+        return np.memmap(str(fname), dtype=np.float16, mode='w+', shape=shape)
 
 def plot(dots, output):
     extent = [ 0, len(dots) ] * 2

@@ -1,6 +1,6 @@
 import csv
-import operator as op
 import multiprocessing as mp
+from uuid import uuid4
 from pathlib import Path
 from argparse import ArgumentParser
 from itertools import islice, combinations
@@ -12,39 +12,49 @@ from zrtlib.dotplot import DistributedDotplot
 from zrtlib.tokenizer import Tokenizer, CorpusTranscriber
 
 def func(args):
-    (indices, weight, *dpopts) = args
+    (key, indices, weight, dpopts) = args
+
+    log = logger.getlogger()
+    log.info('{0} {1}'.format(key, len(indices)))
 
     dp = DistributedDotplot(*dpopts)
-    for (i, j) in indices:
+
+    for (i, j) in combinations(indices, 2):
         dp.update(i, j, weight)
+
     dp.dots.flush()
 
-def enumeration(posting, args):
-    cpus = mp.cpu_count()
-    elements = int(posting)
+    return key
 
+def mkfname(original):
+    (*parts, name) = original.parts
+
+    while True:
+        (c, _) = str(uuid4()).split('-', 1)
+        fname = name + '-' + c
+        path = Path(*parts, fname)
+        if not path.exists():
+            return path
+
+def enumeration(posting, args):
+    elements = int(posting)
+    mmap = mkfname(args.mmap)
     if args.max_elements > 0:
         compression = args.max_elements / elements
     else:
         compression = args.compression
 
     #
-    # Divide the keys across the nodes
+    # Divide the Sequences across the nodes...
     #
-    for i in islice(posting.keys(), args.node, None, args.total_nodes):
-        if posting.mass(i) < args.threshold:
-            weight = posting.weight(i)
-            pairs = filter(lambda x: op.ne(*x),
-                           combinations(posting.each(i), 2))
+    keys = filter(lambda x: posting.mass(x) < args.threshold, posting.keys())
+    for i in islice(keys, args.node, None, args.total_nodes):
+        weight = posting.weight(i)
+        values = list(posting.each(i))
 
-            #
-            # Divide the regions of the matrix across the processors
-            #
-            for j in range(cpus):
-                k = list(islice(pairs, j, None, cpus))
-                log.info('partition: {0} {1} {2}'.format(i, j, len(k)))
+        yield (i, values, weight, (elements, compression, mmap))
 
-                yield (k, weight, elements, compression, args.mmap)
+###########################################################################
 
 arguments = ArgumentParser()
 arguments.add_argument('--tokens', type=Path)
@@ -73,6 +83,6 @@ with args.tokens.open() as fp:
 
 log.info('working')
 with mp.Pool() as pool:
-    for _ in pool.imap_unordered(func, enumeration(posting, args)):
-        pass
-log.info('finished')
+    for i in pool.imap_unordered(func, enumeration(posting, args)):
+        log.info('finished {0}'.format(i))
+log.info('complete')
