@@ -12,19 +12,14 @@ from zrtlib.dotplot import DistributedDotplot
 from zrtlib.tokenizer import Tokenizer, CorpusTranscriber
 
 def func(args):
-    (key, indices, weight, dpopts) = args
+    (key, indices, weight, dpargs) = args
 
     log = logger.getlogger()
     log.info('{0} {1}'.format(key, len(indices)))
 
-    dp = DistributedDotplot(*dpopts)
-
+    dp = DistributedDotplot(*dpargs)
     for (i, j) in combinations(indices, 2):
         dp.update(i, j, weight)
-
-    dp.dots.flush()
-
-    return key
 
 def mkfname(original):
     (*parts, name) = original.parts
@@ -36,23 +31,14 @@ def mkfname(original):
         if not path.exists():
             return path
 
-def enumeration(posting, args):
-    elements = int(posting)
-    mmap = mkfname(args.mmap)
-    if args.max_elements > 0:
-        compression = args.max_elements / elements
-    else:
-        compression = args.compression
-
-    #
-    # Divide the Sequences across the nodes...
-    #
+def enumeration(posting, args, dpargs):
     keys = filter(lambda x: posting.mass(x) < args.threshold, posting.keys())
+
     for i in islice(keys, args.node, None, args.total_nodes):
         weight = posting.weight(i)
-        values = list(posting.each(i))
+        indices = list(posting.each(i))
 
-        yield (i, values, weight, (elements, compression, mmap))
+        yield (i, indices, weight, dpargs)
 
 ###########################################################################
 
@@ -81,8 +67,19 @@ with args.tokens.open() as fp:
 
     posting = Posting(reader, builder)
 
+log.info('initialise dotplot')
+elements = int(posting)
+mmap = mkfname(args.mmap)
+if args.max_elements > 0:
+    compression = args.max_elements / elements
+else:
+    compression = args.compression
+dpargs = (elements, compression, mmap)
+
 log.info('working')
+dp = DistributedDotplot(elements, compression, mmap, True)
 with mp.Pool() as pool:
-    for i in pool.imap_unordered(func, enumeration(posting, args)):
-        log.info('finished {0}'.format(i))
+    for i in pool.imap_unordered(func, enumeration(posting, args, dpargs)):
+        pass
+dp.dots.flush()
 log.info('complete')
