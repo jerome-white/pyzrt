@@ -13,12 +13,11 @@ from zrtlib.dotplot import DistributedDotplot
 from zrtlib.tokenizer import Tokenizer, CorpusTranscriber
 
 def func(args):
-    (key, indices, weight, dpargs) = args
+    (key, indices, weight, dp) = args
 
     log = logger.getlogger()
     log.info('|{0}| {1}'.format(key, len(indices)))
 
-    dp = DistributedDotplot(*dpargs)
     for (i, j) in combinations(indices, 2):
         dp.update(i, j, weight)
 
@@ -34,7 +33,7 @@ def mkfname(original):
         if not path.exists():
             return path
 
-def enumeration(posting, args, ledger, dpargs):
+def enumeration(posting, args, ledger, dp):
     f = lambda x: x not in ledger and posting.mass(x) < args.threshold
     keys = filter(f, posting.keys())
 
@@ -42,7 +41,7 @@ def enumeration(posting, args, ledger, dpargs):
         weight = posting.weight(i)
         indices = list(posting.each(i))
 
-        yield (i, indices, weight, dpargs)
+        yield (i, indices, weight, dp)
 
 ###########################################################################
 
@@ -64,41 +63,42 @@ args = arguments.parse_args()
 log = logger.getlogger(True)
 
 log.info('postings')
+# builder = lambda x: str(FileTranscriber(x, args.corpus))
+corpus = Corpus(args.corpus)
+builder = lambda x: str(CorpusTranscriber(x, corpus))
 with args.tokens.open() as fp:
     reader = Tokenizer(csv.reader(fp))
-
-    # builder = lambda x: str(FileTranscriber(x, args.corpus))
-    corpus = Corpus(args.corpus)
-    builder = lambda x: str(CorpusTranscriber(x, corpus))
-
     posting = Posting(reader, builder)
 
 log.info('initialise dotplot')
 elements = int(posting)
-mmap = mkfname(args.mmap)
 if args.max_elements > 0:
     compression = args.max_elements / elements
 else:
     compression = args.compression
-dpargs = (elements, compression, mmap)
 
 if args.ledger:
     with args.ledger.open() as fp:
         ledger = set(map(op.methodcaller('strip'), fp.readlines()))
     scribe = args.ledger.open('a')
-    annotate = lambda x: print(x, file=scribe)
+    annotate = lambda x: print(x, file=scribe, flush=True)
 else:
     ledger = set()
     annotate = lambda x: None
 
+if len(ledger) > 0:
+    dp = DistributedDotplot(elements, compression, args.mmap)
+else:
+    mmap = mkfname(args.mmap)
+    dp = DistributedDotplot(elements, compression, mmap, True)
+
 log.info('working: {0}'.format(elements))
-dp = DistributedDotplot(elements, compression, mmap, True)
 with mp.Pool() as pool:
-    iterable = enumeration(posting, args, ledger, dpargs)
+    iterable = enumeration(posting, args, ledger, dp)
     for i in pool.imap_unordered(func, iterable):
         annotate(i)
-dp.dots.flush()
 log.info('complete')
 
+dp.dots.flush()
 if args.ledger:
     scribe.close()
