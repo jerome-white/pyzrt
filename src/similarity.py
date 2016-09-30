@@ -1,4 +1,5 @@
 import csv
+import operator as op
 import multiprocessing as mp
 from uuid import uuid4
 from pathlib import Path
@@ -15,11 +16,13 @@ def func(args):
     (key, indices, weight, dpargs) = args
 
     log = logger.getlogger()
-    log.info('{0} {1}'.format(key, len(indices)))
+    log.info('|{0}| {1}'.format(key, len(indices)))
 
     dp = DistributedDotplot(*dpargs)
     for (i, j) in combinations(indices, 2):
         dp.update(i, j, weight)
+
+    return key
 
 def mkfname(original):
     (*parts, name) = original.parts
@@ -31,8 +34,9 @@ def mkfname(original):
         if not path.exists():
             return path
 
-def enumeration(posting, args, dpargs):
-    keys = filter(lambda x: posting.mass(x) < args.threshold, posting.keys())
+def enumeration(posting, args, ledger, dpargs):
+    f = lambda x: x not in ledger and posting.mass(x) < args.threshold
+    keys = filter(f, posting.keys())
 
     for i in islice(keys, args.node, None, args.total_nodes):
         weight = posting.weight(i)
@@ -43,8 +47,10 @@ def enumeration(posting, args, dpargs):
 ###########################################################################
 
 arguments = ArgumentParser()
+# arguments.add_argument('--tokens', actions='append', type=Path)
 arguments.add_argument('--tokens', type=Path)
 arguments.add_argument('--corpus', type=Path)
+arguments.add_argument('--ledger', type=Path)
 
 arguments.add_argument('--mmap', type=Path)
 arguments.add_argument('--threshold', default=1, type=float)
@@ -76,10 +82,23 @@ else:
     compression = args.compression
 dpargs = (elements, compression, mmap)
 
-log.info('working')
+if args.ledger:
+    with args.ledger.open() as fp:
+        ledger = set(map(op.methodcaller('strip'), fp.readlines()))
+    scribe = args.ledger.open('a')
+    annotate = lambda x: print(x, file=scribe)
+else:
+    ledger = set()
+    annotate = lambda x: None
+
+log.info('working: {0}'.format(elements))
 dp = DistributedDotplot(elements, compression, mmap, True)
 with mp.Pool() as pool:
-    for i in pool.imap_unordered(func, enumeration(posting, args, dpargs)):
-        pass
+    iterable = enumeration(posting, args, ledger, dpargs)
+    for i in pool.imap_unordered(func, iterable):
+        annotate(i)
 dp.dots.flush()
 log.info('complete')
+
+if args.ledger:
+    scribe.close()
