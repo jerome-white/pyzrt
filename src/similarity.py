@@ -9,7 +9,7 @@ from itertools import islice, combinations
 from zrtlib import logger
 from zrtlib.post import Posting
 from zrtlib.corpus import Corpus
-from zrtlib.dotplot import DistributedDotplot
+from zrtlib.dotplot import Dotplot
 from zrtlib.tokenizer import Tokenizer, CorpusTranscriber
 
 def func(args):
@@ -62,7 +62,7 @@ args = arguments.parse_args()
 
 log = logger.getlogger(True)
 
-log.info('postings')
+log.info('initialise: posting')
 # builder = lambda x: str(FileTranscriber(x, args.corpus))
 corpus = Corpus(args.corpus)
 builder = lambda x: str(CorpusTranscriber(x, corpus))
@@ -70,35 +70,24 @@ with args.tokens.open() as fp:
     reader = Tokenizer(csv.reader(fp))
     posting = Posting(reader, builder)
 
-log.info('initialise dotplot')
+log.info('initialise: ledger/dotplot')
 elements = int(posting)
 if args.max_elements > 0:
     compression = args.max_elements / elements
 else:
     compression = args.compression
 
-if args.ledger:
-    with args.ledger.open() as fp:
-        ledger = set(map(op.methodcaller('strip'), fp.readlines()))
-    scribe = args.ledger.open('a')
-    annotate = lambda x: print(x, file=scribe, flush=True)
-else:
-    ledger = set()
-    annotate = lambda x: None
+with Ledger(args.ledger, args.node) as ledger:
+    if len(ledger) > 0:
+        dp = Dotplot(elements, compression, args.mmap)
+    else:
+        mmap = mkfname(args.mmap)
+        dp = Dotplot(elements, compression, mmap, True)
 
-if len(ledger) > 0:
-    dp = DistributedDotplot(elements, compression, args.mmap)
-else:
-    mmap = mkfname(args.mmap)
-    dp = DistributedDotplot(elements, compression, mmap, True)
-
-log.info('working: {0}'.format(elements))
-with mp.Pool() as pool:
-    iterable = enumeration(posting, args, ledger, dp)
-    for i in pool.imap_unordered(func, iterable):
-        annotate(i)
-log.info('complete')
-
+    log.info('working: {0}'.format(elements))
+    with mp.Pool() as pool:
+        iterable = enumeration(posting, args, ledger, dp)
+        for i in pool.imap_unordered(func, iterable):
+            ledger.record(i)
+    log.info('complete')
 dp.dots.flush()
-if args.ledger:
-    scribe.close()
