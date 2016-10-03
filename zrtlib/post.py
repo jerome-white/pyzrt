@@ -1,6 +1,4 @@
-import sys
 import operator as op
-from pathlib import Path
 from collections import namedtuple, defaultdict
 
 IndexedToken = namedtuple('IndexedToken', 'index, token')

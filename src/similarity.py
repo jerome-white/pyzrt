@@ -8,6 +8,7 @@ from itertools import islice, combinations
 
 from zrtlib import logger
 from zrtlib.post import Posting
+from zrtlib.ledger import Ledger
 from zrtlib.corpus import Corpus
 from zrtlib.dotplot import Dotplot
 from zrtlib.tokenizer import Tokenizer, CorpusTranscriber

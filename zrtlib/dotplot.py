@@ -1,10 +1,7 @@
-import random
 import numpy as np
 import matplotlib.pyplot as plt
-from uuid import uuid4
-from pathlib import Path
 
-from zrtlib import logger
+# from zrtlib import logger
 
 class Dotplot:
     def __init__(self, total_elements, map_file, init_map=False,

@@ -1,6 +1,5 @@
 import sys
 import itertools
-import operator as op
 import xml.etree.ElementTree as et
 from pathlib import Path
 from functools import singledispatch
@@ -21,6 +20,8 @@ def _(string, lower=True):
 
 class Corpus(dict):
     def __init__(self, path):
+        super().__init__()
+        
         for i in path.iterdir():
             with i.open() as fp:
                 self[i.name] = fp.read()
