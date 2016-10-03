@@ -12,7 +12,7 @@ class Dotplot:
         self.n = round(self.N * compression_ratio)
 
         kwargs = {
-            'filename': str(map_file.with_suffix('.' + str(self.n))),
+            'filename': str(map_file),
             'shape': ( self.n, ) * 2,
             'mode': 'w+' if init_map else 'r+',
             'dtype': np.float16,

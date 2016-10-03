@@ -1,5 +1,4 @@
 import csv
-import operator as op
 import multiprocessing as mp
 from uuid import uuid4
 from pathlib import Path
@@ -79,11 +78,8 @@ else:
     compression = args.compression
 
 with Ledger(args.ledger, args.node) as ledger:
-    if len(ledger) > 0:
-        dp = Dotplot(elements, compression, args.mmap)
-    else:
-        mmap = mkfname(args.mmap)
-        dp = Dotplot(elements, compression, mmap, True)
+    init_map = len(ledger) > 0
+    dp = Dotplot(elements, args.mmap, init_map, compression)
 
     log.info('working: {0}'.format(elements))
     with mp.Pool() as pool:
