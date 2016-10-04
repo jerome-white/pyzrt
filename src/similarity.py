@@ -35,7 +35,7 @@ def mkfname(original):
         if not path.exists():
             return path
 
-def enumeration(posting, args, ledger, dp):
+def enumeration(posting, args, ledger):
     f = lambda x: x not in ledger and posting.mass(x) < args.threshold
     keys = filter(f, posting.keys())
 
@@ -43,7 +43,7 @@ def enumeration(posting, args, ledger, dp):
         weight = posting.weight(i)
         indices = list(posting.each(i))
 
-        yield Job(i, indices, weight, dp)
+        yield (i, indices, weight)
 
 ###########################################################################
 
@@ -86,8 +86,9 @@ with Ledger(args.ledger, args.node) as ledger:
         dp = Dotplot(elements, args.mmap, compression)
 
         log.info('working: {0}'.format(elements))
-        for i in enumeration(posting, args, ledger, dp):
-            queue.put(i)
+        for i in enumeration(posting, args, ledger):
+            job = Job(*i, dp)
+            queue.put(job)
         queue.join()
 
         dp.matrix.flush()
