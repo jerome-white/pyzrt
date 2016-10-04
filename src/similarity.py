@@ -70,21 +70,20 @@ with args.tokens.open() as fp:
     reader = Tokenizer(csv.reader(fp))
     posting = Posting(reader, builder)
 
-log.info('initialise: ledger/dotplot')
+log.info('initialise: dotplot')
 elements = int(posting)
 if args.max_elements > 0:
     compression = args.max_elements / elements
 else:
     compression = args.compression
+dp = Dotplot(elements, args.mmap, compression)
 
+log.info('working: {0}'.format(elements))
 with Ledger(args.ledger, args.node) as ledger:
-    init_map = len(ledger) > 0
-    dp = Dotplot(elements, args.mmap, init_map, compression)
-
-    log.info('working: {0}'.format(elements))
     with mp.Pool() as pool:
         iterable = enumeration(posting, args, ledger, dp)
         for i in pool.imap_unordered(func, iterable):
             ledger.record(i)
-    log.info('complete')
-dp.dots.flush()
+log.info('complete')
+
+dp.matrix.flush()
