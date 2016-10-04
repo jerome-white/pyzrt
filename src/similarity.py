@@ -10,18 +10,20 @@ from zrtlib.post import Posting
 from zrtlib.ledger import Ledger
 from zrtlib.corpus import Corpus
 from zrtlib.dotplot import Dotplot
+from zrtlib.jobqueue import Job, JobQueue
 from zrtlib.tokenizer import Tokenizer, CorpusTranscriber
 
-def func(args):
-    (key, indices, weight, dp) = args
-
+def func(queue):
     log = logger.getlogger()
-    log.info('|{0}| {1}'.format(key, len(indices)))
 
-    for (i, j) in combinations(indices, 2):
-        dp.update(i, j, weight)
+    while True:
+        n = queue.get()
+        log.info('|{0}| {1}'.format(n.key, len(n.indices)))
 
-    return key
+        for (i, j) in combinations(n.indices, 2):
+            dp.update(i, j, n.weight)
+
+        queue.task_done(key)
 
 def mkfname(original):
     (*parts, name) = original.parts
@@ -41,7 +43,7 @@ def enumeration(posting, args, ledger, dp):
         weight = posting.weight(i)
         indices = list(posting.each(i))
 
-        yield (i, indices, weight, dp)
+        yield Job(i, indices, weight, dp)
 
 ###########################################################################
 
@@ -62,28 +64,31 @@ args = arguments.parse_args()
 
 log = logger.getlogger(True)
 
-log.info('initialise: posting')
-# builder = lambda x: str(FileTranscriber(x, args.corpus))
-corpus = Corpus(args.corpus)
-builder = lambda x: str(CorpusTranscriber(x, corpus))
-with args.tokens.open() as fp:
-    reader = Tokenizer(csv.reader(fp))
-    posting = Posting(reader, builder)
-
-log.info('initialise: dotplot')
-elements = int(posting)
-if args.max_elements > 0:
-    compression = args.max_elements / elements
-else:
-    compression = args.compression
-dp = Dotplot(elements, args.mmap, compression)
-
-log.info('working: {0}'.format(elements))
+log.info('starting')
 with Ledger(args.ledger, args.node) as ledger:
-    with mp.Pool() as pool:
-        iterable = enumeration(posting, args, ledger, dp)
-        for i in pool.imap_unordered(func, iterable):
-            ledger.record(i)
-log.info('complete')
+    queue = JobQueue(ledger)
+    with mp.Pool(initializer=func, initargs=(queue, )) as pool:
+        
+        log.info('initialise: posting')
+        # builder = lambda x: str(FileTranscriber(x, args.corpus))
+        corpus = Corpus(args.corpus)
+        builder = lambda x: str(CorpusTranscriber(x, corpus))
+        with args.tokens.open() as fp:
+            reader = Tokenizer(csv.reader(fp))
+            posting = Posting(reader, builder)
 
-dp.matrix.flush()
+        log.info('initialise: dotplot')
+        elements = int(posting)
+        if args.max_elements > 0:
+            compression = args.max_elements / elements
+        else:
+            compression = args.compression
+        dp = Dotplot(elements, args.mmap, compression)
+
+        log.info('working: {0}'.format(elements))
+        for i in enumeration(posting, args, ledger, dp):
+            queue.put(i)
+        queue.join()
+
+        dp.matrix.flush()
+log.info('complete')
