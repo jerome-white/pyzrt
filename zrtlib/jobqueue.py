@@ -1,8 +1,5 @@
-from collections import namedtuple
 from multiprocessing import get_context
 from multiprocessing.queues import JoinableQueue
-
-Job = namedtuple('Job', 'key, indices, weight, dp')
 
 class JobQueue(JoinableQueue):
     def __init__(self, ledger):
