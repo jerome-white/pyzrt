@@ -11,7 +11,7 @@ from zrtlib.post import Posting
 from zrtlib.ledger import Ledger
 from zrtlib.corpus import Corpus
 from zrtlib.dotplot import Dotplot
-from zrtlib.jobqueue import Job, JobQueue
+from zrtlib.jobqueue import JobQueue
 from zrtlib.tokenizer import Tokenizer, CorpusTranscriber
 
 Job = namedtuple('Job', 'key, indices, weight, dp_args')
