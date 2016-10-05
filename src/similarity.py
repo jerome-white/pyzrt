@@ -17,11 +17,11 @@ def func(queue):
     log = logger.getlogger()
 
     while True:
-        n = queue.get()
-        log.info('|{0}| {1}'.format(n.key, len(n.indices)))
+        job = queue.get()
+        log.info('|{0}| {1}'.format(job.key, len(job.indices)))
 
-        for (i, j) in combinations(n.indices, 2):
-            dp.update(i, j, n.weight)
+        for (i, j) in combinations(job.indices, 2):
+            dp.update(i, j, job.weight)
 
         queue.task_done(key)
 
