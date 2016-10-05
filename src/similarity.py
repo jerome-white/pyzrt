@@ -4,6 +4,7 @@ from uuid import uuid4
 from pathlib import Path
 from argparse import ArgumentParser
 from itertools import islice, combinations
+from collections import namedtuple
 
 from zrtlib import logger
 from zrtlib.post import Posting
@@ -13,13 +14,17 @@ from zrtlib.dotplot import Dotplot
 from zrtlib.jobqueue import Job, JobQueue
 from zrtlib.tokenizer import Tokenizer, CorpusTranscriber
 
+Job = namedtuple('Job', 'key, indices, weight, dp_args')
+
 def func(queue):
     log = logger.getlogger()
+    log.debug('ready')
 
     while True:
         job = queue.get()
         log.info('|{0}| {1}'.format(job.key, len(job.indices)))
 
+        dp = Dotplot(*job.dp_args)
         for (i, j) in combinations(job.indices, 2):
             dp.update(i, j, job.weight)
 
@@ -80,7 +85,7 @@ with Ledger(args.ledger, args.node) as ledger:
             compression = args.max_elements / elements
         else:
             compression = args.compression
-        dp = Dotplot(elements, args.mmap, compression)
+        dp_args = (elements, args.mmap, compression)
 
         #
         #
@@ -93,13 +98,14 @@ with Ledger(args.ledger, args.node) as ledger:
             weight = posting.weight(i)
             indices = list(posting.each(i))
 
-            job = Job(i, indices, weight, dp)
+            job = Job(i, indices, weight, dp_args)
             queue.put(job)
 
         #
         #
         #
         log.info('cleanup')
-
+        
+        dp = Dotplot(*dp_args)
         dp.matrix.flush()
 log.info('|< {0}/{1}'.format(args.node, args.total_nodes))
