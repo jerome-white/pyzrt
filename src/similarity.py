@@ -88,12 +88,13 @@ with Ledger(args.ledger, args.node) as ledger:
             compression = args.compression
         dp_args = (elements, args.mmap, compression)
 
-        if args.total_nodes > 1 and args.node > 0:
-            while args.barrier.exists():
-                pass
-        else:
-            Dotplot(*dp_args, True)
-            args.barrier.unlink()
+        if len(ledger) == 0:
+            if args.total_nodes > 1 and args.node > 0:
+                while args.barrier.exists():
+                    pass
+            else:
+                Dotplot(*dp_args, True)
+                args.barrier.unlink()
 
         #
         #
