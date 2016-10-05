@@ -28,7 +28,7 @@ def func(queue):
         for (i, j) in combinations(job.indices, 2):
             dp.update(i, j, job.weight)
 
-        queue.task_done(key)
+        queue.task_done(job.key)
 
 def mkfname(original):
     (*parts, name) = original.parts
