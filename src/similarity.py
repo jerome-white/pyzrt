@@ -35,16 +35,6 @@ def mkfname(original):
         if not path.exists():
             return path
 
-def enumeration(posting, args, ledger):
-    f = lambda x: x not in ledger and posting.mass(x) < args.threshold
-    keys = filter(f, posting.keys())
-
-    for i in islice(keys, args.node, None, args.total_nodes):
-        weight = posting.weight(i)
-        indices = list(posting.each(i))
-
-        yield (i, indices, weight)
-
 ###########################################################################
 
 arguments = ArgumentParser()
@@ -64,12 +54,15 @@ args = arguments.parse_args()
 
 log = logger.getlogger(True)
 
-log.info('starting')
+log.info('|> {0}/{1}'.format(args.node, args.total_nodes))
 with Ledger(args.ledger, args.node) as ledger:
     queue = JobQueue(ledger)
-    with mp.Pool(initializer=func, initargs=(queue, )) as pool:
-        
+    with mp.Pool(initializer=func, initargs=(queue, )):
+        #
+        #
+        #
         log.info('initialise: posting')
+
         # builder = lambda x: str(FileTranscriber(x, args.corpus))
         corpus = Corpus(args.corpus)
         builder = lambda x: str(CorpusTranscriber(x, corpus))
@@ -77,7 +70,11 @@ with Ledger(args.ledger, args.node) as ledger:
             reader = Tokenizer(csv.reader(fp))
             posting = Posting(reader, builder)
 
+        #
+        #
+        #
         log.info('initialise: dotplot')
+
         elements = int(posting)
         if args.max_elements > 0:
             compression = args.max_elements / elements
@@ -85,11 +82,24 @@ with Ledger(args.ledger, args.node) as ledger:
             compression = args.compression
         dp = Dotplot(elements, args.mmap, compression)
 
+        #
+        #
+        #
         log.info('working: {0}'.format(elements))
-        for i in enumeration(posting, args, ledger):
-            job = Job(*i, dp)
+
+        f = lambda x: x not in ledger and posting.mass(x) < args.threshold
+        keys = filter(f, posting.keys())
+        for i in islice(keys, args.node, None, args.total_nodes):
+            weight = posting.weight(i)
+            indices = list(posting.each(i))
+
+            job = Job(i, indices, weight, dp)
             queue.put(job)
-        queue.join()
+
+        #
+        #
+        #
+        log.info('cleanup')
 
         dp.matrix.flush()
-log.info('complete')
+log.info('|< {0}/{1}'.format(args.node, args.total_nodes))
