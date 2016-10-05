@@ -1,5 +1,5 @@
 from collections import namedtuple
-from multiprocessing import JoinableQueue
+from multiprocessing.queues import JoinableQueue
 
 Job = namedtuple('Job', 'key, indices, weight, dp')
 
