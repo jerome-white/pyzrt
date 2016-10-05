@@ -4,7 +4,8 @@ import matplotlib.pyplot as plt
 # from zrtlib import logger
 
 class Dotplot:
-    def __init__(self, total_elements, map_file, compression_ratio=1):
+    def __init__(self, total_elements, map_file, compression_ratio=1,
+                 init_map=False):
         assert(0 < compression_ratio <= 1)
         
         self.N = total_elements
@@ -13,7 +14,7 @@ class Dotplot:
         kwargs = {
             'filename': str(map_file),
             'shape': ( self.n, ) * 2,
-            'mode': 'r+' if map_file.exists() else 'w+',
+            'mode': 'w+' if init_map else 'r+',
             'dtype': np.float16,
         }
         self.matrix = np.memmap(**kwargs)

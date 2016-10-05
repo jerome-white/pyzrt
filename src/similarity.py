@@ -47,6 +47,7 @@ arguments = ArgumentParser()
 arguments.add_argument('--tokens', type=Path)
 arguments.add_argument('--corpus', type=Path)
 arguments.add_argument('--ledger', type=Path)
+arguments.add_argument('--barrier', type=Path)
 
 arguments.add_argument('--mmap', type=Path)
 arguments.add_argument('--threshold', default=1, type=float)
@@ -86,6 +87,13 @@ with Ledger(args.ledger, args.node) as ledger:
         else:
             compression = args.compression
         dp_args = (elements, args.mmap, compression)
+
+        if args.total_nodes > 1 and args.node > 0:
+            while args.barrier.exists():
+                pass
+        else:
+            Dotplot(*dp_args, True)
+            args.barrier.unlink()
 
         #
         #
