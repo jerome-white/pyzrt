@@ -25,12 +25,3 @@ class Dotplot:
     def update(self, row, col, value):
         coordinates = tuple(map(self.cell, [ row, col ]))
         self.matrix[coordinates] += value
-
-def plot(dots, output):
-    extent = [ 0, len(dots) ] * 2
-    plt.imshow(dots, cmap='Greys', interpolation='none', extent=extent)
-        
-    plt.grid('off')
-    plt.tight_layout()
-        
-    plt.savefig(output)
