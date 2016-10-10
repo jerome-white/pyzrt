@@ -30,20 +30,16 @@ class Suffix:
         if not tail:
             self.tokens.append(token)
         else:
-            self.tree[head].add(tail, token)
+            suffix = self.tree[head]
+            suffix.add(tail, token)
 
-    def get(self, ngram, n=None):
-        if n is None:
-            for i in self.tree.keys():
-                n = len(i)
-                break
-            
-        (head, tail) = self.split(ngram, n)
+    def get(self, ngram):
+        (head, tail) = self.split(ngram, self.tree.n)
 
-        if head in self.tokens:
-            if not tail:
-                yield from self.tokens[head].occurences
-            else:
-                return self.get(tail)
-        else:
+        if head not in self.tokens:
             raise KeyError()
+        elif not tail:
+            suffix = self.tokens[head]
+            yield from suffix.occurences
+        else:
+            return self.get(tail)
