@@ -27,6 +27,9 @@ class Character:
     def __lt__(self, other):
         return self.start < other.start
 
+    def __len__(self):
+        return self.end - self.start
+
     def tolist(self):
         return [ self.docno, self.start, self.end ]
 
@@ -35,7 +38,7 @@ class Token(list):
     A collection of characters
     '''
     def __int__(self):
-        return sum([ x.end - x.start for x in self ])
+        return sum(map(len, self))
 
 ###########################################################################
 
@@ -45,15 +48,17 @@ class Sequencer:
         self.block_size = block_size
         self.skip = skip
 
-    def stream(self):
+    def stream(self, offset=0):
         for i in self.corpus:
-            yield from map(lambda x: (i.name, x), range(i.stat().st_size))
+            length = i.stat().st_size
+            yield from map(lambda x: (i.name, x), range(offset, length))
+            offset = min(0, offset - length - 1)
 
-    def sequence(self):
+    def sequence(self, offset=0):
         key = 0
         segment = Deque(self.block_size, self.skip)
 
-        for i in self.stream():
+        for i in self.stream(offset):
             segment.append(i)
             if segment.full():
                 d = collections.OrderedDict()
@@ -64,7 +69,7 @@ class Sequencer:
                     d[name].append(order)
                 
                 for (name, value) in d.items():
-                    (start, stop) = [ f(value) for f in (min, max) ]
+                    (start, stop) = [ x(value) for x in (min, max) ]
                     character = Character(name, start, stop + 1)
                     yield (key, character)
 
