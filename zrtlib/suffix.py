@@ -1,14 +1,20 @@
-import random
 from collections import defaultdict
 
 class NGramDict(defaultdict):
+    def __init__(self, default_factory, *args):
+        super().__init__(default_factory, *args)
+        self.n = None
+        
     def __getitem__(self, key):
-        if key in self:
-            sample = random.choice(self.keys())
-            if len(sample) != len(key):
-                raise KeyError()
-            
-        return super().__getitem__()
+        n = len(key)
+        
+        if self.n is None:
+            self.n = n
+        elif self.n != n:
+            msg = 'Invalid key length: attempted {0} ("{1}"), required {2}'
+            raise KeyError(msg.format(n, key, self.n))
+        
+        return super().__getitem__(key)
 
 class Suffix:
     def __init__(self):
