@@ -34,12 +34,15 @@ class Suffix:
             suffix.add(tail, token)
 
     def get(self, ngram):
+        if not self.tree:
+            raise KeyError('Tree is empty')
+
         (head, tail) = self.split(ngram, self.tree.n)
 
-        if head not in self.tokens:
-            raise KeyError()
+        if head not in self.tree:
+            raise KeyError('{0} is not in the tree'.format(head))
         elif not tail:
             suffix = self.tokens[head]
-            yield from suffix.occurences
+            yield from suffix.tokens
         else:
             return self.get(tail)
