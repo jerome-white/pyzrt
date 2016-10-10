@@ -25,6 +25,10 @@ class Corpus(dict):
         for i in path.iterdir():
             with i.open() as fp:
                 self[i.name] = fp.read()
+
+    def characters(self):
+        return sum(map(len, self.values()))
+
 # http://stackoverflow.com/a/24602374
 #     def __init__(self, parser):
 #         super().__init__(parser.parse())
