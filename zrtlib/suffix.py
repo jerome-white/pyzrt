@@ -27,7 +27,7 @@ class Suffix:
     def add(self, ngram, token, root_key_length=1):
         (head, tail) = self.split(ngram, root_key_length)
 
-        if not tail:
+        if not head:
             self.tokens.append(token)
         else:
             suffix = self.suffixes[head]
@@ -58,6 +58,6 @@ class Suffix:
                 yield from map(lambda x: i + x, j.ngrams(length))
 
     def dump(self, ngram='', level=0):
-        print(' ' * level, ngram, ': ', self.tokens, sep='')
+        print('-' * level, ngram, ' : ', self.tokens, sep='')
         for (i, j) in self.suffixes.items():
             j.dump(ngram + i, level + 1)
