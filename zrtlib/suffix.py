@@ -57,8 +57,7 @@ class Suffix:
             for (i, j) in self.suffixes.items():
                 yield from map(lambda x: i + x, j.ngrams(length))
 
-    def dump(self, level=0):
+    def dump(self, ngram='', level=0):
+        print(' ' * level, ngram, ': ', self.tokens, sep='')
         for (i, j) in self.suffixes.items():
-            print(' ' * level, i, ':', *self.tokens)
-            if j:
-                j.dump(level + 1)
+            j.dump(ngram + i, level + 1)
