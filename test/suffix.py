@@ -1,5 +1,6 @@
 import random
 from itertools import islice
+from collections import Counter
 
 from zrtlib.suffix import Suffix
 
@@ -13,6 +14,7 @@ def randstr(length, constraint=1):
 
     return ''.join(alphabet)
 
+c = Counter()
 s = Suffix()
 
 for i in range(4, 6):
@@ -20,7 +22,15 @@ for i in range(4, 6):
         key = randstr(i)
         value = random.randrange(10)
         s.add(key, value)
+        c[key] += 1
+
+# for i in sorted(c):
+#     print(i, c[i])
 
 s.dump()
+
+for (i, j) in c.items():
+    print(i, j, list(s.get(i)))
+
 # for i in s.ngrams(5):
 #     print(i)

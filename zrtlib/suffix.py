@@ -37,15 +37,15 @@ class Suffix:
         if not self.suffixes:
             raise KeyError('Tree is empty')
 
-        (head, tail) = self.split(ngram, self.suffixes.key_length)
+        (head, tail) = self.split(ngram)
 
         if head not in self.suffixes:
             raise KeyError('{0} is not in the tree'.format(head))
         elif not tail:
-            suffix = self.suffixes[head]
-            yield from suffix.tokens
+            yield from self.tokens
         else:
-            return self.get(tail)
+            suffix = self.suffixes[head]
+            yield from suffix.get(tail)
 
     def ngrams(self, length):
         if not self.suffixes or length < self.suffixes.key_length:
