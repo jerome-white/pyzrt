@@ -3,23 +3,23 @@ from collections import defaultdict
 class NGramDict(defaultdict):
     def __init__(self, default_factory, *args):
         super().__init__(default_factory, *args)
-        self.n = None
+        self.key_length = None
         
     def __getitem__(self, key):
-        n = len(key)
+        key_length = len(key)
         
-        if self.n is None:
-            self.n = n
-        elif self.n != n:
+        if self.key_length is None:
+            self.key_length = key_length
+        elif self.key_length != key_length:
             msg = 'Invalid key length: attempted {0} ("{1}"), required {2}'
-            raise KeyError(msg.format(n, key, self.n))
+            raise KeyError(msg.format(key_length, key, self.key_length))
         
         return super().__getitem__(key)
 
 class Suffix:
     def __init__(self):
         self.tokens = []
-        self.tree = NGramDict(Suffix)
+        self.suffixes = NGramDict(Suffix)
 
     def split(self, ngram, pos=1):
         return (ngram[0:pos], ngram[pos:])
@@ -30,29 +30,35 @@ class Suffix:
         if not tail:
             self.tokens.append(token)
         else:
-            suffix = self.tree[head]
+            suffix = self.suffixes[head]
             suffix.add(tail, token)
 
     def get(self, ngram):
-        if not self.tree:
+        if not self.suffixes:
             raise KeyError('Tree is empty')
 
-        (head, tail) = self.split(ngram, self.tree.n)
+        (head, tail) = self.split(ngram, self.suffixes.key_length)
 
-        if head not in self.tree:
+        if head not in self.suffixes:
             raise KeyError('{0} is not in the tree'.format(head))
         elif not tail:
-            suffix = self.tokens[head]
+            suffix = self.suffixes[head]
             yield from suffix.tokens
         else:
             return self.get(tail)
 
-    def suffixes(self, length):
-        if not self.tokens or length < self.tokens.n:
+    def ngrams(self, length):
+        if not self.suffixes or length < self.suffixes.key_length:
             raise KeyError('Invalid length request')
-        elif length == self.tokens.n:
-            yield from self.tokens.keys()
+        elif length == self.suffixes.key_length:
+            yield from self.suffixes.keys()
         else:
-            length -= self.tokens.n
-            for (i, j) in self.tokens.items():
-                yield from map(lambda x: i + x, j.suffixes(length))
+            length -= self.suffixes.key_length
+            for (i, j) in self.suffixes.items():
+                yield from map(lambda x: i + x, j.ngrams(length))
+
+    def dump(self, level=0):
+        for (i, j) in self.suffixes.items():
+            print(' ' * level, i, ':', *self.tokens)
+            if j:
+                j.dump(level + 1)
