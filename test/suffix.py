@@ -7,19 +7,17 @@ def randstr(length, constraint=1):
     assert(0 <= constraint <= 1)
     
     a = 97
-    z = round(a + 25 * constraint)
+    z = min(a + 25, a + length)
     alphabet = [ chr(x) for x in range(a, z) ]
-    length = min(length, len(alphabet))
+    random.shuffle(alphabet)
 
-    string = random.sample(alphabet, length)
-
-    return ''.join(string)
+    return ''.join(alphabet)
 
 s = Suffix()
 
-for i in range(4, 18):
-    for _ in range(1000):
-        key = randstr(i, 0.15)
+for i in range(4, 6):
+    for _ in range(10 ** 2):
+        key = randstr(i)
         value = random.randrange(10)
         s.add(key, value)
 
