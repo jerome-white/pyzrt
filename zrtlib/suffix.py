@@ -46,3 +46,13 @@ class Suffix:
             yield from suffix.tokens
         else:
             return self.get(tail)
+
+    def suffixes(self, length):
+        if not self.tokens or length < self.tokens.n:
+            raise KeyError('Invalid length request')
+        elif length == self.tokens.n:
+            yield from self.tokens.keys()
+        else:
+            length -= self.tokens.n
+            for (i, j) in self.tokens.items():
+                yield from map(lambda x: i + x, j.suffixes(length))
