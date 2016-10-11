@@ -43,22 +43,25 @@ class Token(list):
 ###########################################################################
 
 class Sequencer:
-    def __init__(self, corpus, block_size=1, skip=0):
+    def __init__(self, corpus, block_size=1, skip=0, offset=0):
         self.corpus = corpus
         self.block_size = block_size
         self.skip = skip
+        self.offset = offset
 
-    def stream(self, offset=0):
+    def stream(self):
+        offset = self.offset
+
         for i in self.corpus:
             length = i.stat().st_size
             yield from map(lambda x: (i.name, x), range(offset, length))
             offset = min(0, offset - length - 1)
 
-    def sequence(self, offset=0):
+    def sequence(self):
         key = 0
         segment = Deque(self.block_size, self.skip)
 
-        for i in self.stream(offset):
+        for i in self.stream():
             segment.append(i)
             if segment.full():
                 d = collections.OrderedDict()
