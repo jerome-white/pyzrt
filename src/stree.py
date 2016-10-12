@@ -59,4 +59,4 @@ with mp.Pool(initializer=func, initargs=(args.corpus, outgoing, incoming, )):
             if result is None:
                 outstanding -= 1
             else:
-                suffix.add(**result)
+                suffix.add(**result, args.min_gram)
