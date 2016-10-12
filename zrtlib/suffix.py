@@ -27,35 +27,26 @@ class Suffix:
     def add(self, ngram, token, root_key_length=1):
         (head, tail) = self.split(ngram, root_key_length)
 
-        if not head:
-            self.tokens.append(token)
+        suffix = self.suffixes[head]
+        if not tail:
+            suffix.tokens.append(token)
         else:
-            suffix = self.suffixes[head]
             suffix.add(tail, token)
 
     def get(self, ngram):
-        if not self.suffixes:
-            raise KeyError('Tree is empty')
+        (head, tail) = self.split(ngram, self.suffixes.key_length)
 
-        (head, tail) = self.split(ngram)
-
-        if head not in self.suffixes:
-            raise KeyError('{0} is not in the tree'.format(head))
-        elif not tail:
-            yield from self.tokens
-        else:
+        if head in self.suffixes:
             suffix = self.suffixes[head]
-            yield from suffix.get(tail)
+            yield from suffix.tokens if not tail else suffix.get(tail)
 
     def ngrams(self, length):
-        if not self.suffixes or length < self.suffixes.key_length:
-            raise KeyError('Invalid length request')
-        elif length == self.suffixes.key_length:
+        if length == self.suffixes.key_length:
             yield from self.suffixes.keys()
         else:
-            length -= self.suffixes.key_length
             for (i, j) in self.suffixes.items():
-                yield from map(lambda x: i + x, j.ngrams(length))
+                for k in j.ngrams(length - self.suffixes.key_length):
+                    yield i + k
 
     def dump(self, ngram='', level=0):
         print('-' * level, ngram, ' : ', self.tokens, sep='')

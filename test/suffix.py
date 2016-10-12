@@ -28,9 +28,9 @@ for i in range(4, 6):
 #     print(i, c[i])
 
 s.dump()
-
+print('.' * 79)
 for (i, j) in c.items():
     print(i, j, list(s.get(i)))
-
-# for i in s.ngrams(5):
-#     print(i)
+print('.' * 79)
+for i in s.ngrams(5):
+    print(i, list(s.get(i)))
