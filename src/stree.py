@@ -17,8 +17,7 @@ def func(corpus_directory, incoming, outgoing):
 
     while True:
         job = incoming.get()
-
-        log.info(''.join(list(job.values())))
+        log.info(', '.join(map(str, job.values())))
 
         sequencer = Sequencer(corpus, **job)
         tokenizer = Tokenizer(sequencer)
