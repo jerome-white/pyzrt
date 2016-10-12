@@ -2,7 +2,7 @@ import random
 from itertools import islice
 from collections import Counter
 
-from zrtlib.suffix import Suffix
+from zrtlib.suffix import SuffixTree
 
 def randstr(length, constraint=1):
     assert(0 <= constraint <= 1)
@@ -15,7 +15,7 @@ def randstr(length, constraint=1):
     return ''.join(alphabet)
 
 c = Counter()
-s = Suffix()
+s = SuffixTree()
 
 for i in range(4, 6):
     for _ in range(10 ** 2):

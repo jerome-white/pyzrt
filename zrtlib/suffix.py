@@ -16,10 +16,10 @@ class NGramDict(defaultdict):
         
         return super().__getitem__(key)
 
-class Suffix:
+class SuffixTree:
     def __init__(self):
         self.tokens = []
-        self.suffixes = NGramDict(Suffix)
+        self.suffixes = NGramDict(SuffixTree)
 
     def split(self, ngram, pos=1):
         return (ngram[0:pos], ngram[pos:])
