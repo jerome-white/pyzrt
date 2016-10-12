@@ -1,7 +1,10 @@
-import np
 import multiprocessing as mp
+from pathlib import Path
 from argparse import ArgumentParser
 
+import numpy as np
+
+from zrtlib import logger
 from zrtlib.corpus import Corpus
 from zrtlib.suffix import SuffixTree
 from zrtlib.tokenizer import Sequencer, Tokenizer, CorpusTranscriber
