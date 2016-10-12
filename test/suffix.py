@@ -21,16 +21,22 @@ for i in range(4, 6):
     for _ in range(10 ** 2):
         key = randstr(i)
         value = random.randrange(10)
-        s.add(key, value)
+        s.add(key, value, 4)
         c[key] += 1
 
 # for i in sorted(c):
 #     print(i, c[i])
 
 s.dump()
-print('.' * 79)
-for (i, j) in c.items():
-    print(i, j, list(s.get(i)))
-print('.' * 79)
-for i in s.ngrams(5):
-    print(i, list(s.get(i)))
+
+# print('.' * 79)
+# for (i, j) in s.each():
+#     print(i, j)
+# print('.' * 79)
+# for (i, j) in c.items():
+#     print(i, j, list(s.get(i)))
+
+for i in range(3, 7):
+    print('.' * 79)
+    for j in s.ngrams(i):
+        print(j, list(s.get(j)))

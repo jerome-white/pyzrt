@@ -38,15 +38,26 @@ class SuffixTree:
 
         if head in self.suffixes:
             suffix = self.suffixes[head]
-            yield from suffix.tokens if not tail else suffix.get(tail)
+            if tail:
+                yield from suffix.get(tail)
+            elif suffix.tokens:
+                yield from suffix.tokens
 
     def ngrams(self, length):
-        if length == self.suffixes.key_length:
-            yield from self.suffixes.keys()
-        else:
-            for (i, j) in self.suffixes.items():
+        for (i, j) in self.suffixes.items():
+            if length == self.suffixes.key_length:
+                if j.tokens:
+                    yield i
+            else:
                 for k in j.ngrams(length - self.suffixes.key_length):
                     yield i + k
+
+    def each(self, ngram=''):
+        if self.tokens:
+            yield (ngram, self.tokens)
+
+        for (i, j) in self.suffixes.items():
+            yield from j.each(ngram + i)
 
     def dump(self, ngram='', level=0):
         print('-' * level, ngram, ' : ', self.tokens, sep='')
