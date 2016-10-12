@@ -42,18 +42,24 @@ class Token(list):
 
 ###########################################################################
 
-class Sequencer:
+class Iterable:
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        yield from self.iterate()
+
+    def iterate(self):
+        raise NotImplementedError()
+
+###########################################################################
+
+class Sequencer(Iterable):
     def __init__(self, corpus, block_size=1, skip=0, offset=0):
         self.corpus = corpus
         self.block_size = block_size
         self.skip = skip
         self.offset = offset
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        yield from self.sequence()
 
     def stream(self):
         offset = self.offset
@@ -63,7 +69,7 @@ class Sequencer:
             yield from map(lambda x: (i.name, x), range(offset, length))
             offset = min(0, offset - length - 1)
 
-    def sequence(self):
+    def iterate(self):
         key = 0
         segment = Deque(self.block_size, self.skip)
 
@@ -126,11 +132,11 @@ class FileTranscriber(Transcriber):
 
 ###########################################################################
 
-class Tokenizer:
+class Tokenizer(Iterable):
     def __init__(self, stream):
         self.stream = stream
     
-    def each(self):
+    def iterate(self):
         token = Token()
         previous = None
         

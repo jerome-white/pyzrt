@@ -7,7 +7,7 @@ class Posting(defaultdict):
     def __init__(self, tokenizer, transcribe):
         super().__init__(list)
 
-        for (i, token) in tokenizer.each():
+        for (i, token) in tokenizer:
             key = transcribe(token)
             value = self.mkentry(i, token)
             self[key].append(value)
