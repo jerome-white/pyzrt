@@ -49,6 +49,12 @@ class Sequencer:
         self.skip = skip
         self.offset = offset
 
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        yield from self.sequence()
+
     def stream(self):
         offset = self.offset
 
