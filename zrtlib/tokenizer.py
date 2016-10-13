@@ -42,34 +42,14 @@ class Token(list):
 
 ###########################################################################
 
-class Iterable:
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        yield from self.iterate()
-
-    def iterate(self):
-        raise NotImplementedError()
-
-###########################################################################
-
-class Sequencer(Iterable):
+class Sequencer:
     def __init__(self, corpus, block_size=1, skip=0, offset=0):
         self.corpus = corpus
         self.block_size = block_size
         self.skip = skip
         self.offset = offset
 
-    def stream(self):
-        offset = self.offset
-
-        for i in self.corpus:
-            length = i.stat().st_size
-            yield from map(lambda x: (i.name, x), range(offset, length))
-            offset = min(0, offset - length - 1)
-
-    def iterate(self):
+    def __iter__(self):
         key = 0
         segment = Deque(self.block_size, self.skip)
 
@@ -90,6 +70,14 @@ class Sequencer(Iterable):
 
                 key += 1
                 self.slide(segment)
+
+    def stream(self):
+        offset = self.offset
+
+        for i in self.corpus:
+            length = i.stat().st_size
+            yield from map(lambda x: (i.name, x), range(offset, length))
+            offset = min(0, offset - length - 1)
 
     def slide(self, segment):
         raise NotImplementedError()
@@ -132,23 +120,19 @@ class FileTranscriber(Transcriber):
 
 ###########################################################################
 
-class Tokenizer(Iterable):
+class Tokenizer:
     def __init__(self, stream):
         self.stream = stream
     
-    def iterate(self):
+    def __iter__(self):
         token = Token()
         previous = None
         
-        for row in self.stream:
-            docno = row.pop(1)
-            (current, start, end) = map(int, row)
-            
+        for (current, character) in self.stream:
             if previous is not None and previous != current:
                 yield (previous, sorted(token))
                 token = Token()
 
-            character = Character(docno, start, end)
             token.append(character)
             previous = current
             
