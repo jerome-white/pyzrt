@@ -1,6 +1,5 @@
 import csv
 import multiprocessing as mp
-from uuid import uuid4
 from pathlib import Path
 from argparse import ArgumentParser
 from itertools import islice, combinations
@@ -29,16 +28,6 @@ def func(queue):
             dp.update(i, j, job.weight)
 
         queue.task_done(job.key)
-
-def mkfname(original):
-    (*parts, name) = original.parts
-
-    while True:
-        (c, _) = str(uuid4()).split('-', 1)
-        fname = name + '-' + c
-        path = Path(*parts, fname)
-        if not path.exists():
-            return path
 
 ###########################################################################
 
