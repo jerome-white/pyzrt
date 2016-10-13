@@ -11,9 +11,21 @@ from zrtlib.ledger import Ledger
 from zrtlib.corpus import Corpus
 from zrtlib.dotplot import Dotplot
 from zrtlib.jobqueue import JobQueue
-from zrtlib.tokenizer import Tokenizer, CorpusTranscriber
+from zrtlib.tokenizer import Character, Tokenizer, CorpusTranscriber
 
 Job = namedtuple('Job', 'key, indices, weight, dp_args')
+
+class TokenParser:
+    def __init__(self, reader):
+        self.reader = reader
+
+    def __iter__(self):
+        for line in self.reader:
+            docno = line.pop(1)
+            (key, start, end) = map(int, line)
+            character = Character(docno, start, end)
+
+            yield (key, character)
 
 def func(queue):
     log = logger.getlogger()
@@ -62,7 +74,8 @@ with Ledger(args.ledger, args.node) as ledger:
         corpus = Corpus(args.corpus)
         builder = lambda x: str(CorpusTranscriber(x, corpus))
         with args.tokens.open() as fp:
-            reader = Tokenizer(csv.reader(fp))
+            parser = TokenParser(csv.reader(fp))
+            reader = Tokenizer(parser)
             posting = Posting(reader, builder)
 
         #
