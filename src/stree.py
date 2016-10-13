@@ -7,7 +7,7 @@ import numpy as np
 from zrtlib import logger
 from zrtlib.corpus import Corpus
 from zrtlib.suffix import SuffixTree
-from zrtlib.tokenizer import Sequencer, Tokenizer, CorpusTranscriber
+from zrtlib.tokenizer import WindowSequencer, Tokenizer, CorpusTranscriber
 
 def func(corpus_directory, incoming, outgoing):
     log = logger.getlogger()
@@ -19,7 +19,7 @@ def func(corpus_directory, incoming, outgoing):
         job = incoming.get()
         log.info(', '.join(map(str, job.values())))
 
-        sequencer = Sequencer(corpus, **job)
+        sequencer = WindowSequencer(corpus=corpus, **job)
         tokenizer = Tokenizer(sequencer)
 
         for (_, i) in tokenizer:
@@ -58,4 +58,4 @@ with mp.Pool(initializer=func, initargs=(args.corpus, outgoing, incoming, )):
             if result is None:
                 outstanding -= 1
             else:
-                suffix.add(**result, args.min_gram)
+                suffix.add(root_key_length=args.min_gram, **result)
