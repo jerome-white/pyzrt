@@ -74,7 +74,7 @@ class Sequencer:
     def stream(self):
         offset = self.offset
 
-        for i in self.corpus:
+        for i in map(Path, self.corpus):
             length = i.stat().st_size
             yield from map(lambda x: (i.name, x), range(offset, length))
             offset = min(0, offset - length - 1)
