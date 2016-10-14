@@ -14,10 +14,10 @@ arguments.add_argument('--corpus', type=Path)
 args = arguments.parse_args()
 
 args.corpus.mkdir(parents=True, exist_ok=True)
-parser = parsers[args.archive_type]()
 strainer = corpus.AlphaNumericStrainer()
+parser = parsers[args.archive_type](strainer)
 
-for (i, data) in parser.parse(strainer):
+for (i, data) in parser:
     p = args.corpus.joinpath(i)
     assert(not p.exists())
     with p.open('w') as fp:

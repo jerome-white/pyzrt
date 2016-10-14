@@ -37,7 +37,7 @@ class Corpus(dict):
 
 class Strainer:
     def strain(self, data):
-        raise NotImplementedError()
+        return data
 
 class AlphaNumericStrainer(Strainer):
     def __init__(self):
@@ -52,13 +52,11 @@ class AlphaNumericStrainer(Strainer):
 ###########################################################################
 
 class Parser():
-    def func(self, doc):
-        raise NotImplementedError()
+    def __init__(self, strainer=None, file_list=sys.stdin):
+        self.strainer = Strainer() if strainer is None else strainer
+        self.file_list = file_list
 
-    def extract(self, path):
-        raise NotImplementedError()
-    
-    def parse(self, strainer=None, file_list=sys.stdin):
+    def __iter__(self):
         log = logger.getlogger(True)
         
         with Pool() as pool:
@@ -74,10 +72,13 @@ class Parser():
                     continue
 
                 for (docno, text) in pool.imap_unordered(self.func, relevant):
-                    if strainer:
-                        text = strainer.strain(text)
-                    
-                    yield (docno, text)
+                    yield (docno, self.strainer.strain(text))
+
+    def func(self, doc):
+        raise NotImplementedError()
+
+    def extract(self, path):
+        raise NotImplementedError()
 
 class TestParser(Parser):
     def func(self, doc):
