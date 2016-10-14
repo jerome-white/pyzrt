@@ -48,7 +48,7 @@ with mp.Pool(initializer=func, initargs=(args.corpus, outgoing, incoming, )):
         outstanding = 0
 
         for j in range(workers):
-            kwargs = { 'block_size': i, 'skip': j }
+            kwargs = { 'block_size': i, 'offset': j, 'skip': workers }
             outgoing.put(kwargs)
             outstanding += 1
 
