@@ -123,7 +123,8 @@ class Tokenizer:
         
         for (current, character) in self.stream:
             if previous is not None and previous != current:
-                yield (previous, sorted(token))
+                token.sort()
+                yield (previous, token)
                 token = Token()
 
             token.append(character)
@@ -131,4 +132,5 @@ class Tokenizer:
             
         # since the last line of the file doesn't get included
         if token:
-            yield (previous, sorted(token))
+            token.sort()
+            yield (previous, token)
