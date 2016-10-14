@@ -3,6 +3,7 @@ import itertools
 import xml.etree.ElementTree as et
 from pathlib import Path
 from functools import singledispatch
+from collections import OrderedDict
 from multiprocessing import Pool
 
 from zrtlib import logger
@@ -18,11 +19,11 @@ def _(string, lower=True):
 
 ###########################################################################
 
-class Corpus(dict):
+class Corpus(OrderedDict):
     def __init__(self, path):
         super().__init__()
         
-        for i in path.iterdir():
+        for i in sorted(path.iterdir()):
             with i.open() as fp:
                 self[i] = fp.read()
 

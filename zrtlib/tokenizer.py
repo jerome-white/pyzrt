@@ -27,7 +27,7 @@ class Character:
         self.end = end
 
     def __lt__(self, other):
-        return self.start < other.start
+        return self.docno < other.docno or self.start < other.start
 
     def __len__(self):
         return self.end - self.start
@@ -123,7 +123,6 @@ class Tokenizer:
         
         for (current, character) in self.stream:
             if previous is not None and previous != current:
-                token.sort()
                 yield (previous, token)
                 token = Token()
 
@@ -132,5 +131,4 @@ class Tokenizer:
             
         # since the last line of the file doesn't get included
         if token:
-            token.sort()
             yield (previous, token)
