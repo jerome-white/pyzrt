@@ -43,12 +43,12 @@ class Token(list):
         return sum(map(len, self))
 
     def __str__(self):
-        def transcribe(char):
-            with char.docno.open() as fp:
+        with char.docno.open() as fp:
+            def transcribe(char):
                 fp.seek(char.start)
                 return fp.read(len(char))
 
-        return self.collect(transcribe)
+            return self.collect(transcribe)
 
     def tostring(self, corpus):
         def transcribe(char):
