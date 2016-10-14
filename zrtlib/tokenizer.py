@@ -75,9 +75,9 @@ class Sequencer:
     def stream(self):
         offset = self.offset
 
-        for i in map(Path, self.corpus):
+        for i in self.corpus:
             length = i.stat().st_size
-            yield from map(lambda x: (i.name, x), range(offset, length))
+            yield from map(lambda x: (i, x), range(offset, length))
             offset = min(0, offset - length - 1)
 
     def slide(self, segment):
