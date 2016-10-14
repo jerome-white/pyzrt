@@ -3,6 +3,7 @@ import numpy as np
 from pathlib import Path
 from argparse import ArgumentParser
 
+import matplotlib.pyplot as plt
 from skimage.transform import rescale
 
 import zrtlib.dotplot as dp

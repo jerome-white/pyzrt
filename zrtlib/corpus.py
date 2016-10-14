@@ -60,7 +60,7 @@ class Parser():
         log = logger.getlogger(True)
         
         with Pool() as pool:
-            for i in file_list:
+            for i in self.file_list:
                 path = Path(i.strip())
                 log.info(str(path))
 
