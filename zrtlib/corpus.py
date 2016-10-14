@@ -24,7 +24,7 @@ class Corpus(dict):
         
         for i in path.iterdir():
             with i.open() as fp:
-                self[i.name] = fp.read()
+                self[i] = fp.read()
 
     def characters(self):
         return sum(map(len, self.values()))
