@@ -7,14 +7,14 @@ import numpy as np
 from zrtlib import logger
 from zrtlib.corpus import Corpus
 from zrtlib.suffix import SuffixTree
-from zrtlib.tokenizer import WindowSequencer, Tokenizer, CorpusTranscriber
+from zrtlib.tokenizer import WindowSequencer, Tokenizer
 
 def func(corpus_directory, incoming, outgoing):
     log = logger.getlogger()
-    log.debug('ready')
 
     corpus = Corpus(corpus_directory)
 
+    log.debug('ready')
     while True:
         job = incoming.get()
         log.info(', '.join(map(str, job.values())))
@@ -23,8 +23,7 @@ def func(corpus_directory, incoming, outgoing):
         tokenizer = Tokenizer(sequencer)
 
         for (_, i) in tokenizer:
-            transcription = CorpusTranscriber(i, corpus)
-            kwargs = { 'ngram': str(transcription), 'token': i }
+            kwargs = { 'ngram': i.tostring(corpus), 'token': i }
             outgoing.put(kwargs)
         outgoing.put(None)
 
@@ -40,12 +39,12 @@ workers = mp.cpu_count()
 outgoing = mp.Queue()
 incoming = mp.Queue()
 
+log.info('>| begin')
 with mp.Pool(initializer=func, initargs=(args.corpus, outgoing, incoming, )):
     suffix = SuffixTree()
 
     for i in range(args.min_gram, args.max_gram):
         log.info('{0}-gram'.format(i))
-
         outstanding = 0
 
         for j in range(workers):
@@ -59,3 +58,10 @@ with mp.Pool(initializer=func, initargs=(args.corpus, outgoing, incoming, )):
                 outstanding -= 1
             else:
                 suffix.add(root_key_length=args.min_gram, **result)
+log.info('>| end')
+
+log.info('> pickle')
+import pickle
+with open('/scratch/jsw7/zrt/wsj/suffix.pkl', 'wb') as fp:
+    pickle.dump(suffix, fp)
+log.info('< pickle')

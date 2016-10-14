@@ -4,11 +4,11 @@ from collections import namedtuple, defaultdict
 IndexedToken = namedtuple('IndexedToken', 'index, token')
 
 class Posting(defaultdict):
-    def __init__(self, tokenizer, transcribe):
+    def __init__(self, tokenizer, corpus):
         super().__init__(list)
 
         for (i, token) in tokenizer:
-            key = transcribe(token)
+            key = token.tostring(corpus)
             value = self.mkentry(i, token)
             self[key].append(value)
 

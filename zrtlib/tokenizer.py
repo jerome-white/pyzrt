@@ -16,6 +16,8 @@ class Deque(collections.deque):
     def visible(self):
         yield from itertools.islice(self, 0, self.exposed)
 
+###########################################################################
+
 class Character:
     '''
     Portion of a token within a single file
@@ -40,6 +42,24 @@ class Token(list):
     '''
     def __int__(self):
         return sum(map(len, self))
+
+    def __str__(self):
+        def transcribe(char):
+            with char.docno.open() as fp:
+                fp.seek(char.start)
+                return fp.read(len(char))
+
+        return self.collect(transcribe)
+
+    def tostring(self, corpus):
+        def transcribe(char):
+            document = corpus[char.docno]
+            return document[char.start:char.end]
+
+        return self.collect(transcribe)
+
+    def collect(self, transcribe):
+        return ''.join(map(transcribe, self))
 
 ###########################################################################
 
@@ -91,33 +111,6 @@ class WindowSequencer(Sequencer):
     def slide(self, segment):
         for _ in range(self.skip + 1):
             segment.popleft()
-    
-###########################################################################
-
-class Transcriber:
-    def __init__(self, token, corpus):
-        self.token = token
-        self.corpus = corpus
-        
-    def __str__(self):
-        return ''.join(map(self.transcribe, self.token))
-
-    def transcribe(self, char):
-        raise NotImplementedError()
-
-# corpus is a dictionary of file offset pointers
-class CorpusTranscriber(Transcriber):
-    def transcribe(self, char):
-        document = self.corpus[char.docno]
-        return document[char.start:char.end]
-    
-# corpus: top level corpus directory
-class FileTranscriber(Transcriber):
-    def transcribe(self, char):
-        path = self.corpus.joinpath(char.docno)
-        with path.open() as fp:
-            fp.seek(char.start)
-            return fp.read(char.end - char.start)
 
 ###########################################################################
 
