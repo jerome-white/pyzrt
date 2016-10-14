@@ -97,7 +97,7 @@ class Sequencer:
         for i in self.corpus:
             length = i.stat().st_size
             yield from map(lambda x: (i, x), range(offset, length))
-            offset = min(0, offset - length - 1)
+            offset = max(0, offset - length - 1)
 
     def slide(self, segment):
         raise NotImplementedError()
