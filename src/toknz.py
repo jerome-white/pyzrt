@@ -15,4 +15,4 @@ sequencer = WindowSequencer(corpus, args.block_size)
 writer = csv.writer(sys.stdout)
 for (key, char) in sequencer:
     row = [ key ] + char.tolist()
-    writer.writerow(row)
+    writer.writerow(map(str, row))
