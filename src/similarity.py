@@ -21,7 +21,7 @@ class TokenParser:
 
     def __iter__(self):
         for line in self.reader:
-            docno = line.pop(1)
+            docno = Path(line.pop(1))
             (key, start, end) = map(int, line)
             character = Character(docno, start, end)
 
