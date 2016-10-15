@@ -37,9 +37,8 @@ class Corpus(list):
 class CompleteCorpus(collections.OrderedDict):
     def __init__(self, corpus):
         super().__init__()
-        
-        c = Corpus(c)
-        for i in c:
+
+        for i in Corpus(corpus):
             with i.open() as fp:
                 self[i] = fp.read()
 
