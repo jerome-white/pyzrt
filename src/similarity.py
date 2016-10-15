@@ -8,10 +8,10 @@ from collections import namedtuple
 from zrtlib import logger
 from zrtlib.post import Posting
 from zrtlib.ledger import Ledger
-from zrtlib.corpus import Corpus
+from zrtlib.corpus import Character, CompleteCorpus
 from zrtlib.dotplot import Dotplot
 from zrtlib.jobqueue import JobQueue
-from zrtlib.tokenizer import Character, Tokenizer
+from zrtlib.tokenizer import Tokenizer
 
 Job = namedtuple('Job', 'key, indices, weight, dp_args')
 
@@ -70,7 +70,7 @@ with Ledger(args.ledger, args.node) as ledger:
         #
         log.info('initialise: posting')
 
-        corpus = Corpus(args.corpus)
+        corpus = CompleteCorpus(args.corpus)
         with args.tokens.open() as fp:
             parser = TokenParser(csv.reader(fp))
             reader = Tokenizer(parser)

@@ -1,112 +1,103 @@
-import sys
 import itertools
-import xml.etree.ElementTree as et
-from pathlib import Path
-from functools import singledispatch
-from collections import OrderedDict
-from multiprocessing import Pool
+import collections
 
-from zrtlib import logger
+class Deque(collections.deque):
+    def __init__(self, block_size, skip):
+        self.exposed = block_size
+        super().__init__(maxlen=(self.exposed + skip))
 
-@singledispatch
-def normalize(string, lower=True):
-    s = ' '.join(string.split())
-    return s.lower() if lower else s
+    def full(self):
+        return len(self) == self.maxlen
 
-@normalize.register(list)
-def _(string, lower=True):
-    return normalize(' '.join(string), lower)
+    def visible(self):
+        yield from itertools.islice(self, 0, self.exposed)
 
-###########################################################################
+class Character:
+    '''
+    A segment of one or more characters within a single file
+    '''
+    def __init__(self, docno, start, end):
+        self.docno = docno
+        self.start = start
+        self.end = end
 
-class Corpus(OrderedDict):
-    def __init__(self, path):
-        super().__init__()
-        
-        for i in sorted(path.iterdir()):
-            with i.open() as fp:
-                self[i] = fp.read()
+    def __lt__(self, other):
+        return self.docno < other.docno or self.start < other.start
 
-    def characters(self):
-        return sum(map(len, self.values()))
+    def __len__(self):
+        return self.end - self.start
 
-# http://stackoverflow.com/a/24602374
-#     def __init__(self, parser):
-#         super().__init__(parser.parse())
+    def tolist(self):
+        return [ self.docno, self.start, self.end ]
 
-###########################################################################
-
-class Strainer:
-    def strain(self, data):
-        return data
-
-class AlphaNumericStrainer(Strainer):
-    def __init__(self):
-        self.table = {}
-        for i in range(2 ** 8):
-            c = chr(i)
-            self.table[i] = c if c.isalnum() else ' '
-
-    def strain(self, data):
-        return normalize(data.translate(self.table))
-
-###########################################################################
-
-class Parser():
-    def __init__(self, strainer=None, file_list=sys.stdin):
-        self.strainer = Strainer() if strainer is None else strainer
-        self.file_list = file_list
+class Corpus:
+    def __init__(self, corpus):
+        items = self.associate(sorted(corpus.iterdir()))
+        self.corpus = collections.OrderedDict(items)
 
     def __iter__(self):
-        log = logger.getlogger(True)
-        
-        with Pool() as pool:
-            for i in self.file_list:
-                path = Path(i.strip())
-                log.info(str(path))
+        yield from self.corpus
 
-                try:
-                    relevant = self.extract(path)
-                except et.ParseError as e:
-                    msg = '{0}: line {1} col {2}'
-                    log.error(msg.format(str(path), *e.position))
-                    continue
-
-                for (docno, text) in pool.imap_unordered(self.func, relevant):
-                    yield (docno, self.strainer.strain(text))
-
-    def func(self, doc):
+    def associate(self, corpus):
         raise NotImplementedError()
 
-    def extract(self, path):
+class CompleteCorpus(Corpus):
+    def associate(self, corpus):
+        for i in corpus:
+            with i.open() as fp:
+                yield (i, fp.read())
+
+    def __len__(self):
+        return sum(map(len, self.corpus.values()))
+
+class CorpusStream(Corpus):
+    def __init__(self, corpus, block_size=1, skip=0, offset=0):
+        super().__init__(corpus)
+        self.block_size = block_size
+        self.skip = skip
+        self.offset = offset
+
+    def __iter__(self):
+        key = 0
+        segment = Deque(self.block_size, self.skip)
+
+        for i in self.stream():
+            segment.append(i)
+            if segment.full():
+                d = collections.OrderedDict()
+
+                for (name, order) in segment.visible():
+                    if name not in d:
+                        d[name] = []
+                    d[name].append(order)
+
+                for (name, value) in d.items():
+                    (start, stop) = [ x(value) for x in (min, max) ]
+                    character = Character(name, start, stop + 1)
+                    yield (key, character)
+
+                key += 1
+                self.slide(segment)
+
+    def associate(self, corpus):
+        yield from zip(corpus, itertools.repeat(None))
+
+    def stream(self):
+        offset = self.offset
+
+        for i in self.corpus:
+            length = i.stat().st_size
+            yield from zip(itertools.repeat(i), range(offset, length))
+            offset = max(0, offset - length - 1)
+
+    def slide(self, segment):
         raise NotImplementedError()
 
-class TestParser(Parser):
-    def func(self, doc):
-        with doc.open() as fp:
-            return (doc.name, fp.read())
+class CharacterCorpus(CorpusStream):
+    def slide(self, segment):
+        segment.clear()
 
-    def extract(self, path):
-        yield from [ path ]
-    
-class WSJParser(Parser):
-    def func(self, doc):
-        docno = doc.findall('DOCNO')
-        assert(len(docno) == 1)
-        docno = docno.pop().text.strip()
-
-        text = []
-        for i in [ 'LP', 'TEXT' ]:
-            for j in doc.findall(i):
-                text.append(j.text)
-        
-        return (docno, normalize(text, False))
-    
-    def extract(self, path):
-        xml = path.read_text().replace('&', ' ')
-
-        # overcome pooly formed XML (http://stackoverflow.com/a/23891895)
-        combos = itertools.chain('<root>', xml, '</root>')
-        root = et.fromstringlist(combos)
-        
-        yield from root.findall('DOC')
+class WindowCorpus(CorpusStream):
+    def slide(self, segment):
+        for _ in range(self.skip + 1):
+            segment.popleft()

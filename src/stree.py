@@ -5,25 +5,23 @@ from argparse import ArgumentParser
 import numpy as np
 
 from zrtlib import logger
-from zrtlib.corpus import Corpus
+from zrtlib.corpus import WindowCorpus
 from zrtlib.suffix import SuffixTree
-from zrtlib.tokenizer import WindowSequencer, Tokenizer
+from zrtlib.tokenizer import Tokenizer
 
-def func(corpus_directory, incoming, outgoing):
+def func(corpus, incoming, outgoing):
     log = logger.getlogger()
-
-    corpus = Corpus(corpus_directory)
 
     log.debug('ready')
     while True:
         job = incoming.get()
-        log.info(', '.join(map(str, job.values())))
+        log.info(','.join(map(str, job.values())))
 
-        sequencer = WindowSequencer(corpus=corpus, **job)
-        tokenizer = Tokenizer(sequencer)
+        stream = WindowCorpus(corpus=corpus, **job)
+        tokenizer = Tokenizer(stream)
 
         for (_, i) in tokenizer:
-            kwargs = { 'ngram': i.tostring(corpus), 'token': i }
+            kwargs = { 'ngram': str(i), 'token': i }
             outgoing.put(kwargs)
         outgoing.put(None)
 

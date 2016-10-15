@@ -6,7 +6,7 @@ from argparse import ArgumentParser
 import matplotlib.pyplot as plt
 from skimage.transform import rescale
 
-import zrtlib.dotplot as dp
+# import zrtlib.dotplot as dp
 
 arguments = ArgumentParser()
 arguments.add_argument('--mmap', type=Path)
