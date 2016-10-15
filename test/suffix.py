@@ -2,7 +2,7 @@ import random
 from itertools import islice
 from collections import Counter
 
-from zrtlib.suffix import SuffixTree
+from zrtlib.suffix import DebugSuffixTree as SuffixTree
 
 def randstr(length, constraint=1):
     assert(0 <= constraint <= 1)
