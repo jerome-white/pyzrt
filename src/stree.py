@@ -6,14 +6,14 @@ from argparse import ArgumentParser
 import numpy as np
 
 from zrtlib import logger
-from zrtlib.corpus import Corpus, WindowStreamer
+from zrtlib.corpus import CompleteCorpus, WindowStreamer
 from zrtlib.suffix import SuffixTree
 from zrtlib.tokenizer import Tokenizer
 
 def func(corpus_directory, incoming, outgoing):
     log = logger.getlogger()
 
-    corpus = Corpus(corpus_directory)
+    corpus = CompleteCorpus(corpus_directory)
 
     log.debug('ready')
     while True:
@@ -24,7 +24,8 @@ def func(corpus_directory, incoming, outgoing):
         tokenizer = Tokenizer(stream)
 
         for (_, i) in tokenizer:
-            outgoing.put((str(i), i))
+            ngram = i.tostring(corpus)
+            outgoing.put((ngram, i))
 
 log = logger.getlogger()
 
