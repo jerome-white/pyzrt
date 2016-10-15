@@ -15,7 +15,7 @@ class LogConfigure:
     logname = None # basename for clients
     
     def __new__(cls):
-        if not self.logname:
+        if not cls.logname:
             # log level
             level = logging.DEBUG
 
@@ -40,9 +40,9 @@ class LogConfigure:
 
             # configure!
             logging.basicConfig(level=level, format=msgfmt, datefmt=datefmt)
-            self.logname = '.'.join(map(str, [ platform.node(), os.getpid() ]))
+            cls.logname = '.'.join(map(str, [ platform.node(), os.getpid() ]))
             
-        return self.logname
+        return cls.logname
 
 def getlogger(root=False):
     elements = [ LogConfigure() ]
