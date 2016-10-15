@@ -1,3 +1,4 @@
+import pickle
 import multiprocessing as mp
 from pathlib import Path
 from argparse import ArgumentParser
@@ -29,6 +30,7 @@ log = logger.getlogger()
 
 arguments = ArgumentParser()
 arguments.add_argument('--corpus', type=Path)
+arguments.add_argument('--pickle', type=Path)
 arguments.add_argument('--min-gram', type=int, default=1)
 arguments.add_argument('--max-gram', type=int, default=np.inf)
 args = arguments.parse_args()
@@ -49,8 +51,8 @@ with mp.Pool(initializer=func, initargs=(args.corpus, outgoing, incoming, )):
         suffix.add(ngram, token, args.min_gram)
 log.info('>| end')
 
-log.info('> pickle')
-import pickle
-with open('/scratch/jsw7/zrt/wsj/suffix.pkl', 'wb') as fp:
-    pickle.dump(suffix, fp)
-log.info('< pickle')
+if args.pickle:
+    log.info('> pickle')
+    with open(args.pickle, 'wb') as fp:
+        pickle.dump(suffix, fp)
+    log.info('< pickle')
