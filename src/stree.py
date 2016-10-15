@@ -5,19 +5,21 @@ from argparse import ArgumentParser
 import numpy as np
 
 from zrtlib import logger
-from zrtlib.corpus import WindowCorpus
+from zrtlib.corpus import ShallowCorpus, WindowStreamer
 from zrtlib.suffix import SuffixTree
 from zrtlib.tokenizer import Tokenizer
 
-def func(corpus, incoming, outgoing):
+def func(corpus_directory, incoming, outgoing):
     log = logger.getlogger()
+
+    corpus = ShallowCorpus(corpus_directory)
 
     log.debug('ready')
     while True:
         (block_size, skip, offset) = incoming.get()
         log.info(','.join(map(str, [block_size, skip, offset])))
 
-        stream = WindowCorpus(corpus, block_size, skip, offset)
+        stream = WindowStreamer(corpus, block_size, skip, offset)
         tokenizer = Tokenizer(stream)
 
         for (_, i) in tokenizer:

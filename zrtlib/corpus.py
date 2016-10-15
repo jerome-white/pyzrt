@@ -30,16 +30,16 @@ class Character:
     def tolist(self):
         return [ self.docno, self.start, self.end ]
 
-class Corpus:
+class Corpus(collections.OrderedDict):
     def __init__(self, corpus):
-        items = self.associate(sorted(corpus.iterdir()))
-        self.corpus = collections.OrderedDict(items)
-
-    def __iter__(self):
-        yield from self.corpus
+        super().__init__(self.associate(sorted(corpus.iterdir())))
 
     def associate(self, corpus):
         raise NotImplementedError()
+
+class ShallowCorpus(Corpus):
+    def associate(self, corpus):
+        yield from zip(corpus, itertools.repeat(None))
 
 class CompleteCorpus(Corpus):
     def associate(self, corpus):
@@ -47,12 +47,12 @@ class CompleteCorpus(Corpus):
             with i.open() as fp:
                 yield (i, fp.read())
 
-    def __len__(self):
+    def characters(self):
         return sum(map(len, self.corpus.values()))
 
-class CorpusStream(Corpus):
+class CorpusStreamer:
     def __init__(self, corpus, block_size=1, skip=0, offset=0):
-        super().__init__(corpus)
+        self.corpus = corpus
         self.block_size = block_size
         self.skip = skip
         self.offset = offset
@@ -79,9 +79,6 @@ class CorpusStream(Corpus):
                 key += 1
                 self.slide(segment)
 
-    def associate(self, corpus):
-        yield from zip(corpus, itertools.repeat(None))
-
     def stream(self):
         offset = self.offset
 
@@ -93,11 +90,11 @@ class CorpusStream(Corpus):
     def slide(self, segment):
         raise NotImplementedError()
 
-class CharacterCorpus(CorpusStream):
+class CharacterStreamer(CorpusStreamer):
     def slide(self, segment):
         segment.clear()
 
-class WindowCorpus(CorpusStream):
+class WindowStreamer(CorpusStreamer):
     def slide(self, segment):
         for _ in range(self.skip + 1):
             segment.popleft()
