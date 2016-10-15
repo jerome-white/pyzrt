@@ -14,16 +14,14 @@ def func(corpus, incoming, outgoing):
 
     log.debug('ready')
     while True:
-        job = incoming.get()
-        log.info(','.join(map(str, job.values())))
+        (block_size, skip, offset) = incoming.get()
+        log.info(','.join(map(str, job)))
 
-        stream = WindowCorpus(corpus=corpus, **job)
+        stream = WindowCorpus(corpus, block_size, skip, offset)
         tokenizer = Tokenizer(stream)
 
         for (_, i) in tokenizer:
-            kwargs = { 'ngram': str(i), 'token': i }
-            outgoing.put(kwargs)
-        outgoing.put(None)
+            outgoing.put((str(i), i))
 
 log = logger.getlogger()
 
@@ -39,24 +37,14 @@ incoming = mp.Queue()
 
 log.info('>| begin')
 with mp.Pool(initializer=func, initargs=(args.corpus, outgoing, incoming, )):
-    suffix = SuffixTree()
-
     for i in range(args.min_gram, args.max_gram):
-        log.info('{0}-gram'.format(i))
-        outstanding = 0
-
         for j in range(workers):
-            kwargs = { 'block_size': i, 'offset': j, 'skip': workers }
-            outgoing.put(kwargs)
-            outstanding += 1
+            outgoing.put((i, workers, j))
 
-        while outstanding > 0:
-            result = incoming.get()
-            if result is None:
-                outstanding -= 1
-            else:
-                log.debug(result['ngram'])
-                suffix.add(root_key_length=args.min_gram, **result)
+    suffix = SuffixTree()
+    while not outgoing.empty():
+        (ngram, token) = incoming.get()
+        suffix.add(ngram, token, args.min_gram)
 log.info('>| end')
 
 log.info('> pickle')
