@@ -6,14 +6,14 @@ from argparse import ArgumentParser
 import numpy as np
 
 from zrtlib import logger
-from zrtlib.corpus import ShallowCorpus, WindowStreamer
+from zrtlib.corpus import Corpus, WindowStreamer
 from zrtlib.suffix import SuffixTree
 from zrtlib.tokenizer import Tokenizer
 
 def func(corpus_directory, incoming, outgoing):
     log = logger.getlogger()
 
-    corpus = ShallowCorpus(corpus_directory)
+    corpus = Corpus(corpus_directory)
 
     log.debug('ready')
     while True:

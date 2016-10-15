@@ -30,22 +30,18 @@ class Character:
     def tolist(self):
         return [ self.docno, self.start, self.end ]
 
-class Corpus(collections.OrderedDict):
+class Corpus(list):
     def __init__(self, corpus):
-        super().__init__(self.associate(sorted(corpus.iterdir())))
+        super().__init__(sorted(corpus.iterdir()))
 
-    def associate(self, corpus):
-        raise NotImplementedError()
-
-class ShallowCorpus(Corpus):
-    def associate(self, corpus):
-        yield from zip(corpus, itertools.repeat(None))
-
-class CompleteCorpus(Corpus):
-    def associate(self, corpus):
-        for i in corpus:
+class CompleteCorpus(collections.OrderedDict):
+    def __init__(self, corpus):
+        super().__init__()
+        
+        c = Corpus(c)
+        for i in c:
             with i.open() as fp:
-                yield (i, fp.read())
+                self[i] = fp.read()
 
     def characters(self):
         return sum(map(len, self.corpus.values()))
