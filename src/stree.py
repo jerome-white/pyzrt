@@ -55,6 +55,7 @@ with mp.Pool(initializer=func, initargs=(args.corpus, outgoing, incoming, )):
             if result is None:
                 outstanding -= 1
             else:
+                log.debug(result['ngram'])
                 suffix.add(root_key_length=args.min_gram, **result)
 log.info('>| end')
 
