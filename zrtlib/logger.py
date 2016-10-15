@@ -14,7 +14,7 @@ import platform
 class LogConfigure:
     logname = None # basename for clients
     
-    def __new__(self):
+    def __new__(cls):
         if not self.logname:
             # log level
             level = logging.DEBUG
