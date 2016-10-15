@@ -8,9 +8,9 @@ from collections import namedtuple
 from zrtlib import logger
 from zrtlib.post import Posting
 from zrtlib.ledger import Ledger
+from zrtlib.queues import JobQueue
 from zrtlib.corpus import Character, CompleteCorpus
 from zrtlib.dotplot import Dotplot
-from zrtlib.jobqueue import JobQueue
 from zrtlib.tokenizer import Tokenizer
 
 Job = namedtuple('Job', 'key, indices, weight, dp_args')

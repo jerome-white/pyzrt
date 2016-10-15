@@ -6,7 +6,7 @@ from argparse import ArgumentParser
 import numpy as np
 
 from zrtlib import logger
-from zrtlib.jobqueue import CountableQueue
+from zrtlib.queues import CountableQueue
 from zrtlib.corpus import Corpus, WindowStreamer
 from zrtlib.suffix import SuffixTree
 from zrtlib.tokenizer import Tokenizer
