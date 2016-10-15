@@ -36,7 +36,7 @@ arguments.add_argument('--max-gram', type=int, default=np.inf)
 args = arguments.parse_args()
 
 workers = mp.cpu_count()
-outgoing = mp.Queue()
+outgoing = mp.SimpleQueue()
 incoming = mp.Queue()
 
 log.info('>| begin')
