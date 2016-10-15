@@ -15,7 +15,7 @@ def func(corpus, incoming, outgoing):
     log.debug('ready')
     while True:
         (block_size, skip, offset) = incoming.get()
-        log.info(','.join(map(str, job)))
+        log.info(','.join(map(str, [block_size, skip, offset])))
 
         stream = WindowCorpus(corpus, block_size, skip, offset)
         tokenizer = Tokenizer(stream)
