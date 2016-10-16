@@ -11,12 +11,14 @@ from zrtlib.corpus import Corpus, WindowStreamer
 from zrtlib.suffix import SuffixTree
 from zrtlib.tokenizer import Tokenizer
 
-def func(corpus_directory, incoming, outgoing):
+def func(corpus_directory, incoming, outgoing, barrier):
     log = logger.getlogger()
 
     corpus = Corpus(corpus_directory)
 
     log.debug('ready')
+    
+    barrier.wait()
     while True:
         (block_size, skip, offset) = incoming.get()
         log.info(','.join(map(str, [block_size, skip, offset])))
@@ -38,19 +40,26 @@ arguments.add_argument('--min-gram', type=int, default=1)
 arguments.add_argument('--max-gram', type=int, default=np.inf)
 args = arguments.parse_args()
 
-workers = mp.cpu_count()
 outgoing = CountableQueue()
 incoming = mp.Queue()
+barrier = mp.Event()
+initargs=(args.corpus, outgoing, incoming, barrier, )
 
-log.info('>| setup')
-for i in range(args.min_gram, args.max_gram):
-    for j in range(workers):
-        outgoing.put((i, workers, j))
+log.info('>| begin')
+with mp.Pool(initializer=func, initargs=initargs):
+    workers = mp.cpu_count()
+    
+    log.info('+| setup')
+    for i in range(args.min_gram, args.max_gram):
+        for j in range(workers):
+            outgoing.put((i, workers, j))
 
-log.info('+| process')
-with mp.Pool(initializer=func, initargs=(args.corpus, outgoing, incoming, )):
+    log.info('+| process')            
     suffix = SuffixTree()
     while not outgoing.empty():
+        if barrier:
+            barrier.set()
+            barrier = None
         (ngram, token) = incoming.get()
         suffix.add(ngram, token, args.min_gram)
 
