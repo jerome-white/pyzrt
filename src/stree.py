@@ -6,15 +6,15 @@ from argparse import ArgumentParser
 import numpy as np
 
 from zrtlib import logger
-from zrtlib.queues import CountableQueue
-from zrtlib.corpus import Corpus, WindowStreamer
 from zrtlib.suffix import SuffixTree
+from zrtlib.queues import CountableQueue
+from zrtlib.corpus import CompleteCorpus, WindowStreamer
 from zrtlib.tokenizer import Tokenizer
 
 def func(corpus_directory, incoming, outgoing, barrier):
     log = logger.getlogger()
 
-    corpus = Corpus(corpus_directory)
+    corpus = CompleteCorpus(corpus_directory)
 
     log.debug('ready')
     
@@ -27,7 +27,8 @@ def func(corpus_directory, incoming, outgoing, barrier):
         tokenizer = Tokenizer(stream)
 
         for (_, i) in tokenizer:
-            outgoing.put((str(i), i))
+            ngram = i.tostring(corpus)
+            outgoing.put((ngram, i))
 
         incoming.task_done()
 
