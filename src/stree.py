@@ -21,7 +21,7 @@ def func(corpus_directory, incoming, outgoing, barrier):
     barrier.wait()
     while True:
         (block_size, skip, offset) = incoming.get()
-        log.info(','.join(map(str, [block_size, skip, offset])))
+        log.info(','.join(map(str, [ block_size, offset ])))
 
         stream = WindowStreamer(corpus, block_size, skip, offset)
         tokenizer = Tokenizer(stream)
