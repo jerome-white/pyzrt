@@ -66,7 +66,7 @@ with mp.Pool(initializer=func, initargs=initargs):
 
 if args.pickle:
     log.info('+ pickle')
-    with open(args.pickle, 'wb') as fp:
+    with args.pickle.open('wb') as fp:
         pickle.dump(suffix, fp)
     log.info('- pickle')
 log.info('<| complete')
