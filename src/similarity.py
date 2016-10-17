@@ -8,7 +8,7 @@ from collections import namedtuple
 from zrtlib import logger
 from zrtlib.post import Posting
 from zrtlib.ledger import Ledger
-from zrtlib.queues import JobQueue
+from zrtlib.queues import MarkerQueue
 from zrtlib.corpus import Character, CompleteCorpus
 from zrtlib.dotplot import Dotplot
 from zrtlib.tokenizer import Tokenizer
@@ -39,7 +39,7 @@ def func(queue):
         for (i, j) in combinations(job.indices, 2):
             dp.update(i, j, job.weight)
 
-        queue.task_done(job.key)
+        queue.mark_done(job.key)
 
 ###########################################################################
 
@@ -63,7 +63,7 @@ log = logger.getlogger(True)
 
 log.info('|> {0}/{1}'.format(args.node, args.total_nodes))
 with Ledger(args.ledger, args.node) as ledger:
-    queue = JobQueue(ledger)
+    queue = MarkerQueue(ledger)
     with mp.Pool(initializer=func, initargs=(queue, )):
         #
         #

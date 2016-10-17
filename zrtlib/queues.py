@@ -3,12 +3,12 @@ import ctypes
 import multiprocessing as mp
 from multiprocessing.queues import Queue, JoinableQueue
 
-class JobQueue(JoinableQueue):
+class MarkerQueue(JoinableQueue):
     def __init__(self, ledger):
         super().__init__(ctx=mp.get_context())
         self.ledger = ledger
 
-    def task_done(self, key):
+    def mark_done(self, key):
         self.ledger.record(key)
         super().task_done()
 
