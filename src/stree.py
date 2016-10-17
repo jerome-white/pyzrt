@@ -1,4 +1,3 @@
-import sys
 import queue
 import pickle
 import multiprocessing as mp
@@ -16,14 +15,11 @@ from zrtlib.tokenizer import Tokenizer
 
 def func(corpus_directory, incoming, outgoing):
     log = logger.getlogger()
-    
+
     corpus = CompleteCorpus(corpus_directory)
     log.debug('ready')
     while True:
-        try:
-            (block_size, skip, offset) = incoming.get()
-        except queue.Empty:
-            break
+        (block_size, skip, offset) = incoming.get()
         log.info(','.join(map(str, [ block_size, offset ])))
 
         stream = WindowStreamer(corpus, block_size, skip, offset)
@@ -32,9 +28,7 @@ def func(corpus_directory, incoming, outgoing):
         for (_, i) in tokenizer:
             ngram = i.tostring(corpus)
             outgoing.put((ngram, i))
-
         incoming.task_done()
-    log.debug('finished')
 
 log = logger.getlogger()
 
@@ -57,15 +51,14 @@ with mp.Pool(initializer=func, initargs=(args.corpus, outgoing, incoming, )):
         for j in range(workers):
             outgoing.put((i, workers, j))
 
-    log.info('+| process')
+    log.info('+| process {0}'.format(outgoing.qsize()))
     suffix = SuffixTree()
-    plogger = logger.PeriodicLogger(constants.minute * 15)
+    plogger = logger.PeriodicLogger(constants.minute * 10)
     while not outgoing.empty():
         outgoing.barrier.set()
         (ngram, token) = incoming.get()
+        plogger.emit('added ' + ngram)
         suffix.add(ngram, token, args.min_gram)
-
-        plogger.emit(sys.getsizeof(suffix))
 
 if args.pickle:
     log.info('+ pickle')
