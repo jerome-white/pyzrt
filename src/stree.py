@@ -14,7 +14,7 @@ from zrtlib.queues import ConsumptionQueue
 from zrtlib.corpus import CompleteCorpus, WindowStreamer
 from zrtlib.tokenizer import Tokenizer
 
-def func(corpus_directory, incoming, outgoing, barrier):
+def func(corpus_directory, incoming, outgoing):
     log = logger.getlogger()
     
     corpus = CompleteCorpus(corpus_directory)
