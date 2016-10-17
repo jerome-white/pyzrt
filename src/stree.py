@@ -6,22 +6,19 @@ from pathlib import Path
 from argparse import ArgumentParser
 
 import numpy as np
+from scipy import constants
 
 from zrtlib import logger
 from zrtlib.suffix import SuffixTree
-from zrtlib.queues import WorkQueue
+from zrtlib.queues import ConsumptionQueue
 from zrtlib.corpus import CompleteCorpus, WindowStreamer
 from zrtlib.tokenizer import Tokenizer
 
 def func(corpus_directory, incoming, outgoing, barrier):
     log = logger.getlogger()
-
-    log.debug('ready')
-    corpus = CompleteCorpus(corpus_directory)
-    log.debug('set')
     
-    barrier.wait()
-    log.debug('go')
+    corpus = CompleteCorpus(corpus_directory)
+    log.debug('ready')
     while True:
         try:
             (block_size, skip, offset) = incoming.get()
@@ -37,7 +34,6 @@ def func(corpus_directory, incoming, outgoing, barrier):
             outgoing.put((ngram, i))
 
         incoming.task_done()
-
     log.debug('finished')
 
 log = logger.getlogger()
@@ -49,13 +45,11 @@ arguments.add_argument('--min-gram', type=int, default=1)
 arguments.add_argument('--max-gram', type=int, default=np.inf)
 args = arguments.parse_args()
 
-outgoing = WorkQueue()
 incoming = mp.Queue()
-barrier = mp.Event()
-initargs=(args.corpus, outgoing, incoming, barrier, )
+outgoing = ConsumptionQueue()
 
 log.info('>| begin')
-with mp.Pool(initializer=func, initargs=initargs):
+with mp.Pool(initializer=func, initargs=(args.corpus, outgoing, incoming, )):
     workers = mp.cpu_count()
     
     log.info('+| setup')
@@ -65,11 +59,9 @@ with mp.Pool(initializer=func, initargs=initargs):
 
     log.info('+| process')
     suffix = SuffixTree()
-    plogger = logger.PeriodicLogger(900)
+    plogger = logger.PeriodicLogger(constants.minute * 15)
     while not outgoing.empty():
-        if barrier:
-            barrier.set()
-            barrier = None
+        outgoing.barrier.set()
         (ngram, token) = incoming.get()
         suffix.add(ngram, token, args.min_gram)
 

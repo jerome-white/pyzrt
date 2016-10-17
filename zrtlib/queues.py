@@ -12,10 +12,15 @@ class MarkerQueue(JoinableQueue):
         self.ledger.record(key)
         super().task_done()
 
-class WorkQueue(Queue):
+class ConsumptionQueue(Queue):
     def __init__(self):
         super().__init__(ctx=mp.get_context())
+        self.barrier = mp.Event()
         self.counter = mp.Value(ctypes.c_uint)
+
+    # def release(self):
+    #     self.barrier.set()
+    #     self.barrier = None
 
     def put(self, obj, block=True, timeout=None):
         with self.counter.get_lock():
@@ -23,6 +28,7 @@ class WorkQueue(Queue):
             self.counter.value += 1
 
     def get(self, block=True, timeout=None):
+        self.barrier.wait()
         with self.counter.get_lock():
             if self.counter.value > 0:
                 return super().get(block, timeout)
