@@ -27,14 +27,10 @@ class ConsumptionQueue(Queue):
         self.barrier.wait()
         return super().get(block, timeout)
 
-    def task_done(self):
-        with self.size.get_lock():
-            assert(self.size.value >= 0)
-            self.size.value -= 1
-
-    def empty(self):
-        with self.size.get_lock():
-            return self.size.value == 0
+    def release(self):
+        for _ in range(self.qsize()):
+            self.put(None)
+        self.barrier.set()
 
     def qsize(self):
         with self.size.get_lock():

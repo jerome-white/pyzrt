@@ -19,7 +19,10 @@ def func(corpus_directory, incoming, outgoing):
     corpus = CompleteCorpus(corpus_directory)
     log.debug('ready')
     while True:
-        (block_size, skip, offset) = incoming.get()
+        job = incoming.get()
+        if job is None:
+            break
+        (block_size, skip, offset) = job
         log.info(','.join(map(str, [ block_size, offset ])))
 
         stream = WindowStreamer(corpus, block_size, skip, offset)
@@ -28,8 +31,11 @@ def func(corpus_directory, incoming, outgoing):
         for (_, i) in tokenizer:
             ngram = i.tostring(corpus)
             outgoing.put((ngram, i))
-        incoming.task_done()
+        outgoing.put(None)
 
+#
+# Setup the variables
+#
 log = logger.getlogger()
 
 arguments = ArgumentParser()
@@ -42,24 +48,42 @@ args = arguments.parse_args()
 incoming = mp.Queue()
 outgoing = ConsumptionQueue()
 
+#
+# Work!
+#
 log.info('>| begin')
-with mp.Pool(initializer=func, initargs=(args.corpus, outgoing, incoming, )):
+with mp.Pool(initializer=func, initargs=(args.corpus, outgoing, incoming)):
     workers = mp.cpu_count()
-    
+
+    #
+    # Create the work queue
+    #
     log.info('+| setup')
     for i in range(args.min_gram, args.max_gram):
         for j in range(workers):
             outgoing.put((i, workers, j))
+    jobs = outgoing.qsize()
+    outgoing.release()
 
-    log.info('+| process {0}'.format(outgoing.qsize()))
+    #
+    # Use the results to build a suffix tree
+    #
+    log.info('+| process {0}'.format(jobs))
+    plogger = logger.PeriodicLogger(constants.minute * 5)
     suffix = SuffixTree()
-    plogger = logger.PeriodicLogger(constants.minute * 10)
-    while not outgoing.empty():
-        outgoing.barrier.set()
-        (ngram, token) = incoming.get()
-        plogger.emit('added ' + ngram)
-        suffix.add(ngram, token, args.min_gram)
 
+    while jobs > 0:
+        value = incoming.get()
+        if value is None:
+            jobs -= 1
+        else:
+            (ngram, token) = value
+            plogger.emit('added ' + ngram)
+            suffix.add(ngram, token, args.min_gram)
+
+#
+# Pickle if needed
+#
 if args.pickle:
     log.info('+ pickle')
     with args.pickle.open('wb') as fp:
