@@ -15,30 +15,27 @@ class MarkerQueue(JoinableQueue):
 class ConsumptionQueue(Queue):
     def __init__(self):
         super().__init__(ctx=mp.get_context())
+        self.size = mp.Value(ctypes.c_uint)
         self.barrier = mp.Event()
-        self.counter = mp.Value(ctypes.c_uint)
-
-    # def release(self):
-    #     self.barrier.set()
-    #     self.barrier = None
 
     def put(self, obj, block=True, timeout=None):
-        with self.counter.get_lock():
+        with self.size.get_lock():
             super().put(obj, block, timeout)
-            self.counter.value += 1
+            self.size.value += 1
 
     def get(self, block=True, timeout=None):
         self.barrier.wait()
-        with self.counter.get_lock():
-            if self.counter.value > 0:
-                return super().get(block, timeout)
-            raise queue.Empty
+        return super().get(block, timeout)
 
     def task_done(self):
-        with self.counter.get_lock():
-            assert(self.counter.value >= 0)
-            self.counter.value -= 1
+        with self.size.get_lock():
+            assert(self.size.value >= 0)
+            self.size.value -= 1
 
     def empty(self):
-        with self.counter.get_lock():
-            return self.counter.value == 0
+        with self.size.get_lock():
+            return self.size.value == 0
+
+    def qsize(self):
+        with self.size.get_lock():
+            return self.size.value
