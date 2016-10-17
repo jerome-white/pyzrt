@@ -1,3 +1,4 @@
+import queue
 import ctypes
 import multiprocessing as mp
 from multiprocessing.queues import Queue, JoinableQueue
@@ -11,7 +12,7 @@ class JobQueue(JoinableQueue):
         self.ledger.record(key)
         super().task_done()
 
-class CountableQueue(Queue):
+class WorkQueue(Queue):
     def __init__(self):
         super().__init__(ctx=mp.get_context())
         self.counter = mp.Value(ctypes.c_uint)
@@ -20,6 +21,12 @@ class CountableQueue(Queue):
         with self.counter.get_lock():
             super().put(obj, block, timeout)
             self.counter.value += 1
+
+    def get(self, block=True, timeout=None):
+        with self.counter.get_lock():
+            if self.counter.value > 0:
+                return super().get(block, timeout)
+            raise queue.Empty
 
     def task_done(self):
         with self.counter.get_lock():
