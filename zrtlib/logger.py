@@ -30,10 +30,10 @@ class LogConfigure:
             msgfmt = msgsep.join(msgfmt)
 
             # date format
-            mdy = [ 'Y', 'm', 'd' ]
+            mdy = [ 'm', 'd' ]
             hms = [ 'H', 'M', 'S' ]
             datesep_intra = ''
-            datesep_inter = ','
+            datesep_inter = '.'
 
             mdyhms = [ [ '%' + x for x in y ] for y in [mdy, hms] ]
             datefmt = datesep_inter.join(map(datesep_intra.join, mdyhms))
