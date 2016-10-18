@@ -17,13 +17,12 @@ class NGramDict(defaultdict):
         super().__setitem__(key, val)
 
     def integrity_check(self, key):
-        l = len(key)
-        
+        k = len(key)
         if self.key_length is None:
-            self.key_length = l
-        elif self.key_length != l:
+            self.key_length = k
+        elif self.key_length != k:
             msg = 'Invalid key length: attempted {0} ("{1}"), required {2}'
-            raise KeyError(msg.format(l, key, self.key_length))
+            raise KeyError(msg.format(k, key, self.key_length))
 
 class SuffixTree:
     def __init__(self):
@@ -34,10 +33,10 @@ class SuffixTree:
         (head, tail) = cut(ngram, root_key_length)
 
         suffix = self.suffixes[head]
-        if not tail:
-            suffix.tokens.append(token)
-        else:
+        if tail:
             suffix.add(tail, token)
+        else:
+            suffix.tokens.append(token)
 
     def get(self, ngram):
         (head, tail) = cut(ngram, self.suffixes.key_length)
