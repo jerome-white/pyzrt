@@ -8,16 +8,22 @@ class NGramDict(defaultdict):
         super().__init__(default_factory, *args)
         self.key_length = None
         
-    def __getitem__(self, key):
-        key_length = len(key)
+    def __missing__(self, key):
+        self.integrity_check(key)
+        return super().__missing__(key)
+
+    def __setitem__(self, key, val):
+        self.integrity_check(key)
+        super().__setitem__(key, val)
+
+    def integrity_check(self, key):
+        l = len(key)
         
         if self.key_length is None:
-            self.key_length = key_length
-        elif self.key_length != key_length:
+            self.key_length = l
+        elif self.key_length != l:
             msg = 'Invalid key length: attempted {0} ("{1}"), required {2}'
-            raise KeyError(msg.format(key_length, key, self.key_length))
-        
-        return super().__getitem__(key)
+            raise KeyError(msg.format(l, key, self.key_length))
 
 class SuffixTree:
     def __init__(self):
