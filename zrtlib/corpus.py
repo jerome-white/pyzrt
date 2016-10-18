@@ -30,6 +30,9 @@ class Character:
     def __str__(self):
         return ' '.join(map(str, self.tolist()))
 
+    def __repr__(self):
+        return str(self)
+
     def tolist(self):
         return [ self.docno, self.start, self.end ]
 
