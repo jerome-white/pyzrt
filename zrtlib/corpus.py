@@ -27,6 +27,9 @@ class Character:
     def __len__(self):
         return self.end - self.start
 
+    def __str__(self):
+        return ' '.join(map(str, self.tolist()))
+
     def tolist(self):
         return [ self.docno, self.start, self.end ]
 
