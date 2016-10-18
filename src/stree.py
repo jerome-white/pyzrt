@@ -3,6 +3,7 @@ import pickle
 import multiprocessing as mp
 from pathlib import Path
 from argparse import ArgumentParser
+from tempfile import NamedTemporaryFile
 
 import numpy as np
 from scipy import constants
@@ -19,10 +20,7 @@ def func(corpus_directory, incoming, outgoing):
     corpus = CompleteCorpus(corpus_directory)
     log.debug('ready')
     while True:
-        job = incoming.get()
-        if job is None:
-            break
-        (block_size, skip, offset) = job
+        (block_size, skip, offset) = incoming.get()
         log.info(','.join(map(str, [ block_size, offset ])))
 
         stream = WindowStreamer(corpus, block_size, skip, offset)
@@ -46,7 +44,7 @@ arguments.add_argument('--max-gram', type=int, default=np.inf)
 args = arguments.parse_args()
 
 incoming = mp.Queue()
-outgoing = ConsumptionQueue()
+outgoing = mp.Queue()
 
 #
 # Work!
@@ -54,39 +52,41 @@ outgoing = ConsumptionQueue()
 log.info('>| begin')
 with mp.Pool(initializer=func, initargs=(args.corpus, outgoing, incoming)):
     workers = mp.cpu_count()
+    suffix = SuffixTree()
 
     #
     # Create the work queue
     #
-    log.info('+| setup')
     for i in range(args.min_gram, args.max_gram):
+        log.info('+| setup {0}'.format(i))
+        jobs = 0
         for j in range(workers):
             outgoing.put((i, workers, j))
-    jobs = outgoing.qsize()
-    outgoing.release()
+            jobs += 1
 
-    #
-    # Use the results to build a suffix tree
-    #
-    log.info('+| process {0}'.format(jobs))
-    plogger = logger.PeriodicLogger(constants.minute * 5)
-    suffix = SuffixTree()
+        #
+        # Use the results to build a suffix tree
+        #
+        log.info('+| process {0}'.format(jobs))
+        plogger = logger.PeriodicLogger(constants.minute * 5)
+        while jobs > 0:
+            value = incoming.get()
+            if value is None:
+                jobs -= 1
+            else:
+                (ngram, token) = value
+                plogger.emit('added ' + ngram)
+                suffix.add(ngram, token, args.min_gram)
 
-    while jobs > 0:
-        value = incoming.get()
-        if value is None:
-            jobs -= 1
-        else:
-            (ngram, token) = value
-            plogger.emit('added ' + ngram)
-            suffix.add(ngram, token, args.min_gram)
-
-#
-# Pickle if needed
-#
-if args.pickle:
-    log.info('+ pickle')
-    with args.pickle.open('wb') as fp:
-        pickle.dump(suffix, fp)
-    log.info('- pickle')
+        #
+        # Pickle if needed
+        #
+        if args.pickle:
+            log.info('+ pickle')
+            d = str(args.pickle.parent)
+            with NamedTemporaryFile(mode='wb', dir=d, delete=False) as fp:
+                pickle.dump(suffix, fp)
+                tmp = Path(fp.name)
+            tmp.rename(args.pickle)
+            log.info('- pickle')
 log.info('<| complete')
