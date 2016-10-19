@@ -97,5 +97,5 @@ class CharacterStreamer(CorpusStreamer):
 
 class WindowStreamer(CorpusStreamer):
     def slide(self, segment):
-        for _ in range(self.skip + 1):
+        for _ in range(self.skip):
             segment.popleft()
