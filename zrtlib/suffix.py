@@ -83,3 +83,15 @@ class SuffixTree:
                 for i in tokens:
                     tok = token_factory(i)
                     self.add(ngram, tok, min_key)
+
+    def prune(self, frequency, relation=op.le):
+        if relation(len(self.tokens), frequency):
+            self.tokens.clear()
+
+        notok = []
+        for (i, j) in self.suffixes.items():
+            j.prune(frequency, relation)
+            if not j.tokens:
+                notok.append(i)
+        for i in notok:
+            del self.suffixes[i]
