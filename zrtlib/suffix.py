@@ -1,3 +1,6 @@
+import csv
+import operator as op
+import itertools
 from collections import defaultdict
 
 def cut(word, pos=1):
@@ -64,8 +67,19 @@ class SuffixTree:
         for (i, j) in self.suffixes.items():
             yield from j.each(ngram + i)
 
-class DebugSuffixTree(SuffixTree):
-    def dump(self, ngram='', level=0):
-        print('-' * level, ngram, ' : ', self.tokens, sep='')
-        for (i, j) in self.suffixes.items():
-            j.dump(ngram + i, level + 1)
+    def write(self, path):
+        with path.open('w') as fp:
+            writer = csv.writer(fp)
+            for (i, j) in self.each():
+                writer.writerow([ i ] + [ repr(x) for x in j ])
+
+    def read(self, path, token_factory):
+        with path.open() as fp:
+            reader = csv.reader(fp)
+            min_key = min(map(len, map(op.itemgetter(0), reader)))
+
+            fp.seek(0)
+            for (ngram, *tokens) in reader:
+                for i in tokens:
+                    tok = token_factory(i)
+                    self.add(ngram, tok, min_key)
