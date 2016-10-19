@@ -38,6 +38,7 @@ arguments = ArgumentParser()
 arguments.add_argument('--corpus', type=Path)
 arguments.add_argument('--output', type=Path)
 arguments.add_argument('--existing', type=Path)
+arguments.add_argument('--prune', type=int, default=0)
 arguments.add_argument('--min-gram', type=int, default=1)
 arguments.add_argument('--max-gram', type=int, default=np.inf)
 arguments.add_argument('--incremental', action='store_true')
@@ -83,6 +84,9 @@ with mp.Pool(initializer=func, initargs=(args.corpus, outgoing, incoming)):
                 (ngram, token) = value
                 plogger.emit('added ' + ngram)
                 suffix.add(ngram, token, args.min_gram)
+
+        if args.prune > 0:
+            suffix.prune(args.prune)
 
         #
         # Dump if needed
