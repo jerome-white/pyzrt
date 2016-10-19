@@ -1,3 +1,5 @@
+from zrtlib import zutils
+
 class Token(list):
     '''
     A collection of Characters
@@ -5,6 +7,9 @@ class Token(list):
     def __int__(self):
         return sum(map(len, self))
 
+    def __repr__(self):
+        return ' '.join(map(str, self))
+    
     def __str__(self):
         def transcribe(char):
             with char.docno.open() as fp:
@@ -42,3 +47,18 @@ class Tokenizer:
         # since the last line of the file doesn't get included
         if token:
             yield (previous, token)
+
+def unstream(string, ch_attrs=3):
+    i = 0
+    t = Token()
+
+    while True:
+        s = string[i:ch_attrs]
+        if not s:
+            break
+        character = Character(*zutils.pmap(int, s, 1))
+        t.append(character)
+
+        i += ch_attrs
+
+    return t
