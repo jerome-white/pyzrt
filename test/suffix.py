@@ -6,7 +6,7 @@ from itertools import islice
 from collections import Counter
 
 from zrtlib.suffix import SuffixTree
-# from zrtlib.suffix import DebugSuffixTree as SuffixTree
+from zrtlib.tokenizer import unstream
 
 ROWS_ = 70
 
@@ -25,15 +25,15 @@ def fmtkey(key):
 
 arguments = ArgumentParser()
 arguments.add_argument('--existing', type=Path)
+arguments.add_argument('--output', type=Path)
 args = arguments.parse_args()
 
 c = Counter()
-if args.existing:
-    with args.existing.open('rb') as fp:
-        s = pickle.load(fp)
-else:
-    s = SuffixTree()
+s = SuffixTree()
 
+if args.existing:
+    s.read(args.existing, unstream)
+else:
     for i in range(4, 6):
         for _ in range(10 ** 2):
             key = randstr(i)
@@ -44,17 +44,18 @@ else:
 # for i in sorted(c):
 #     print(i, c[i])
 
-# s.dump()
-
-print('.' * ROWS_)
-for (i, j) in s.each():
-    print(fmtkey(i), j)
+# print('.' * ROWS_)
+# for (i, j) in s.each():
+#     print(fmtkey(i), j)
 
 # print('.' * ROWS_)
 # for (i, j) in c.items():
 #     print(i, j, list(s.get(i)))
 
-for i in range(3, 7):
-    print(i, '.' * ROWS_)
-    for j in s.ngrams(i):
-        print(fmtkey(j), list(s.get(j)))
+# for i in range(3, 7):
+#     print(i, '.' * ROWS_)
+#     for j in s.ngrams(i):
+#         print(fmtkey(j), list(s.get(j)))
+
+if args.output:
+    s.write(args.output)
