@@ -1,17 +1,20 @@
 import queue
+import operator as op
 import multiprocessing as mp
 from pathlib import Path
 from argparse import ArgumentParser
 from tempfile import NamedTemporaryFile
+from collections import Counter
 
 import numpy as np
 from scipy import constants
 
+from zrtlib import zutils
 from zrtlib import logger
 from zrtlib.suffix import SuffixTree
 from zrtlib.queues import ConsumptionQueue
 from zrtlib.corpus import CompleteCorpus, WindowStreamer
-from zrtlib.tokenizer import Tokenizer
+from zrtlib.tokenizer import Tokenizer, unstream
 
 def func(corpus_directory, incoming, outgoing):
     log = logger.getlogger()
@@ -38,9 +41,10 @@ log = logger.getlogger()
 arguments = ArgumentParser()
 arguments.add_argument('--corpus', type=Path)
 arguments.add_argument('--output', type=Path)
-arguments.add_argument('--incremental', action='store_true')
+arguments.add_argument('--existing', type=Path)
 arguments.add_argument('--min-gram', type=int, default=1)
 arguments.add_argument('--max-gram', type=int, default=np.inf)
+arguments.add_argument('--incremental', action='store_true')
 args = arguments.parse_args()
 
 incoming = mp.Queue()
@@ -52,7 +56,13 @@ outgoing = mp.Queue()
 log.info('>| begin')
 with mp.Pool(initializer=func, initargs=(args.corpus, outgoing, incoming)):
     workers = mp.cpu_count()
+
     suffix = SuffixTree()
+    if args.existing:
+        log.info('+ existing')
+        suffix.read(args.existing, unstream)
+        args.min_gram = zutils.minval(suffix.each()) + 1
+        log.info('- existing {0}'.format(len(c)))
 
     #
     # Create the work queue

@@ -3,6 +3,8 @@ import operator as op
 import itertools
 from collections import defaultdict
 
+from zrtlib import zutils
+
 def cut(word, pos=1):
     return (word[0:pos], word[pos:])
 
@@ -76,7 +78,7 @@ class SuffixTree:
     def read(self, path, token_factory):
         with path.open() as fp:
             reader = csv.reader(fp)
-            min_key = min(map(len, map(op.itemgetter(0), reader)))
+            min_key = zutils.minval(reader)
 
             fp.seek(0)
             for (ngram, *tokens) in reader:
