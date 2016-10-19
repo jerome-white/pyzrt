@@ -1,10 +1,7 @@
-import queue
-import operator as op
 import multiprocessing as mp
 from pathlib import Path
 from argparse import ArgumentParser
-from tempfile import NamedTemporaryFile
-from collections import Counter
+# from tempfile import NamedTemporaryFile
 
 import numpy as np
 from scipy import constants
@@ -12,7 +9,6 @@ from scipy import constants
 from zrtlib import zutils
 from zrtlib import logger
 from zrtlib.suffix import SuffixTree
-from zrtlib.queues import ConsumptionQueue
 from zrtlib.corpus import CompleteCorpus, WindowStreamer
 from zrtlib.tokenizer import Tokenizer, unstream
 
@@ -62,7 +58,7 @@ with mp.Pool(initializer=func, initargs=(args.corpus, outgoing, incoming)):
         log.info('+ existing')
         suffix.read(args.existing, unstream)
         args.min_gram = zutils.minval(suffix.each()) + 1
-        log.info('- existing {0}'.format(len(c)))
+        log.info('- existing ({0})'.format(args.min_gram))
 
     #
     # Create the work queue

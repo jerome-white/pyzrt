@@ -1,6 +1,5 @@
 import csv
 import operator as op
-import itertools
 from collections import defaultdict
 
 from zrtlib import zutils
