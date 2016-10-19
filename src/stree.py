@@ -57,7 +57,7 @@ with mp.Pool(initializer=func, initargs=(args.corpus, outgoing, incoming)):
     #
     # Create the work queue
     #
-    for i in range(args.min_gram, args.max_gram):
+    for i in range(args.min_gram, args.max_gram + 1):
         log.info('+| setup {0}'.format(i))
         jobs = 0
         for j in range(workers):
