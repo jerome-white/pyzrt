@@ -1,4 +1,6 @@
-from zrtlib import zutils
+from pathlib import Path
+
+from zrtlib.corpus import Character
 
 class Token(list):
     '''
@@ -49,16 +51,15 @@ class Tokenizer:
             yield (previous, token)
 
 def unstream(string, ch_attrs=3):
-    i = 0
-    t = Token()
+    line = []
+    token = Token()
 
-    while True:
-        s = string[i:ch_attrs]
-        if not s:
-            break
-        character = Character(*zutils.pmap(int, s, 1))
-        t.append(character)
+    for i in string.split():
+        line.append(i)
+        if len(line) == ch_attrs:
+            docno = Path(line[0])
+            character = Character(docno, *map(int, line[1:]))
+            token.append(character)
+            line = []
 
-        i += ch_attrs
-
-    return t
+    return token
