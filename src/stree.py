@@ -1,5 +1,4 @@
 import queue
-import pickle
 import multiprocessing as mp
 from pathlib import Path
 from argparse import ArgumentParser
@@ -38,7 +37,8 @@ log = logger.getlogger()
 
 arguments = ArgumentParser()
 arguments.add_argument('--corpus', type=Path)
-arguments.add_argument('--pickle', type=Path)
+arguments.add_argument('--output', type=Path)
+arguments.add_argument('--incremental', action='store_true')
 arguments.add_argument('--min-gram', type=int, default=1)
 arguments.add_argument('--max-gram', type=int, default=np.inf)
 args = arguments.parse_args()
@@ -79,14 +79,10 @@ with mp.Pool(initializer=func, initargs=(args.corpus, outgoing, incoming)):
                 suffix.add(ngram, token, args.min_gram)
 
         #
-        # Pickle if needed
+        # Dump if needed
         #
-        if args.pickle:
-            log.info('+ pickle')
-            d = str(args.pickle.parent)
-            with NamedTemporaryFile(mode='wb', dir=d, delete=False) as fp:
-                pickle.dump(suffix, fp)
-                tmp = Path(fp.name)
-            tmp.rename(args.pickle)
-            log.info('- pickle')
+        if args.output and (args.incremental or i == args.max_gram):
+            log.info('+ output')
+            suffix.write(args.output)
+            log.info('- output')
 log.info('<| complete')
