@@ -50,10 +50,10 @@ class SuffixTree:
 
     def ngrams(self, length):
         for (i, j) in self.suffixes.items():
-            if length == self.suffixes.key_length:
-                if j.tokens:
-                    yield i
-            else:
+            correct_level = length == self.suffixes.key_length
+            if correct_level and j.tokens:
+                yield i
+            elif not correct_level:
                 for k in j.ngrams(length - self.suffixes.key_length):
                     yield i + k
 
