@@ -1,7 +1,7 @@
 import multiprocessing as mp
 from pathlib import Path
 from argparse import ArgumentParser
-# from tempfile import NamedTemporaryFile
+from tempfile import NamedTemporaryFile
 
 import numpy as np
 from scipy import constants
@@ -40,7 +40,7 @@ arguments.add_argument('--output', type=Path)
 arguments.add_argument('--existing', type=Path)
 arguments.add_argument('--prune', type=int, default=0)
 arguments.add_argument('--min-gram', type=int, default=1)
-arguments.add_argument('--max-gram', type=int, default=np.inf)
+arguments.add_argument('--max-gram', type=int)
 arguments.add_argument('--incremental', action='store_true')
 args = arguments.parse_args()
 
@@ -53,6 +53,7 @@ outgoing = mp.Queue()
 log.info('>| begin')
 with mp.Pool(initializer=func, initargs=(args.corpus, outgoing, incoming)):
     workers = mp.cpu_count()
+    increments = []
 
     suffix = SuffixTree()
     if args.existing:
@@ -64,7 +65,7 @@ with mp.Pool(initializer=func, initargs=(args.corpus, outgoing, incoming)):
     #
     # Create the work queue
     #
-    for i in range(args.min_gram, args.max_gram + 1):
+    for i in zutils.count(args.min_gram, args.max_gram):
         log.info('+| setup {0}'.format(i))
         jobs = 0
         for j in range(workers):
@@ -82,8 +83,8 @@ with mp.Pool(initializer=func, initargs=(args.corpus, outgoing, incoming)):
                 jobs -= 1
             else:
                 (ngram, token) = value
-                plogger.emit('added ' + ngram)
                 suffix.add(ngram, token, args.min_gram)
+                plogger.emit('added ' + ngram)
 
         if args.prune > 0:
             suffix.prune(args.prune)
@@ -91,8 +92,27 @@ with mp.Pool(initializer=func, initargs=(args.corpus, outgoing, incoming)):
         #
         # Dump if needed
         #
-        if args.output and (args.incremental or i == args.max_gram):
-            log.info('+ output')
-            suffix.write(args.output)
-            log.info('- output')
+        if args.incremental:
+            sfx = '.' + str(i)
+            with NamedTemporaryFile(mode='w', suffix=sfx, delete=False) as fp:
+                suffix.write(fp)
+                increments.append(Path(fp.name))
+                log.info('+ incremental {0}'.format(fp.name))
+
+#
+# Save the output
+#
+if args.output:
+    if increments:
+        latest = increments.pop()
+        latest.rename(args.output)
+    else:
+        log.info('+ output')
+        with args.output.open('w') as fp:
+            suffix.write(fp)
+        log.info('- output')
+
+for i in increments:
+    i.unlink()
+
 log.info('<| complete')
