@@ -68,22 +68,20 @@ class SuffixTree:
         for (i, j) in self.suffixes.items():
             yield from j.each(ngram + i)
 
-    def write(self, path):
-        with path.open('w') as fp:
-            writer = csv.writer(fp)
-            for (i, j) in self.each():
-                writer.writerow([ i ] + [ repr(x) for x in j ])
+    def write(self, fp):
+        writer = csv.writer(fp)
+        for (i, j) in self.each():
+            writer.writerow([ i ] + [ repr(x) for x in j ])
 
-    def read(self, path, token_factory):
-        with path.open() as fp:
-            reader = csv.reader(fp)
-            min_key = zutils.minval(reader)
+    def read(self, fp, token_factory):
+        reader = csv.reader(fp)
+        min_key = zutils.minval(reader)
 
-            fp.seek(0)
-            for (ngram, *tokens) in reader:
-                for i in tokens:
-                    tok = token_factory(i)
-                    self.add(ngram, tok, min_key)
+        fp.seek(0)
+        for (ngram, *tokens) in reader:
+            for i in tokens:
+                tok = token_factory(i)
+                self.add(ngram, tok, min_key)
 
     def prune(self, frequency, relation=op.le):
         if relation(len(self.tokens), frequency):
