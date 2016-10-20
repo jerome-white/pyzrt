@@ -45,9 +45,9 @@ else:
 # for i in sorted(c):
 #     print(i, c[i])
 
-print('.' * ROWS_)
-for (i, j) in s.each():
-    print(fmtkey(i), j)
+# print('.' * ROWS_)
+# for (i, j) in s.each():
+#     print(fmtkey(i), j)
 
 # print('.' * ROWS_)
 # for (i, j) in c.items():
@@ -58,12 +58,12 @@ for (i, j) in s.each():
 #     for j in s.ngrams(i):
 #         print(fmtkey(j), list(s.get(j)))
 
-if args.output:
-    with args.output.open() as fp:
-        s.write(fp)
+# if args.output:
+#     with args.output.open() as fp:
+#         s.write(fp)
 
-s.prune(1)
+print(s.prune(1))
 
-print('.' * ROWS_)
-for (i, j) in s.each():
-    print(fmtkey(i), j)
+# print('.' * ROWS_)
+# for (i, j) in s.each():
+#     print(fmtkey(i), j)

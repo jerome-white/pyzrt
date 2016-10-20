@@ -3,7 +3,6 @@ from pathlib import Path
 from argparse import ArgumentParser
 from tempfile import NamedTemporaryFile
 
-import numpy as np
 from scipy import constants
 
 from zrtlib import zutils
@@ -54,6 +53,7 @@ log.info('>| begin')
 with mp.Pool(initializer=func, initargs=(args.corpus, outgoing, incoming)):
     workers = mp.cpu_count()
     increments = []
+    plogger = logger.PeriodicLogger(constants.minute * 5)
 
     suffix = SuffixTree()
     if args.existing:
@@ -66,7 +66,7 @@ with mp.Pool(initializer=func, initargs=(args.corpus, outgoing, incoming)):
     # Create the work queue
     #
     for i in zutils.count(args.min_gram, args.max_gram):
-        log.info('+| setup {0}'.format(i))
+        log.info('setup {0}'.format(i))
         jobs = 0
         for j in range(workers):
             outgoing.put((i, workers, j))
@@ -75,8 +75,7 @@ with mp.Pool(initializer=func, initargs=(args.corpus, outgoing, incoming)):
         #
         # Use the results to build a suffix tree
         #
-        log.info('+| process {0}'.format(jobs))
-        plogger = logger.PeriodicLogger(constants.minute * 5)
+        log.info('process {0}'.format(jobs))
         while jobs > 0:
             value = incoming.get()
             if value is None:
@@ -84,10 +83,11 @@ with mp.Pool(initializer=func, initargs=(args.corpus, outgoing, incoming)):
             else:
                 (ngram, token) = value
                 suffix.add(ngram, token, args.min_gram)
-                plogger.emit('added ' + ngram)
+                plogger.emit('+{0}|{1}|'.format(len(ngram), ngram))
 
         if args.prune > 0:
-            suffix.prune(args.prune)
+            pruned = suffix.prune(args.prune)
+            log.info('pruned {0}'.format(pruned))
 
         #
         # Dump if needed
@@ -97,7 +97,7 @@ with mp.Pool(initializer=func, initargs=(args.corpus, outgoing, incoming)):
             with NamedTemporaryFile(mode='w', suffix=sfx, delete=False) as fp:
                 suffix.write(fp)
                 increments.append(Path(fp.name))
-                log.info('+ incremental {0}'.format(fp.name))
+                log.info('incremental {0}'.format(fp.name))
 
 #
 # Save the output
