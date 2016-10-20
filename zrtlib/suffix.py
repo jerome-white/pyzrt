@@ -87,9 +87,15 @@ class SuffixTree:
             self.tokens.clear()
 
         notok = []
+        removed = 0
+
         for (i, j) in self.suffixes.items():
-            j.prune(frequency, relation)
+            removed += j.prune(frequency, relation)
             if not j.tokens:
                 notok.append(i)
+
         for i in notok:
             del self.suffixes[i]
+            removed += 1
+
+        return removed
