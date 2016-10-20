@@ -79,9 +79,8 @@ class SuffixTree:
 
         fp.seek(0)
         for (ngram, *tokens) in reader:
-            for i in tokens:
-                tok = token_factory(i)
-                self.add(ngram, tok, min_key)
+            for i in map(token_factory, tokens):
+                self.add(ngram, i, min_key)
 
     def prune(self, frequency, relation=op.le):
         if relation(len(self.tokens), frequency):
