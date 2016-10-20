@@ -32,7 +32,8 @@ c = Counter()
 s = SuffixTree()
 
 if args.existing:
-    s.read(args.existing, unstream)
+    with args.existing.open() as fp:
+        s.read(fp, unstream)
 else:
     for i in range(4, 6):
         for _ in range(10 ** 2):
@@ -57,8 +58,9 @@ for (i, j) in s.each():
 #     for j in s.ngrams(i):
 #         print(fmtkey(j), list(s.get(j)))
 
-# if args.output:
-#     s.write(args.output)
+if args.output:
+    with args.output.open() as fp:
+        s.write(fp)
 
 s.prune(1)
 
