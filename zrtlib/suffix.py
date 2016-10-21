@@ -106,7 +106,7 @@ class SuffixTree:
     # n-grams.
     #
     def compress(self):
-        for i in self.suffix.values():
+        for i in self.suffixes.values():
             if self.tokens and tokenizer.subset(self.tokens, i.tokens):
                 self.tokens.clear()
             i.compress()
@@ -116,7 +116,7 @@ class SuffixTree:
     # the chain (n-grams with the same prefix).
     #
     def exists(self, tokens):
-        for i in self.suffix.values():
+        for i in self.suffixes.values():
             if tokenizer.subset(tokens, i.tokens) or i.exists(tokens):
                 return True
 
@@ -126,7 +126,7 @@ class SuffixTree:
         if self.tokens and self.exists(self.tokens):
             self.tokens.clear()
 
-        for j in self.suffix.values():
+        for j in self.suffixes.values():
             j.collapse()
 
     #
