@@ -24,6 +24,9 @@ class Character:
     def __lt__(self, other):
         return self.docno < other.docno or self.start < other.start
 
+    def __gt__(self, other):
+        return self.docno > other.docno or self.end > other.end
+
     def __len__(self):
         return self.end - self.start
 
