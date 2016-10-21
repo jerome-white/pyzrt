@@ -99,3 +99,23 @@ class SuffixTree:
             removed += 1
 
         return removed
+
+    def compress(self):
+        for i in self.suffix.values():
+            if self.tokens and self.tokens.issubset(i.tokens):
+                self.tokens.clear()
+            i.compress()
+
+    def exists(self, tokens):
+        for i in self.suffix.values():
+            if tokens.issubset(i.tokens) or i.exists(tokens):
+                return True
+
+        return False
+
+    def collapse(self):
+        if self.tokens and self.exists(self.tokens):
+            self.tokens.clear()
+
+        for j in self.suffix.values():
+            j.collapse()
