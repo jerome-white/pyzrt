@@ -3,6 +3,7 @@ import operator as op
 import collections
 
 from zrtlib import zutils
+from zrtlib import tokenizer
 
 class NGramDict(collections.defaultdict):
     def __init__(self, default_factory, *args):
@@ -106,7 +107,7 @@ class SuffixTree:
     #
     def compress(self):
         for i in self.suffix.values():
-            if self.tokens and self.tokens.issubset(i.tokens):
+            if self.tokens and tokenizer.subset(self.tokens, i.tokens):
                 self.tokens.clear()
             i.compress()
 
@@ -116,7 +117,7 @@ class SuffixTree:
     #
     def exists(self, tokens):
         for i in self.suffix.values():
-            if tokens.issubset(i.tokens) or i.exists(tokens):
+            if tokenizer.subset(tokens, i.tokens) or i.exists(tokens):
                 return True
 
         return False
@@ -133,15 +134,17 @@ class SuffixTree:
     # in the tree (no-prefix condition).
     #
     def fold(self):
-        c = collections.Counter(map(len, self.each()))
+        c = collections.Counter([ len(x) for (x, _) in self.each() ])
+        if len(c) < 2:
+            return
         (x, y) = [ x(c.keys()) for x in (min, max) ]
 
         for i in range(y, x, -1):
             for j in self.ngrams(i):
-                larger = self.lookup(j)
-                for k in zrutils.substrings(j):
-                    smaller = self.lookup(k)
-                    if smaller and smaller.tokens.issubset(larger.tokens):
-                        smaller.tokens.clear()
+                sr = self.lookup(j)
+                for k in zutils.substrings(j):
+                    jr = self.lookup(k)
+                    if jr and tokenizer.subset(jr.tokens, sr.tokens):
+                        jr.tokens.clear()
 
         self.prune()
