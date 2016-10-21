@@ -1,13 +1,10 @@
 import csv
 import operator as op
-from collections import defaultdict
+import collections
 
 from zrtlib import zutils
 
-def cut(word, pos=1):
-    return (word[0:pos], word[pos:])
-
-class NGramDict(defaultdict):
+class NGramDict(collections.defaultdict):
     def __init__(self, default_factory, *args):
         super().__init__(default_factory, *args)
         self.key_length = None
@@ -34,7 +31,7 @@ class SuffixTree:
         self.suffixes = NGramDict(type(self))
 
     def add(self, ngram, token, root_key_length=1):
-        (head, tail) = cut(ngram, root_key_length)
+        (head, tail) = zutils.cut(ngram, root_key_length)
 
         suffix = self.suffixes[head]
         if tail:
@@ -43,7 +40,7 @@ class SuffixTree:
             suffix.tokens.add(token)
 
     def lookup(self, ngram):
-        (head, tail) = cut(ngram, self.suffixes.key_length)
+        (head, tail) = zutils.cut(ngram, self.suffixes.key_length)
 
         if head in self.suffixes:
             suffix = self.suffixes[head]
@@ -84,30 +81,39 @@ class SuffixTree:
             for i in map(token_factory, tokens):
                 self.add(ngram, i, min_key)
 
-    def prune(self, frequency, relation=op.le):
+    def prune(self, frequency=0, relation=op.le):
         if relation(len(self.tokens), frequency):
             self.tokens.clear()
 
         notok = []
-        removed = 0
+        remaining = len(self.tokens)
 
         for (i, j) in self.suffixes.items():
-            removed += j.prune(frequency, relation)
-            if not j.tokens:
+            pruned = j.prune(frequency, relation)
+            if pruned > 0:
+                remaining += pruned
+            elif not j.tokens:
                 notok.append(i)
 
         for i in notok:
             del self.suffixes[i]
-            removed += 1
 
-        return removed
+        return remaining
 
+    #
+    # Remove n-grams whose locations are subsets of immediate larger
+    # n-grams.
+    #
     def compress(self):
         for i in self.suffix.values():
             if self.tokens and self.tokens.issubset(i.tokens):
                 self.tokens.clear()
             i.compress()
 
+    #
+    # Remove n-grams whose locations are subsets of larger n-grams in
+    # the chain (n-grams with the same prefix).
+    #
     def exists(self, tokens):
         for i in self.suffix.values():
             if tokens.issubset(i.tokens) or i.exists(tokens):
@@ -121,3 +127,21 @@ class SuffixTree:
 
         for j in self.suffix.values():
             j.collapse()
+
+    #
+    # Remove n-grams whose location is subsumed by any other n-gram
+    # in the tree (no-prefix condition).
+    #
+    def fold(self):
+        c = collections.Counter(map(len, self.each()))
+        (x, y) = [ x(c.keys()) for x in (min, max) ]
+
+        for i in range(y, x, -1):
+            for j in self.ngrams(i):
+                larger = self.lookup(j)
+                for k in zrutils.substrings(j):
+                    smaller = self.lookup(k)
+                    if smaller and smaller.tokens.issubset(larger.tokens):
+                        smaller.tokens.clear()
+
+        self.prune()
