@@ -1,3 +1,4 @@
+import operator as op
 from pathlib import Path
 
 from zrtlib.corpus import Character
@@ -29,6 +30,16 @@ class Token(tuple):
 
     def collect(self, transcribe):
         return ''.join(map(transcribe, self))
+
+    def between(self, other):
+        compare = lambda x, y, z: z(x, y) or not (z(x, y) or z(y, x))
+
+        for (i, j) in zip((0, -1), (op.lt, op.gt)):
+            (x, y) = map(op.itemgetter(i), (self, other))
+            if not compare(y, x, j):
+                return False
+
+        return True
 
 class Tokenizer:
     def __init__(self, stream):
@@ -63,3 +74,11 @@ def unstream(string, sep=' ', ch_attrs=3):
             line = []
 
     return Token(token)
+
+def subset(t1, t2):
+    for i in t1:
+        for j in t2:
+            if not i.between(j):
+                return False
+
+    return True
