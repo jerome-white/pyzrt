@@ -30,7 +30,7 @@ class NGramDict(defaultdict):
 
 class SuffixTree:
     def __init__(self):
-        self.tokens = []
+        self.tokens = set()
         self.suffixes = NGramDict(type(self))
 
     def add(self, ngram, token, root_key_length=1):
@@ -40,7 +40,7 @@ class SuffixTree:
         if tail:
             suffix.add(tail, token)
         else:
-            suffix.tokens.append(token)
+            suffix.tokens.add(token)
 
     def get(self, ngram):
         (head, tail) = cut(ngram, self.suffixes.key_length)

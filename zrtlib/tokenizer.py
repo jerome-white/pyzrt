@@ -2,7 +2,7 @@ from pathlib import Path
 
 from zrtlib.corpus import Character
 
-class Token(list):
+class Token(tuple):
     '''
     A collection of Characters
     '''
@@ -35,31 +35,31 @@ class Tokenizer:
         self.stream = stream
     
     def __iter__(self):
-        token = Token()
+        token = []
         previous = None
         
         for (current, character) in self.stream:
             if previous is not None and previous != current:
-                yield (previous, token)
-                token = Token()
+                yield (previous, Token(token))
+                token = []
 
             token.append(character)
             previous = current
             
         # since the last line of the file doesn't get included
         if token:
-            yield (previous, token)
+            yield (previous, Token(token))
 
-def unstream(string, ch_attrs=3):
+def unstream(string, sep=' ', ch_attrs=3):
     line = []
-    token = Token()
+    token = []
 
-    for i in string.split():
+    for i in string.split(sep):
         line.append(i)
         if len(line) == ch_attrs:
             docno = Path(line[0])
-            character = Character(docno, *map(int, line[1:]))
-            token.append(character)
+            (start, stop) = map(int, line[1:])
+            token.append(Character(docno, start, stop))
             line = []
 
-    return token
+    return Token(token)
