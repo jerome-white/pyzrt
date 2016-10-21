@@ -85,9 +85,14 @@ with mp.Pool(initializer=func, initargs=(args.corpus, outgoing, incoming)):
                 suffix.add(ngram, token, args.min_gram)
                 plogger.emit('+{0}|{1}|'.format(len(ngram), ngram))
 
+        #
+        # Prune and fold the tree
+        #
         if args.prune > 0:
-            pruned = suffix.prune(args.prune)
-            log.info('pruned {0}'.format(pruned))
+            remaining = suffix.prune(args.prune)
+            log.info('pruned {0}'.format(remaining))
+
+        suffix.fold()
 
         #
         # Dump if needed
