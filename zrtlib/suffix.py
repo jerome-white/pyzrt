@@ -42,15 +42,17 @@ class SuffixTree:
         else:
             suffix.tokens.add(token)
 
-    def get(self, ngram):
+    def lookup(self, ngram):
         (head, tail) = cut(ngram, self.suffixes.key_length)
 
         if head in self.suffixes:
             suffix = self.suffixes[head]
-            if tail:
-                yield from suffix.get(tail)
-            elif suffix.tokens:
-                yield from suffix.tokens
+            return suffix.lookup(tail) if tail else suffix
+
+    def get(self, ngram):
+        suffix = self.lookup(ngram)
+        if suffix:
+            yield from suffix.tokens
 
     def ngrams(self, length):
         for (i, j) in self.suffixes.items():
