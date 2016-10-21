@@ -38,6 +38,7 @@ arguments.add_argument('--corpus', type=Path)
 arguments.add_argument('--output', type=Path)
 arguments.add_argument('--existing', type=Path)
 arguments.add_argument('--prune', type=int, default=0)
+arguments.add_argument('--workers', type=int, default=mp.cpu_count())
 arguments.add_argument('--min-gram', type=int, default=1)
 arguments.add_argument('--max-gram', type=int)
 arguments.add_argument('--incremental', action='store_true')
@@ -50,8 +51,13 @@ outgoing = mp.Queue()
 # Work!
 #
 log.info('>| begin')
-with mp.Pool(initializer=func, initargs=(args.corpus, outgoing, incoming)):
-    workers = mp.cpu_count()
+
+workers = min(mp.cpu_count(), max(1, args.workers))
+if workers != args.workers:
+    log.warning('Worker request adjusted -> {0}'.format(workers))
+initargs = (args.corpus, outgoing, incoming)
+
+with mp.Pool(processes=workers, initializer=func, initargs=initargs):
     increments = []
     plogger = logger.PeriodicLogger(constants.minute * 5)
 
@@ -91,7 +97,6 @@ with mp.Pool(initializer=func, initargs=(args.corpus, outgoing, incoming)):
         if args.prune > 0:
             remaining = suffix.prune(args.prune)
             log.info('pruned {0}'.format(remaining))
-
         suffix.fold()
 
         #
