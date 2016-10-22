@@ -1,5 +1,6 @@
 import operator as op
 from pathlib import Path
+from collections import defaultdict
 
 from zrtlib.corpus import Character
 
@@ -41,6 +42,18 @@ class Token(tuple):
 
         return True
 
+class TokenSet(set):
+    def issubset(self, other):
+        d = defaultdict(bool)
+
+        for i in self:
+            for j in other:
+                d[i] |= i.between(j)
+                if d[i]:
+                    break
+
+        return all(d.values())
+
 class Tokenizer:
     def __init__(self, stream):
         self.stream = stream
@@ -74,11 +87,3 @@ def unstream(string, sep=' ', ch_attrs=3):
             line = []
 
     return Token(token)
-
-def subset(t1, t2):
-    for i in t1:
-        for j in t2:
-            if not i.between(j):
-                return False
-
-    return True
