@@ -5,8 +5,8 @@ from argparse import ArgumentParser
 from itertools import islice
 from collections import Counter
 
-from zrtlib.suffix import SuffixTree
-from zrtlib.tokenizer import unstream
+from zrtlib.suffix import SuffixTree, suffix_builder
+from zrtlib.tokenizer import TokenSet, unstream
 
 ROWS_ = 70
 
@@ -29,12 +29,11 @@ arguments.add_argument('--output', type=Path)
 args = arguments.parse_args()
 
 c = Counter()
-s = SuffixTree()
 
 if args.existing:
-    with args.existing.open() as fp:
-        s.read(fp, unstream)
+    s = suffix_builder(args.existing, unstream, TokenSet)
 else:
+    s = SuffixTree(TokenSet)
     for i in range(4, 6):
         for _ in range(10 ** 2):
             key = randstr(i)
@@ -46,10 +45,6 @@ else:
 #     print(i, c[i])
 
 # print('.' * ROWS_)
-# for (i, j) in s.each():
-#     print(fmtkey(i), j)
-
-# print('.' * ROWS_)
 # for (i, j) in c.items():
 #     print(i, j, list(s.get(i)))
 
@@ -59,11 +54,20 @@ else:
 #         print(fmtkey(j), list(s.get(j)))
 
 # if args.output:
-#     with args.output.open() as fp:
+#     with args.output.open('w') as fp:
 #         s.write(fp)
-
-print(s.prune(1))
 
 # print('.' * ROWS_)
 # for (i, j) in s.each():
 #     print(fmtkey(i), j)
+
+# print('.' * ROWS_)
+# print(len(s))
+# print(s.prune(1))
+print(len(s))
+s.fold()
+print(len(s))
+
+print('.' * ROWS_)
+for (i, j) in s.each():
+    print(fmtkey(i), j)
