@@ -3,7 +3,13 @@ import operator as op
 import collections
 
 from zrtlib import zutils
-from zrtlib import tokenizer
+
+def suffix_builder(path, token_parser, token_factory=None):
+    s = SuffixTree(token_factory)
+    with path.open() as fp:
+        s.read(fp, token_parser)
+
+    return s
 
 class NGramDict(collections.defaultdict):
     def __init__(self, default_factory, *args):
@@ -27,9 +33,18 @@ class NGramDict(collections.defaultdict):
             raise KeyError(msg.format(k, key, self.key_length))
 
 class SuffixTree:
-    def __init__(self):
-        self.tokens = set()
-        self.suffixes = NGramDict(type(self))
+    def __init__(self, token_factory=None):
+        if token_factory is None:
+            token_factory = set
+
+        self.tokens = token_factory()
+        self.suffixes = NGramDict(self.factory(token_factory))
+
+    def __len__(self):
+        return len(list(self.each()))
+
+    def factory(self, token_factory):
+        return lambda: type(self)(token_factory)
 
     def add(self, ngram, token, root_key_length=1):
         (head, tail) = zutils.cut(ngram, root_key_length)
@@ -73,13 +88,13 @@ class SuffixTree:
         for (i, j) in self.each():
             writer.writerow([ i ] + [ repr(x) for x in j ])
 
-    def read(self, fp, token_factory):
+    def read(self, fp, token_parser):
         reader = csv.reader(fp)
         min_key = zutils.minval(reader)
 
         fp.seek(0)
         for (ngram, *tokens) in reader:
-            for i in map(token_factory, tokens):
+            for i in map(token_parser, tokens):
                 self.add(ngram, i, min_key)
 
     def prune(self, frequency=0, relation=op.le):
@@ -107,7 +122,7 @@ class SuffixTree:
     #
     def compress(self):
         for i in self.suffixes.values():
-            if self.tokens and tokenizer.subset(self.tokens, i.tokens):
+            if self.tokens and self.tokens.issubset(i.tokens):
                 self.tokens.clear()
             i.compress()
 
@@ -117,7 +132,7 @@ class SuffixTree:
     #
     def exists(self, tokens):
         for i in self.suffixes.values():
-            if tokenizer.subset(tokens, i.tokens) or i.exists(tokens):
+            if tokens.issubset(i.tokens) or i.exists(tokens):
                 return True
 
         return False
@@ -139,12 +154,12 @@ class SuffixTree:
             return
         (x, y) = [ x(c.keys()) for x in (min, max) ]
 
-        for i in range(y, x, -1):
+        for i in zutils.count(x + 1, y):
             for j in self.ngrams(i):
                 sr = self.lookup(j)
                 for k in zutils.substrings(j):
                     jr = self.lookup(k)
-                    if jr and tokenizer.subset(jr.tokens, sr.tokens):
+                    if jr and jr.tokens.issubset(sr.tokens):
                         jr.tokens.clear()
 
         self.prune()
