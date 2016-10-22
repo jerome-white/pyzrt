@@ -7,9 +7,9 @@ from scipy import constants
 
 from zrtlib import zutils
 from zrtlib import logger
-from zrtlib.suffix import SuffixTree
+from zrtlib.suffix import SuffixTree, suffix_builder
 from zrtlib.corpus import CompleteCorpus, WindowStreamer
-from zrtlib.tokenizer import Tokenizer, unstream
+from zrtlib.tokenizer import Tokenizer, TokenSet, unstream
 
 def func(corpus_directory, incoming, outgoing):
     log = logger.getlogger()
@@ -61,12 +61,17 @@ with mp.Pool(processes=workers, initializer=func, initargs=initargs):
     increments = []
     plogger = logger.PeriodicLogger(constants.minute * 5)
 
-    suffix = SuffixTree()
     if args.existing:
         log.info('+ existing')
-        suffix.read(args.existing, unstream)
-        args.min_gram = zutils.minval(suffix.each()) + 1
+        suffix = suffix_builder(args.existing, unstream, TokenSet)
+        min_gram = zutils.minval(suffix.each())
+        if args.min_gram <= min_gram:
+            args.min_gram = min_gram + 1
+            msg = 'Minimum existing n-gram {0}. New starting n-gram {1}'
+            log.warning(msg.format(min_gram, args.min_gram))
         log.info('- existing ({0})'.format(args.min_gram))
+    else:
+        suffix = SuffixTree(TokenSet)
 
     #
     # Create the work queue
