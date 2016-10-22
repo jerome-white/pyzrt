@@ -33,10 +33,7 @@ class NGramDict(collections.defaultdict):
             raise KeyError(msg.format(k, key, self.key_length))
 
 class SuffixTree:
-    def __init__(self, token_factory=None):
-        if token_factory is None:
-            token_factory = set
-
+    def __init__(self, token_factory=set):
         self.tokens = token_factory()
         self.suffixes = NGramDict(self.factory(token_factory))
 
