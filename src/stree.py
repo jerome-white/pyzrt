@@ -72,6 +72,7 @@ with mp.Pool(processes=workers, initializer=func, initargs=initargs):
         log.info('- existing ({0})'.format(args.min_gram))
     else:
         suffix = SuffixTree(TokenSet)
+        min_gram = args.min_gram
 
     #
     # Create the work queue
@@ -93,7 +94,7 @@ with mp.Pool(processes=workers, initializer=func, initargs=initargs):
                 jobs -= 1
             else:
                 (ngram, token) = value
-                suffix.add(ngram, token, args.min_gram)
+                suffix.add(ngram, token, min_gram)
                 plogger.emit('+{0}|{1}|'.format(len(ngram), ngram))
 
         #
