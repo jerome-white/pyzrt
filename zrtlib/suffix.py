@@ -33,16 +33,31 @@ class NGramDict(collections.defaultdict):
             raise KeyError(msg.format(k, key, self.key_length))
 
 class SuffixTree:
+    #
+    # A SuffixTree contains n-grams who point to tokens and other
+    # n-grams.
+    #
     def __init__(self, token_factory=set):
         self.tokens = token_factory()
         self.suffixes = NGramDict(self.factory(token_factory))
 
+    #
+    # The length of a suffix tree is the number of n-grams it
+    # contains.
+    #
     def __len__(self):
         return len(list(self.each()))
 
+    #
+    # Method for building new SuffixTree's based on the current
+    # instance.
+    #
     def factory(self, token_factory):
         return lambda: type(self)(token_factory)
 
+    #
+    # Add an n-gram and corresponding token to the tree.
+    #
     def add(self, ngram, token, root_key_length=1):
         (head, tail) = zutils.cut(ngram, root_key_length)
 
@@ -52,6 +67,9 @@ class SuffixTree:
         else:
             suffix.tokens.add(token)
 
+    #
+    # Find the root suffix branch associated with this n-gram
+    #
     def lookup(self, ngram):
         (head, tail) = zutils.cut(ngram, self.suffixes.key_length)
 
@@ -59,11 +77,17 @@ class SuffixTree:
             suffix = self.suffixes[head]
             return suffix.lookup(tail) if tail else suffix
 
+    #
+    # Get the tokens associated with this n-gram.
+    #
     def get(self, ngram):
         suffix = self.lookup(ngram)
         if suffix:
             yield from suffix.tokens
 
+    #
+    # Get all n-grams of a certain length.
+    #
     def ngrams(self, length):
         for (i, j) in self.suffixes.items():
             correct_level = length == self.suffixes.key_length
@@ -73,6 +97,9 @@ class SuffixTree:
                 for k in j.ngrams(length - self.suffixes.key_length):
                     yield i + k
 
+    #
+    # Retrieve all n-grams in the tree.
+    #
     def each(self, ngram=''):
         if self.tokens:
             yield (ngram, self.tokens)
@@ -80,11 +107,17 @@ class SuffixTree:
         for (i, j) in self.suffixes.items():
             yield from j.each(ngram + i)
 
+    #
+    # Write the suffix tree as a CSV file.
+    #
     def write(self, fp):
         writer = csv.writer(fp)
         for (i, j) in self.each():
             writer.writerow([ i ] + [ repr(x) for x in j ])
 
+    #
+    # Insert n-grams from a suffix tree written by 'write'
+    #
     def read(self, fp, token_parser):
         reader = csv.reader(fp)
         min_key = zutils.minval(reader)
@@ -94,64 +127,32 @@ class SuffixTree:
             for i in map(token_parser, tokens):
                 self.add(ngram, i, min_key)
 
+    #
+    # Remove suffixes with too few corresponding tokens.
+    #
     def prune(self, frequency=0, relation=op.le):
         if relation(len(self.tokens), frequency):
             self.tokens.clear()
 
         notok = []
         remaining = len(self.tokens)
-
         for (i, j) in self.suffixes.items():
             pruned = j.prune(frequency, relation)
             if pruned > 0:
                 remaining += pruned
             elif not j.tokens:
                 notok.append(i)
-
         for i in notok:
             del self.suffixes[i]
 
         return remaining
 
     #
-    # Remove n-grams whose locations are subsets of immediate larger
-    # n-grams.
-    #
-    def compress(self):
-        for i in self.suffixes.values():
-            if self.tokens and self.tokens.issubset(i.tokens):
-                self.tokens.clear()
-            i.compress()
-
-    #
-    # Remove n-grams whose locations are subsets of larger n-grams in
-    # the chain (n-grams with the same prefix).
-    #
-    def exists(self, tokens):
-        for i in self.suffixes.values():
-            if tokens.issubset(i.tokens) or i.exists(tokens):
-                return True
-
-        return False
-
-    def collapse(self):
-        if self.tokens and self.exists(self.tokens):
-            self.tokens.clear()
-
-        for j in self.suffixes.values():
-            j.collapse()
-
-    #
     # Remove n-grams whose location is subsumed by any other n-gram
     # in the tree (no-prefix condition).
     #
-    def fold(self):
-        c = collections.Counter([ len(x) for (x, _) in self.each() ])
-        if len(c) < 2:
-            return
-        (x, y) = [ x(c.keys()) for x in (min, max) ]
-
-        for i in zutils.count(x + 1, y):
+    def fold(self, min_gram, max_gram):
+        for i in zutils.count(min_gram, max_gram):
             for j in self.ngrams(i):
                 sr = self.lookup(j)
                 for k in zutils.substrings(j):
@@ -159,4 +160,17 @@ class SuffixTree:
                     if jr and jr.tokens.issubset(sr.tokens):
                         jr.tokens.clear()
 
+    #
+    # Convenience method for fold.
+    #
+    def compress(self, length=None):
+        c = collections.Counter([ len(x) for (x, _) in self.each() ])
+        if len(c) < 2:
+            return
+
+        if length is None:
+            (x, y) = [ x(c.keys()) for x in (min, max) ]
+            self.fold(x + 1, y)
+        else:
+            self.fold(length, length)
         self.prune()

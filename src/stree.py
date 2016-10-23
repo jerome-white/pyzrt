@@ -102,7 +102,7 @@ with mp.Pool(processes=workers, initializer=func, initargs=initargs):
         if args.prune > 0:
             remaining = suffix.prune(args.prune)
             log.info('pruned {0}'.format(remaining))
-        suffix.fold()
+        suffix.compress(i)
 
         #
         # Dump if needed
