@@ -18,6 +18,10 @@ def pmap(f, iterable, start=0, stop=None):
 def minval(iterable, item=0):
     return min(map(len, map(op.itemgetter(item), iterable)))
 
+def minmax(iterable):
+    realised = list(iterable)
+    return [ x(realised) for x in (min, max) ]
+
 def count(start=0, stop=None, inclusive=True):
     rel = op.gt if inclusive else op.ge
 

@@ -56,6 +56,12 @@ class SuffixTree:
         return lambda: type(self)(token_factory)
 
     #
+    # Number of times each key length appears in the tree
+    #
+    def counts(self):
+        return collections.Counter([ len(x) for (x, _) in self.each() ])
+
+    #
     # Add an n-gram and corresponding token to the tree.
     #
     def add(self, ngram, token, root_key_length=1):
@@ -163,12 +169,12 @@ class SuffixTree:
     # Convenience method for fold.
     #
     def compress(self, length=None):
-        c = collections.Counter([ len(x) for (x, _) in self.each() ])
+        c = self.counts()
         if len(c) < 2:
             return
 
         if length is None:
-            (x, y) = [ x(c.keys()) for x in (min, max) ]
+            (x, y) = zutils.minmax(c.keys())
             self.fold(x + 1, y)
         else:
             self.fold(length, length)
