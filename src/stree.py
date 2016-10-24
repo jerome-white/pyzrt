@@ -64,12 +64,12 @@ with mp.Pool(processes=workers, initializer=func, initargs=initargs):
     if args.existing:
         log.info('+ existing')
         suffix = suffix_builder(args.existing, unstream, TokenSet)
-        min_gram = zutils.minval(suffix.each())
-        if args.min_gram <= min_gram:
-            args.min_gram = min_gram + 1
-            msg = 'Minimum existing n-gram {0}. New starting n-gram {1}'
-            log.warning(msg.format(min_gram, args.min_gram))
-        log.info('- existing ({0})'.format(args.min_gram))
+        (min_gram, max_gram) = zutils.minmax(suffix.counts().keys())
+        if args.min_gram <= max_gram:
+            args.min_gram = max_gram + 1
+            msg = 'Largest existing n-gram {0}. New starting n-gram {1}'
+            log.warning(msg.format(max_gram, args.min_gram))
+        log.info('- existing ({0} {1})'.format(min_gram, args.min_gram))
     else:
         suffix = SuffixTree(TokenSet)
         min_gram = args.min_gram
