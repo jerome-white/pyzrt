@@ -4,7 +4,7 @@ import collections
 
 from zrtlib import zutils
 
-def suffix_builder(path, token_parser, token_factory=None):
+def suffix_builder(path, token_parser, token_factory=set):
     s = SuffixTree(token_factory)
     with path.open() as fp:
         s.read(fp, token_parser)
