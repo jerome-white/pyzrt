@@ -65,7 +65,7 @@ else:
 # print(len(s))
 # print(s.prune(1))
 print(len(s))
-s.fold()
+s.compress()
 print(len(s))
 
 print('.' * ROWS_)
