@@ -15,8 +15,8 @@ def func(corpus_directory, incoming, outgoing):
     log = logger.getlogger()
 
     corpus = CompleteCorpus(corpus_directory)
-    log.debug('ready')
     while True:
+        log.info('ready')
         (block_size, skip, offset) = incoming.get()
         log.info(','.join(map(str, [ block_size, offset ])))
 
@@ -100,33 +100,34 @@ with mp.Pool(processes=workers, initializer=func, initargs=initargs):
         #
         # Prune and fold the tree
         #
+        log.info('trim')
         if args.prune > 0:
             remaining = suffix.prune(args.prune)
-            log.info('pruned {0}'.format(remaining))
+            log.info('- pruned {0}'.format(remaining))
         suffix.compress(i)
 
         #
         # Dump if needed
         #
         if args.incremental:
+            log.info('incremental')
             sfx = '.' + str(i)
             with NamedTemporaryFile(mode='w', suffix=sfx, delete=False) as fp:
-                suffix.write(fp)
+                log.info(fp.name)
                 increments.append(Path(fp.name))
-                log.info('incremental {0}'.format(fp.name))
+                suffix.write(fp)
 
 #
 # Save the output
 #
 if args.output:
+    log.info('save')
     if increments:
         latest = increments.pop()
         latest.rename(args.output)
     else:
-        log.info('+ output')
         with args.output.open('w') as fp:
             suffix.write(fp)
-        log.info('- output')
 
 for i in increments:
     i.unlink()
