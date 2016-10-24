@@ -19,8 +19,15 @@ def minval(iterable, item=0):
     return min(map(len, map(op.itemgetter(item), iterable)))
 
 def minmax(iterable):
-    realised = list(iterable)
-    return [ x(realised) for x in (min, max) ]
+    (x, y) = (None, None)
+
+    for i in iterable:
+        if x is None or i < x:
+            x = i
+        if y is None or i > y:
+            y = i
+
+    return (x, y)
 
 def count(start=0, stop=None, inclusive=True):
     rel = op.gt if inclusive else op.ge
