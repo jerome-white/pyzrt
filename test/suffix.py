@@ -33,11 +33,11 @@ c = Counter()
 if args.existing:
     s = suffix_builder(args.existing, unstream, TokenSet)
 else:
-    s = SuffixTree(TokenSet)
+    s = SuffixTree(set)
     for i in range(4, 6):
         for _ in range(10 ** 2):
             key = randstr(i)
-            value = random.randrange(10)
+            value = randstr(1).upper() + str(random.randrange(10))
             s.add(key, value, 4)
             c[key] += 1
 
