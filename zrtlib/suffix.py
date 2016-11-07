@@ -56,9 +56,10 @@ class SuffixTree:
         return lambda: type(self)(token_factory)
 
     #
-    # Number of times each key length appears in the tree
+    # Length frequency (number of times each key length appears in the
+    # tree)
     #
-    def counts(self):
+    def lf(self):
         return collections.Counter([ len(x) for (x, _) in self.each() ])
 
     #
@@ -169,7 +170,7 @@ class SuffixTree:
     # Convenience method for fold.
     #
     def compress(self, length=None):
-        c = self.counts()
+        c = self.lf()
         if len(c) < 2:
             return
 
