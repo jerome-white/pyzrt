@@ -32,6 +32,9 @@ class Token(tuple):
     def collect(self, transcribe):
         return ''.join(map(transcribe, self))
 
+    def documents(self):
+        yield from map(op.attrgetter('docno'), self)
+
     def between(self, other):
         compare = lambda x, y, z: z(x, y) or not (z(x, y) or z(y, x))
 
