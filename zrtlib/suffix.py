@@ -180,3 +180,17 @@ class SuffixTree:
         else:
             self.fold(length, length)
         self.prune()
+
+    #
+    # Create (pseudo)terms
+    #
+    def terms(self, path, prefix='pt', sep=','):
+        digits = len(str(len(self)))
+
+        for (i, (ngram, collection)) in enumerate(self.each()):
+            term = prefix + str(i).zfill(digits)
+            for token in collection:
+                for i in token:
+                    p = path.joinpath(i.docno.stem)
+                    with p.open('a') as fp:
+                        print(ngram, term, i.start, i.end, sep=sep, file=fp)

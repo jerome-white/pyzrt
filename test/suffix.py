@@ -71,3 +71,7 @@ print(len(s))
 print('.' * ROWS_)
 for (i, j) in s.each():
     print(fmtkey(i), j)
+
+p = Path('psuedoterms')
+p.mkdir(exist_ok=True)
+s.tofiles(p)
