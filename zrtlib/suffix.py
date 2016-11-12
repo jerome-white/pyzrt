@@ -180,15 +180,3 @@ class SuffixTree:
         else:
             self.fold(length, length)
         self.prune()
-
-    #
-    # Create (pseudo)terms
-    #
-    def terms(self, token_writer):
-        digits = len(str(len(self.suffix)))
-
-        for (i, (ngram, collection)) in enumerate(self.suffix.each()):
-            pt = token_writer.prefix + str(i).zfill(digits)
-            for token in collection:
-                for t in token:
-                    term_writer.write(pt, ngram, t)
