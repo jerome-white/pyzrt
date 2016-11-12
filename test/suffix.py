@@ -7,6 +7,7 @@ from collections import Counter
 
 from zrtlib.suffix import SuffixTree, suffix_builder
 from zrtlib.tokenizer import TokenSet, unstream
+from zrtlib.pseudoterm import PseudoTermWriter
 
 ROWS_ = 70
 
@@ -72,6 +73,7 @@ print('.' * ROWS_)
 for (i, j) in s.each():
     print(fmtkey(i), j)
 
-p = Path('psuedoterms')
-p.mkdir(exist_ok=True)
-s.terms(p)
+p = Path('psuedoterms')    
+p.mkdir(exist_ok=True)    
+writer = PseudoTermWriter(s)
+writer.write(p)
