@@ -74,4 +74,4 @@ for (i, j) in s.each():
 
 p = Path('psuedoterms')
 p.mkdir(exist_ok=True)
-s.tofiles(p)
+s.terms(p)

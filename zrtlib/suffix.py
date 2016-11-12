@@ -184,13 +184,11 @@ class SuffixTree:
     #
     # Create (pseudo)terms
     #
-    def terms(self, path, prefix='pt', sep=','):
-        digits = len(str(len(self)))
+    def terms(self, token_writer):
+        digits = len(str(len(self.suffix)))
 
-        for (i, (ngram, collection)) in enumerate(self.each()):
-            term = prefix + str(i).zfill(digits)
+        for (i, (ngram, collection)) in enumerate(self.suffix.each()):
+            pt = token_writer.prefix + str(i).zfill(digits)
             for token in collection:
-                for i in token:
-                    p = path.joinpath(i.docno.stem)
-                    with p.open('a') as fp:
-                        print(ngram, term, i.start, i.end, sep=sep, file=fp)
+                for t in token:
+                    term_writer.write(pt, ngram, t)
