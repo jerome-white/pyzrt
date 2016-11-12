@@ -73,7 +73,11 @@ print('.' * ROWS_)
 for (i, j) in s.each():
     print(fmtkey(i), j)
 
-p = Path('psuedoterms')    
-p.mkdir(exist_ok=True)    
+p1 = Path('psuedoterms')
+p1.mkdir(exist_ok=True)
 writer = PseudoTermWriter(s)
-writer.write(p)
+writer.write(p1)
+
+p2 = Path('pt-files')
+p2.mkdir(exist_ok=True)
+writer.consolidate(p1, p2)
