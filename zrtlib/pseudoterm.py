@@ -28,12 +28,13 @@ class PseudoTermWriter:
                             writer.writeheader()
                         writer.writerow(row)
 
-
     #
     # Build (pseudo)term files that are capable of indexing
     #
     def consolidate(self, source, destination):
         for i in source.iterdir():
+            path_or_buf = str(destination.joinpath(i.stem))
+            
             df = pd.read_csv(str(i))
             df.sort_values(by=[ 'start', 'end' ], inplace=True)
 
@@ -41,5 +42,5 @@ class PseudoTermWriter:
                       header=False,
                       index=False,
                       line_terminator=' ',
-                      path_or_buf=str(destination.joinpath(i.stem)),
+                      path_or_buf=path_or_buf,
                       sep=' ')
