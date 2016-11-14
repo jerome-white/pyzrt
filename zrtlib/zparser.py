@@ -4,7 +4,10 @@ import xml.etree.ElementTree as et
 from pathlib import Path
 from functools import singledispatch
 
+import pandas as pd
+
 from zrtlib import logger
+from zrtlib.strainer import Strainer
 
 @singledispatch
 def normalize(string, lower=True):
@@ -15,72 +18,55 @@ def normalize(string, lower=True):
 def _(string, lower=True):
     return normalize(' '.join(string), lower)
 
-class Strainer:
-    def strain(self, data):
-        return normalize(data, False)
-
-class AlphaNumericStrainer(Strainer):
-    def __init__(self, extended=False):
-        self.table = {}
-
-        for i in range(128):
-            c = chr(i)
-            self.table[i] = c if c.isalnum() else ' '
-
-        if extended:
-            self.table.update({ i: ' ' for i in range(128, 256) })
-
-    def strain(self, data):
-        return normalize(data.translate(self.table))
+class Document:
+    def __init__(self, docno, text):
+        self.docno = docno
+        self.text = text
 
 class Parser():
     def __init__(self, strainer=None):
         self.strainer = strainer if strainer else Strainer()
 
     def parse(self, document):
-        try:
-            relevant = self.extract(document)
-        except et.ParseError as e:
-            log = logger.getlogger(True)
-            msg = '{0}: line {1} col {2}'
-            log.error(msg.format(str(i), *e.position))
-            return
+        yield from map(self.strainer.strain, self._parse(document))
 
-        for (docno, text) in map(self.func, relevant):
-            yield (docno, self.strainer.strain(text))
-
-    def func(self, path):
-        raise NotImplementedError()
-
-    def extract(self, path):
+    def _parse(self, doc):
         raise NotImplementedError()
 
 class TestParser(Parser):
-    def func(self, doc):
+    def _parse(self, doc):
         with doc.open() as fp:
-            return (doc.name, fp.read())
-
-    def extract(self, path):
-        yield from [ path ]
+            yield Document(doc.name, fp.read())
     
 class WSJParser(Parser):
-    def func(self, doc):
-        docno = doc.findall('DOCNO')
-        assert(len(docno) == 1)
-        docno = docno.pop().text.strip()
-
-        text = []
-        for i in [ 'LP', 'TEXT' ]:
-            for j in doc.findall(i):
-                text.append(j.text)
-        
-        return (docno, text)
-    
-    def extract(self, path):
-        xml = path.read_text().replace('&', ' ')
+    def _parse(self, doc):
+        xml = doc.read_text().replace('&', ' ')
 
         # overcome poorly formed XML (http://stackoverflow.com/a/23891895)
         combos = itertools.chain('<root>', xml, '</root>')
         root = et.fromstringlist(combos)
         
-        yield from root.findall('DOC')
+        for i in root.findall('DOC'):
+            docno = i.findall('DOCNO')
+            assert(len(docno) == 1)
+            docno = docno.pop().text.strip()
+
+            text = []
+            for j in [ 'LP', 'TEXT' ]:
+                for k in i.findall(j):
+                    text.append(k.text)
+
+            yield Document(docno, normalize(text, self.strainer.casing))
+
+class PseudoTermParser(Parser):
+    def _parse(self, doc):
+        df = pd.read_csv(str(doc))
+        df.sort_values(by=[ 'start', 'end' ], inplace=True)
+
+        text = df.to_csv(columns=[ 'term' ],
+                         header=False,
+                         index=False,
+                         line_terminator=' ',
+                         sep=' ')
+
+        yield Document(doc.stem, text)

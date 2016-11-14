@@ -5,6 +5,7 @@ from argparse import ArgumentParser
 
 from zrtlib import logger
 from zrtlib import zparser
+from zrtlib import strainer
 
 def directory_walker(path):
     for p in path.iterdir():
@@ -14,33 +15,41 @@ def directory_walker(path):
             yield p
 
 def f(args, document_queue):
+    log = logger.getlogger()
+
     Parser = {
         'wsj': zparser.WSJParser,
         'test': zparser.TestParser,
+        'pt': zparser.PseudoTermParser,
     }[args.archive_type.lower()]
 
-    strainer = zparser.AlphaNumericStrainer() if args.strain else None
-    parser = Parser(strainer)
+    strain_selector = {
+        'alpha': strainer.AlphaNumericStrainer,
+        'trec': strainer.TRECStrainer,
+    }
 
-    log = logger.getlogger()
+    s = strainer.Strainer()
+    for i in args.strainer:
+        Strainer = strain_selector[i]
+        s = Strainer(s)
+    parser = Parser(s)
 
     while True:
         document = document_queue.get()
         log.info(document)
 
-        for (i, data) in parser.parse(document):
-            p = args.corpus.joinpath(i)
-            assert(not p.exists())
+        for i in parser.parse(document):
+            p = args.corpus.joinpath(i.docno)
             with p.open('w') as fp:
-                fp.write(data)
+                fp.write(i.text)
 
         document_queue.task_done()
 
 arguments = ArgumentParser()
-arguments.add_argument('--archive-type')
-arguments.add_argument('--corpus', type=Path)
+arguments.add_argument('--parser')
+arguments.add_argument('--output-data', type=Path)
 arguments.add_argument('--raw-data', type=Path)
-arguments.add_argument('--strain', action='store_true')
+arguments.add_argument('--strainer', action='append')
 args = arguments.parse_args()
 
 args.corpus.mkdir(parents=True, exist_ok=True)
