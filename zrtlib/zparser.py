@@ -3,7 +3,6 @@ import itertools
 import xml.etree.ElementTree as et
 from pathlib import Path
 from functools import singledispatch
-from multiprocessing import Pool
 
 from zrtlib import logger
 
@@ -18,42 +17,39 @@ def _(string, lower=True):
 
 class Strainer:
     def strain(self, data):
-        return data
+        return normalize(data, False)
 
 class AlphaNumericStrainer(Strainer):
-    def __init__(self):
+    def __init__(self, extended=False):
         self.table = {}
-        for i in range(2 ** 8):
+
+        for i in range(128):
             c = chr(i)
             self.table[i] = c if c.isalnum() else ' '
+
+        if extended:
+            self.table.update({ i: ' ' for i in range(128, 256) })
 
     def strain(self, data):
         return normalize(data.translate(self.table))
 
 class Parser():
-    def __init__(self, strainer=None, file_list=sys.stdin):
-        self.strainer = Strainer() if strainer is None else strainer
-        self.file_list = file_list
+    def __init__(self, strainer=None):
+        self.strainer = strainer if strainer else Strainer()
 
-    def __iter__(self):
-        log = logger.getlogger(True)
-        
-        with Pool() as pool:
-            for i in self.file_list:
-                path = Path(i.strip())
-                log.info(str(path))
+    def parse(self, document):
+        try:
+            relevant = self.extract(document)
+        except et.ParseError as e:
+            log = logger.getlogger(True)
+            msg = '{0}: line {1} col {2}'
+            log.error(msg.format(str(i), *e.position))
+            return
 
-                try:
-                    relevant = self.extract(path)
-                except et.ParseError as e:
-                    msg = '{0}: line {1} col {2}'
-                    log.error(msg.format(str(path), *e.position))
-                    continue
+        for (docno, text) in map(self.func, relevant):
+            yield (docno, self.strainer.strain(text))
 
-                for (docno, text) in pool.imap_unordered(self.func, relevant):
-                    yield (docno, self.strainer.strain(text))
-
-    def func(self, doc):
+    def func(self, path):
         raise NotImplementedError()
 
     def extract(self, path):
@@ -78,12 +74,12 @@ class WSJParser(Parser):
             for j in doc.findall(i):
                 text.append(j.text)
         
-        return (docno, normalize(text, False))
+        return (docno, text)
     
     def extract(self, path):
         xml = path.read_text().replace('&', ' ')
 
-        # overcome pooly formed XML (http://stackoverflow.com/a/23891895)
+        # overcome poorly formed XML (http://stackoverflow.com/a/23891895)
         combos = itertools.chain('<root>', xml, '</root>')
         root = et.fromstringlist(combos)
         
