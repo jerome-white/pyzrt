@@ -21,7 +21,7 @@ def f(args, document_queue):
         'wsj': zparser.WSJParser,
         'test': zparser.TestParser,
         'pt': zparser.PseudoTermParser,
-    }[args.archive_type.lower()]
+    }[args.parser.lower()]
 
     strain_selector = {
         'alpha': strainer.AlphaNumericStrainer,
@@ -39,7 +39,7 @@ def f(args, document_queue):
         log.info(document)
 
         for i in parser.parse(document):
-            p = args.corpus.joinpath(i.docno)
+            p = args.output_data.joinpath(i.docno)
             with p.open('w') as fp:
                 fp.write(i.text)
 
@@ -52,10 +52,9 @@ arguments.add_argument('--raw-data', type=Path)
 arguments.add_argument('--strainer', action='append')
 args = arguments.parse_args()
 
-args.corpus.mkdir(parents=True, exist_ok=True)
-
 document_queue = mp.JoinableQueue()
 with mp.Pool(initializer=f, initargs=(args, document_queue)):
+    args.output_data.mkdir(parents=True, exist_ok=True)
     if args.raw_data:
         files = directory_walker(args.raw_data)
     else:
