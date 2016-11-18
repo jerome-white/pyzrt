@@ -9,6 +9,9 @@ from collections import defaultdict
 
 from zrtlib import logger
 
+#
+# http://trec.nist.gov/data/qrels_eng/
+#
 class Entry:
     def __init__(self, topic, iteration, document, relevancy):
         self.topic = topic
