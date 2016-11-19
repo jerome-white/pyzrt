@@ -4,35 +4,55 @@
 #
 
 mkquery() {
-    echo "<parameters>"
-
-    n=0
-    for i in $@; do
-	cat <<EOF
+    cat <<EOF
 <query>
   <type>indri</type>
-  <number>$n</number>
-  <text>`cat $i`</text>
+  <number>$1</number>
+  <text>${@:2}</text>
 </query>
 EOF
-	(( n++ ))
-    done
+}
 
+mkqfile() {
+    n=0
+    skip=$2
+    unset q
+
+    echo "<parameters>"
+    sed -e's/[^[:alnum:][:space:]]//g' $1 | { \
+	while read; do
+	    if [ -z "$REPLY" ]; then
+		if [ $skip -eq 0 ]; then
+		    mkquery $n ${q[@]}
+		    (( n++ ))
+		fi
+		skip=0
+		unset q
+	    else
+		q=( ${q[@]} $REPLY )
+	    fi
+	done
+	if [ ${#q[@]} -gt 0 ]; then
+	    mkquery $n ${q[@]}
+	fi
+    }
     echo "</parameters>"
 }
 
-data=$HOME/data/pyzrt/indri
+index=$HOME/data/pyzrt/indri
 count=1000
-while getopts "d:q:c:" OPTION; do
+with_topic=0
+while getopts "i:q:c:t" OPTION; do
     case $OPTION in
-        d) data=$OPTARG ;;
-	q) queries=( ${queries[@]} $OPTARG ) ;;
+        i) index=$OPTARG ;;
+	q) queries=$OPTARG ;;
 	c) count=$OPTARG ;;
+	t) with_topic=1 ;; # include the topic description as a query
         *) exit 1 ;;
     esac
 done
 
 tmp=`mktemp`
-mkquery ${queries[@]} > $tmp
-IndriRunQuery -count=$count -index=$data -trecFormat=true $tmp
+mkqfile $queries $with_topic > $tmp
+IndriRunQuery -count=$count -index=$index -trecFormat=true $tmp
 rm $tmp
