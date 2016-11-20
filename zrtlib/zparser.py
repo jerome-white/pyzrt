@@ -25,7 +25,7 @@ class Document:
 
 class Parser():
     def __init__(self, strainer=None):
-        self.strainer = strainer if strainer is None else Strainer()
+        self.strainer = Strainer() if strainer is None else strainer
 
     def parse(self, document):
         yield from map(self.strainer.strain, self._parse(document))
