@@ -15,12 +15,20 @@ class AlphaNumericStrainer(Strainer):
         self.fmt = lambda x: x.lower()
         self.table = {}
 
-        for i in range(128):
-            c = chr(i)
-            self.table[i] = c if c.isalnum() else ' '
-
+        ascii_range = 7
         if extended:
-            self.table.update({ i: ' ' for i in range(128, 256) })
+            ascii_range += 1
+
+        for i in range(2 ** ascii_range):
+            c = chr(i)
+            if not c.isalnum():
+                if c == '%':
+                    c = ' percent '
+                elif c == '.'
+                    c = ''
+                else:
+                    c = ' '
+            self.table[i] = c
 
     def strain(self, document):
         document.text = document.text.translate(self.table)
