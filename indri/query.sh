@@ -15,24 +15,25 @@ EOF
 
 mkqfile() {
     n=0
-    skip=$2
+    include=$2
     unset q
 
     echo "<parameters>"
     sed -e's/[^[:alnum:][:space:]]//g' $1 | { \
 	while read; do
 	    if [ -z "$REPLY" ]; then
-		if [ $skip -eq 0 ]; then
+		if [ $include -eq 1 ]; then
 		    mkquery $n ${q[@]}
 		    (( n++ ))
 		fi
-		skip=0
+		include=1
 		unset q
 	    else
 		q=( ${q[@]} $REPLY )
 	    fi
 	done
-	if [ ${#q[@]} -gt 0 ]; then
+	
+	if [ ${#q[@]} -gt 0 ] && [ $2 -eq 1 ]; then
 	    mkquery $n ${q[@]}
 	fi
     }
@@ -42,15 +43,30 @@ mkqfile() {
 index=$HOME/data/pyzrt/indri
 count=1000
 with_topic=0
-while getopts "i:q:c:t" OPTION; do
+while getopts "i:q:c:th" OPTION; do
     case $OPTION in
         i) index=$OPTARG ;;
 	q) queries=$OPTARG ;;
 	c) count=$OPTARG ;;
-	t) with_topic=1 ;; # include the topic description as a query
-        *) exit 1 ;;
+	t) with_topic=1 ;;
+	h)
+	    cat <<EOF
+$0
+  -i location of index
+  -q location of queries
+  -c count
+  -t (include the topic description as a query)
+EOF
+	    exit
+	    ;;
+        *)
+	    $0 -h
+	    exit 1
+	    ;;
     esac
 done
+
+# mkqfile $queries $with_topic
 
 tmp=`mktemp`
 mkqfile $queries $with_topic > $tmp
