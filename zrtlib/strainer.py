@@ -24,7 +24,7 @@ class AlphaNumericStrainer(Strainer):
             if not c.isalnum():
                 if c == '%':
                     c = ' percent '
-                elif c == '.'
+                elif c == '.':
                     c = ''
                 else:
                     c = ' '
