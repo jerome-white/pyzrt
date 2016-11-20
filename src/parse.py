@@ -18,19 +18,19 @@ def f(args, document_queue):
     log = logger.getlogger()
 
     Parser = {
+        'pt': zparser.PseudoTermParser,
         'wsj': zparser.WSJParser,
         'test': zparser.TestParser,
-        'pt': zparser.PseudoTermParser,
     }[args.parser.lower()]
 
     strain_selector = {
-        'alpha': strainer.AlphaNumericStrainer,
         'trec': strainer.TRECStrainer,
+        'alpha': strainer.AlphaNumericStrainer,
     }
 
     s = strainer.Strainer()
     for i in args.strainer:
-        Strainer = strain_selector[i]
+        Strainer = strain_selector[i.lower()]
         s = Strainer(s)
     parser = Parser(s)
 
