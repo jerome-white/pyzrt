@@ -3,23 +3,24 @@ import xml.etree.ElementTree as et
 from pathlib import Path
 from argparse import ArgumentParser
 
-class Query:
+class Query(list):
     def __init__(self, path):
         self.name = path.stem.zfill(3)
-        self.xml = et.Element('DOC')
 
-    def __len__(self):
-        return len(self.xml.findall('DOCNO'))
-
-    def __str__(self):
-        return et.tostring(self.xml, encoding="unicode")
+    def each(self):
+        for i in self:
+            yield et.tostring(i, encoding="unicode")
 
     def add(self, query):
-        docno = et.SubElement(self.xml, 'DOCNO')
+        doc = et.Element('DOC')
+
+        docno = et.SubElement(doc, 'DOCNO')
         docno.text = 'WSJQ00{0}-{1:04d}'.format(self.name, len(self))
 
-        text = et.SubElement(self.xml, 'TEXT')
+        text = et.SubElement(doc, 'TEXT')
         text.text = ' '.join(query)
+
+        self.append(doc)
 
 arguments = ArgumentParser()
 arguments.add_argument('--input', type=Path)
@@ -47,4 +48,5 @@ for i in filter(lambda x: x.stem.isdigit(), args.input.iterdir()):
     if len(query) > 0:
         output = args.output.joinpath('WSJ_Q' + i.stem)
         with output.open('w') as fp:
-            fp.write(str(query))
+            for j in query.each():
+                fp.write(j)
