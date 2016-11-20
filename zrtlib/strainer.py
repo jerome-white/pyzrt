@@ -3,16 +3,16 @@ import xml.etree.ElementTree as et
 class Strainer:
     def __init__(self, strainer=None):
         self.strainer = strainer
-        self.casing = False
+        self.fmt = None
 
     def strain(self, document):
         return document
 
 class AlphaNumericStrainer(Strainer):
     def __init__(self, strainer, extended=False):
-        super().__init__()
+        super().__init__(strainer)
 
-        self.casing = True
+        self.fmt = lambda x: x.lower()
         self.table = {}
 
         for i in range(128):

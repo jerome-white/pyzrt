@@ -10,13 +10,13 @@ from zrtlib import logger
 from zrtlib.strainer import Strainer
 
 @singledispatch
-def normalize(string, lower=True):
+def normalize(string, fmt=None):
     s = ' '.join(string.split())
-    return s.lower() if lower else s
+    return s if fmt is None else fmt(s)
 
 @normalize.register(list)
-def _(string, lower=True):
-    return normalize(' '.join(string), lower)
+def _(string, fmt=None):
+    return normalize(' '.join(string), fmt)
 
 class Document:
     def __init__(self, docno, text):
@@ -25,7 +25,7 @@ class Document:
 
 class Parser():
     def __init__(self, strainer=None):
-        self.strainer = strainer if strainer else Strainer()
+        self.strainer = strainer if strainer is None else Strainer()
 
     def parse(self, document):
         yield from map(self.strainer.strain, self._parse(document))
@@ -55,8 +55,9 @@ class WSJParser(Parser):
             for j in [ 'LP', 'TEXT' ]:
                 for k in i.findall(j):
                     text.append(k.text)
+            text = normalize(text, self.strainer.fmt)
 
-            yield Document(docno, normalize(text, self.strainer.casing))
+            yield Document(docno, text)
 
 class PseudoTermParser(Parser):
     def _parse(self, doc):
