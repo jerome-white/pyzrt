@@ -6,7 +6,6 @@ from argparse import ArgumentParser
 from zrtlib import logger
 from zrtlib.suffix import suffix_builder
 from zrtlib.tokenizer import TokenSet, unstream
-from zrtlib.pseudoterm import PseudoTermWriter
 
 def f(jobs, path):
     log = logger.getlogger()
@@ -35,6 +34,7 @@ arguments.add_argument('--output', type=Path)
 arguments.add_argument('--term-prefix', default='pt')
 args = arguments.parse_args()
 
+log = logger.getlogger()
 jobs = mp.JoinableQueue()
 
 with mp.Pool(initializer=f, initargs=(jobs, args.output)):
