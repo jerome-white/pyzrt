@@ -37,15 +37,15 @@ class Character:
     def __repr__(self):
         return str(self)
 
-    def tolist(self):
-        return [ self.docno, self.start, self.end ]
-
     @classmethod
-    def fromlist(cls, list_of_strings):
-        docno = Path(list_of_strings[0])
+    def fromlist(cls, list_of_strings, docno_type=Path):
+        docno = docno_type(list_of_strings[0])
         (start, stop) = map(int, list_of_strings[1:])
 
         return cls(docno, start, stop)
+
+    def tolist(self):
+        return [ self.docno, self.start, self.end ]
 
 class Corpus(list):
     def __init__(self, corpus):
