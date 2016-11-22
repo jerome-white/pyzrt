@@ -2,29 +2,26 @@ import csv
 import multiprocessing as mp
 from pathlib import Path
 from argparse import ArgumentParser
+from collections import namedtuple, defaultdict
 
 from zrtlib import logger
-from zrtlib.suffix import suffix_builder
-from zrtlib.tokenizer import TokenSet, unstream
+from zrtlib.corpus import Character
+
+Term = namedtuple('Term', 'term, ngram, start, end')
 
 def f(jobs, path):
     log = logger.getlogger()
-    fieldnames = [ 'term', 'ngram', 'start', 'end' ]
 
     while True:
-        (term, ngram, collection) = jobs.get()
-        log.info('{0} |{1}|'.format(term, ngram))
+        (document, terms) = jobs.get()
+        log.info('{0} |{1}|'.format(document, len(terms)))
 
-        for token in collection:
-            for i in token:
-                row = dict(zip(fieldnames, [ term, ngram, i.start, i.end ]))
-                p = path.joinpath(i.docno.stem)
-
-                with p.open('a') as fp:
-                    writer = csv.DictWriter(fp, fieldnames=fieldnames)
-                    if fp.tell() == 0:
-                        writer.writeheader()
-                    writer.writerow(row)
+        p = path.joinpath(document.stem)
+        with p.open('w') as fp:
+            writer = csv.DictWriter(fp, fieldnames=Term._fields)
+            writer.writeheader()
+            for i in terms:
+                writer.writerow(i._asdict())
 
         jobs.task_done()
 
@@ -38,11 +35,20 @@ log = logger.getlogger()
 jobs = mp.JoinableQueue()
 
 with mp.Pool(initializer=f, initargs=(jobs, args.output)):
-    log.info('suffix tree')
-    suffix = suffix_builder(args.suffix_tree, unstream, TokenSet)
-    ngrams = len(str(len(suffix)))
+    postings = defaultdict(list)
+    with args.suffix_tree.open() as fp:
+        terms = sum([ 1 for _ in fp ])
+        log.info('terms {0}', terms)
 
-    for (i, (ngram, collection)) in enumerate(suffix.each()):
-        term = args.term_prefix + str(i).zfill(ngrams)
-        jobs.put((term, ngram, collection))
+        fp.seek(0)
+        reader = csv.reader(fp)
+
+        for (i, (ngram, *docs)) in enumerate(reader):
+            pt = args.term_prefix + str(i).zfill(terms)
+            for c in map(Character, docs):
+                term = Term(pt, ngram, c.start, c.end)
+                postings[c.docno].append(entry)
+
+    for i in postings.items():
+        jobs.put(i)
     jobs.join()
