@@ -31,23 +31,25 @@ arguments.add_argument('--output', type=Path)
 arguments.add_argument('--term-prefix', default='pt')
 args = arguments.parse_args()
 
-log = logger.getlogger()
+log = logger.getlogger(True)
 jobs = mp.JoinableQueue()
 
 with mp.Pool(initializer=f, initargs=(jobs, args.output)):
     postings = defaultdict(list)
     with args.suffix_tree.open() as fp:
         terms = sum([ 1 for _ in fp ])
-        log.info('terms {0}', terms)
+        log.info('terms {0}'.format(terms))
+        digits = len(str(terms)))
 
         fp.seek(0)
         reader = csv.reader(fp)
 
-        for (i, (ngram, *docs)) in enumerate(reader):
-            pt = args.term_prefix + str(i).zfill(terms)
-            for c in map(Character, docs):
+        for (i, (ngram, *tokens)) in enumerate(reader):
+            pt = args.term_prefix + str(i).zfill(digits)
+            for j in tokens:
+                c = Character.fromlist(j.split())
                 term = Term(pt, ngram, c.start, c.end)
-                postings[c.docno].append(entry)
+                postings[c.docno].append(term)
 
     for i in postings.items():
         jobs.put(i)
