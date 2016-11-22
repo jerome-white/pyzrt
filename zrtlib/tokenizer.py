@@ -84,8 +84,7 @@ def unstream(string, sep=' ', ch_attrs=3):
     for i in string.split(sep):
         line.append(i)
         if len(line) == ch_attrs:
-            c = Character.fromlist(line)
-            token.append(c)
+            token.append(Character.fromlist(line))
             line = []
 
     return Token(token)
