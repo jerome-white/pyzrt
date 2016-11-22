@@ -4,13 +4,6 @@ import collections
 
 from zrtlib import zutils
 
-def suffix_builder(path, token_parser, token_factory=set):
-    s = SuffixTree(token_factory)
-    with path.open() as fp:
-        s.read(fp, token_parser)
-
-    return s
-
 class NGramDict(collections.defaultdict):
     def __init__(self, default_factory, *args):
         super().__init__(default_factory, *args)
@@ -47,6 +40,14 @@ class SuffixTree:
     #
     def __len__(self):
         return len(list(self.each()))
+
+    @classmethod
+    def builder(cls, path, token_parser, token_factory=set):
+        suffix = cls(token_factory)
+        with path.open() as fp:
+            suffix.read(fp, token_parser)
+
+        return suffix
 
     #
     # Method for building new SuffixTree's based on the current

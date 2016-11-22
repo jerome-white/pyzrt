@@ -7,7 +7,7 @@ from scipy import constants
 
 from zrtlib import zutils
 from zrtlib import logger
-from zrtlib.suffix import SuffixTree, suffix_builder
+from zrtlib.suffix import SuffixTree
 from zrtlib.corpus import CompleteCorpus, WindowStreamer
 from zrtlib.tokenizer import Tokenizer, TokenSet, unstream
 
@@ -63,7 +63,7 @@ with mp.Pool(processes=workers, initializer=func, initargs=initargs):
 
     if args.existing:
         log.info('+ existing')
-        suffix = suffix_builder(args.existing, unstream, TokenSet)
+        suffix = Suffix.builder(args.existing, unstream, TokenSet)
         (min_gram, max_gram) = zutils.minmax(suffix.lf().keys())
         if args.min_gram <= max_gram:
             args.min_gram = max_gram + 1

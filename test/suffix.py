@@ -5,7 +5,7 @@ from argparse import ArgumentParser
 from itertools import islice
 from collections import Counter
 
-from zrtlib.suffix import SuffixTree, suffix_builder
+from zrtlib.suffix import SuffixTree
 from zrtlib.tokenizer import TokenSet, unstream
 from zrtlib.pseudoterm import PseudoTermWriter
 
@@ -32,7 +32,7 @@ args = arguments.parse_args()
 c = Counter()
 
 if args.existing:
-    s = suffix_builder(args.existing, unstream, TokenSet)
+    s = Suffix.builder(args.existing, unstream, TokenSet)
 else:
     s = SuffixTree(set)
     for i in range(4, 6):
