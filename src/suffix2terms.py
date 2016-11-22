@@ -1,4 +1,5 @@
 import csv
+import itertools
 import multiprocessing as mp
 from pathlib import Path
 from argparse import ArgumentParser
@@ -39,7 +40,7 @@ with mp.Pool(initializer=f, initargs=(jobs, args.output)):
     with args.suffix_tree.open() as fp:
         terms = sum([ 1 for _ in fp ])
         log.info('terms {0}'.format(terms))
-        digits = len(str(terms)))
+        digits = len(str(terms))
 
         fp.seek(0)
         reader = csv.reader(fp)
@@ -47,9 +48,14 @@ with mp.Pool(initializer=f, initargs=(jobs, args.output)):
         for (i, (ngram, *tokens)) in enumerate(reader):
             pt = args.term_prefix + str(i).zfill(digits)
             for j in tokens:
-                c = Character.fromlist(j.split())
-                term = Term(pt, ngram, c.start, c.end)
-                postings[c.docno].append(term)
+                toks = j.split()
+                for k in range(0, len(toks), 3):
+                    components = toks[k:k+3]
+                    if not components:
+                        break
+                    c = Character.fromlist(components)
+                    term = Term(pt, ngram, c.start, c.end)
+                    postings[c.docno].append(term)
 
     for i in postings.items():
         jobs.put(i)
