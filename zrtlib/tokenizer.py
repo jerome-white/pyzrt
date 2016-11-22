@@ -84,9 +84,8 @@ def unstream(string, sep=' ', ch_attrs=3):
     for i in string.split(sep):
         line.append(i)
         if len(line) == ch_attrs:
-            docno = Path(line[0])
-            (start, stop) = map(int, line[1:])
-            token.append(Character(docno, start, stop))
+            c = Character.fromlist(line)
+            token.append(c)
             line = []
 
     return Token(token)

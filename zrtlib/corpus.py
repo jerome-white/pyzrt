@@ -1,5 +1,6 @@
 import itertools
 import collections
+from pathlib import Path
 
 class Deque(collections.deque):
     def __init__(self, block_size, skip):
@@ -38,6 +39,13 @@ class Character:
 
     def tolist(self):
         return [ self.docno, self.start, self.end ]
+
+    @classmethod
+    def fromlist(cls, list_of_strings):
+        docno = Path(list_of_strings[0])
+        (start, stop) = map(int, list_of_strings[1:])
+
+        return cls(docno, start, stop)
 
 class Corpus(list):
     def __init__(self, corpus):
