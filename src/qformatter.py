@@ -1,4 +1,3 @@
-import operator as op
 import xml.etree.ElementTree as et
 from pathlib import Path
 from argparse import ArgumentParser
@@ -9,7 +8,7 @@ class QueryDocs:
         self.docs = []
 
     def __iter__(self):
-        yield from map(lambda x: et.tostring(x, encoding="unicode"), self.docs)
+        yield from map(lambda x: et.tostring(x, encoding='unicode'), self.docs)
 
     def __bool__(self):
         return len(self.docs) > 0
@@ -31,12 +30,16 @@ arguments.add_argument('--output', type=Path)
 arguments.add_argument('--include-topic', action='store_true')
 args = arguments.parse_args()
 
-for i in filter(lambda x: x.stem.isdigit(), args.input.iterdir()):
+for i in args.input.iterdir():
+    if not i.stem.isdigit():
+        continue
+
     qdocs = QueryDocs(i)
     with i.open() as fp:
         q = []
         topic = args.include_topic
-        for line in map(op.methodcaller('strip'), fp):
+        for j in fp:
+            line = j.strip()
             if line:
                 q.append(line)
             else:
