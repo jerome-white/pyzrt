@@ -111,8 +111,8 @@ with mp.Pool(processes=workers, initializer=func, initargs=initargs):
         #
         if args.incremental:
             log.info('incremental')
-            sfx = '.' + str(i)
-            with NamedTemporaryFile(mode='w', suffix=sfx, delete=False) as fp:
+            pre = '{0:02d}.'.format(i)
+            with NamedTemporaryFile(mode='w', prefix=pre, delete=False) as fp:
                 log.info(fp.name)
                 increments.append(Path(fp.name))
                 suffix.write(fp)
