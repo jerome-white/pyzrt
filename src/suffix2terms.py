@@ -10,12 +10,12 @@ from zrtlib.corpus import Character
 
 Term = namedtuple('Term', 'term, ngram, start, end')
 
-def f(jobs, path):
+def func(jobs, path):
     log = logger.getlogger()
 
     while True:
         (document, terms) = jobs.get()
-        log.info('{0} |{1}|'.format(document, len(terms)))
+        log.info('{0} {1}'.format(document.stem, len(terms)))
 
         p = path.joinpath(document.stem)
         with p.open('w') as fp:
@@ -35,27 +35,25 @@ args = arguments.parse_args()
 log = logger.getlogger(True)
 jobs = mp.JoinableQueue()
 
-with mp.Pool(initializer=f, initargs=(jobs, args.output)):
+with mp.Pool(initializer=func, initargs=(jobs, args.output)):
     postings = defaultdict(list)
+
     with args.suffix_tree.open() as fp:
-        terms = sum([ 1 for _ in fp ])
-        log.info('terms {0}'.format(terms))
-        digits = len(str(terms))
-
+        for (i, _) in enumerate(fp):
+            pass
+        log.info('terms {0}'.format(i))
+        digits = len(str(i))
         fp.seek(0)
-        reader = csv.reader(fp)
 
+        reader = csv.reader(fp)
         for (i, (ngram, *tokens)) in enumerate(reader):
-            pt = args.term_prefix + str(i).zfill(digits)
+            prefix = args.term_prefix + str(i).zfill(digits)
             for j in tokens:
                 toks = j.split()
                 for k in range(0, len(toks), 3):
-                    components = toks[k:k+3]
-                    if not components:
-                        break
-                    c = Character.fromlist(components)
-                    term = Term(pt, ngram, c.start, c.end)
-                    postings[c.docno].append(term)
+                    char = Character.fromlist(toks[k:k+3])
+                    term = Term(prefix, ngram, char.start, char.end)
+                    postings[char.docno].append(term)
 
     for i in postings.items():
         jobs.put(i)
