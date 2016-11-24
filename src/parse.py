@@ -14,7 +14,7 @@ def directory_walker(path):
         else:
             yield p
 
-def f(args, document_queue):
+def func(args, document_queue):
     log = logger.getlogger()
 
     Parser = {
@@ -53,7 +53,7 @@ arguments.add_argument('--strainer', action='append')
 args = arguments.parse_args()
 
 document_queue = mp.JoinableQueue()
-with mp.Pool(initializer=f, initargs=(args, document_queue)):
+with mp.Pool(initializer=func, initargs=(args, document_queue)):
     args.output_data.mkdir(parents=True, exist_ok=True)
     if args.raw_data:
         files = directory_walker(args.raw_data)
