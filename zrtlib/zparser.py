@@ -4,9 +4,8 @@ import xml.etree.ElementTree as et
 from pathlib import Path
 from functools import singledispatch
 
-import pandas as pd
-
 from zrtlib import logger
+from zrtlib.query import TermDocument
 from zrtlib.strainer import Strainer
 
 @singledispatch
@@ -61,13 +60,6 @@ class WSJParser(Parser):
 
 class PseudoTermParser(Parser):
     def _parse(self, doc):
-        df = pd.read_csv(str(doc))
-        df.sort_values(by=[ 'start', 'end' ], inplace=True)
+        document = TermDocument(str(doc))
 
-        text = df.to_csv(columns=[ 'term' ],
-                         header=False,
-                         index=False,
-                         line_terminator=' ',
-                         sep=' ')
-
-        yield Document(doc.stem, text)
+        yield Document(doc.stem, str(document))
