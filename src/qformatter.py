@@ -19,13 +19,11 @@ class QueryDocs:
         return len(self.docs) > 0
 
     def add(self, query):
+        docno = 'WSJQ00{0}-{1:04d}'.format(self.name, len(self.docs))
+
         doc = et.Element('DOC')
-
-        docno = et.SubElement(doc, 'DOCNO')
-        docno.text = 'WSJQ00{0}-{1:04d}'.format(self.name, len(self.docs))
-
-        text = et.SubElement(doc, 'TEXT')
-        text.text = ' '.join(query)
+        et.SubElement(doc, 'DOCNO').text = docno
+        et.SubElement(doc, 'TEXT').text = ' '.join(query)
 
         self.docs.append(doc)
 

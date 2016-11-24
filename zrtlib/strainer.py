@@ -37,12 +37,8 @@ class AlphaNumericStrainer(Strainer):
 class TRECStrainer(Strainer):
     def strain(self, document):
         top = et.Element('DOC')
-
-        docno = et.SubElement(top, 'DOCNO')
-        docno.text = document.docno
-
-        text = et.SubElement(top, 'TEXT')
-        text.text = document.text
+        et.SubElement(top, 'DOCNO').text = document.docno
+        et.SubElement(top, 'TEXT').text = document.text
 
         document.text = et.tostring(top, encoding="unicode")
         return self.strainer.strain(document)
