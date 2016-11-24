@@ -1,3 +1,8 @@
+#
+# Formats a raw query (data/query) into the DOC/DOCNO/TEXT format
+# required for TREC (and ultimately) for the parser.
+#
+
 import xml.etree.ElementTree as et
 from pathlib import Path
 from argparse import ArgumentParser
