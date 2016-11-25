@@ -1,6 +1,6 @@
 import pandas as pd
 
-class TermDoc:
+class TermDocument:
     def __init__(self, doc):
         self.df = pd.read_csv(doc)
         self.df.sort_values(by=[ 'start', 'end' ], inplace=True)
