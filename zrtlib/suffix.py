@@ -163,8 +163,9 @@ class SuffixTree:
         for i in zutils.count(min_gram, max_gram):
             for j in self.ngrams(i):
                 sr = self.lookup(j)
-                for jr in filter(None, map(self.lookup, zutils.substrings(j))):
-                    if jr.tokens.issubset(sr.tokens):
+                for k in zutils.substrings(j):
+                    jr = self.lookup(k)
+                    if jr and jr.tokens.issubset(sr.tokens):
                         jr.tokens.clear()
 
     #
