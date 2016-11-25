@@ -1,3 +1,4 @@
+import multiprocessing as mp
 import xml.etree.ElementTree as et
 from pathlib import Path
 from argparse import ArgumentParser
@@ -7,10 +8,10 @@ from zrtlib.zparser import PseudoTermParser
 
 def func(incoming, outgoing):
     log = logger.getlogger()
-    parser = PseudoTermParser()
+    parser = WSJParser()
     
     while True:
-        (document, ) = incoming.get()
+        document = incoming.get()
         log.info(document)
 
         for i in parser.parse(document):
@@ -30,7 +31,7 @@ with mp.Pool(initializer=func, initargs=(outgoing, incoming)):
 
     query = et.Element('parameter')
     while jobs > 0:
-        (text, ) = incoming.get()
+        text = incoming.get()
         et.SubElement(query, 'type').text = 'indri'
         et.SubElement(query, 'number').text = str(jobs)
         et.SubElement(query, 'text').text = text
