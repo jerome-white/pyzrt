@@ -58,9 +58,6 @@ if workers != args.workers:
 initargs = (args.corpus, outgoing, incoming)
 
 with mp.Pool(processes=workers, initializer=func, initargs=initargs):
-    increments = []
-    plogger = logger.PeriodicLogger(constants.minute * 5)
-
     if args.existing:
         log.info('+ existing')
         suffix = Suffix.builder(args.existing, unstream, TokenSet)
@@ -73,6 +70,9 @@ with mp.Pool(processes=workers, initializer=func, initargs=initargs):
     else:
         suffix = SuffixTree(TokenSet)
         min_gram = args.min_gram
+
+    plogger = logger.PeriodicLogger(constants.minute * 5)
+    fname = '{{0:0{0:d}d}}'.format(len(str(args.max_gram)))
 
     #
     # Create the work queue
@@ -107,29 +107,12 @@ with mp.Pool(processes=workers, initializer=func, initargs=initargs):
         suffix.compress(i)
 
         #
-        # Dump if needed
+        # Save
         #
-        if args.incremental:
-            log.info('incremental')
-            pre = '{0:02d}.'.format(i)
-            with NamedTemporaryFile(mode='w', prefix=pre, delete=False) as fp:
+        if args.incremental or i == args.max_gram:
+            path = args.output.join(fname.format(i))
+            with path.with_suffix('.csv').open('w') as fp:
                 log.info(fp.name)
-                increments.append(Path(fp.name))
                 suffix.write(fp)
-
-#
-# Save the output
-#
-if args.output:
-    log.info('save')
-    if increments:
-        latest = increments.pop()
-        latest.rename(args.output)
-    else:
-        with args.output.open('w') as fp:
-            suffix.write(fp)
-
-for i in increments:
-    i.unlink()
 
 log.info('<| complete')
