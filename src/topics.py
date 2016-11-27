@@ -4,6 +4,18 @@ from argparse import ArgumentParser
 
 from zrtlib import logger
 
+class Tracker:
+    def __init__(self):
+        self.topic = None
+        self.recording = False
+        self.text = []
+
+    def __bool__(self):
+        return bool(self.topic)
+
+    def __str__(self):
+        return ' '.join(self.text)
+
 arguments = ArgumentParser()
 arguments.add_argument('--topics')
 arguments.add_argument('--output', type=Path)
@@ -13,10 +25,7 @@ arguments.add_argument('--narrative', action='store_true')
 args = arguments.parse_args()
 
 log = logger.getlogger()
-
-num = None
-record = False
-entry = []
+tracker = Tracker()
 
 with gzip.open(args.topics) as fp:
     for i in fp:
@@ -27,21 +36,21 @@ with gzip.open(args.topics) as fp:
         parts = line.split()
         line_type = parts[0]
         if line_type == '<num>':
-            if num is not None:
-                log.info(num)
-                path = args.output.joinpath(num)
-                with path.open('w') as op:
-                    print(' '.join(entry), file=op)
-            num = parts[-1]
-            entry = []
+            tracker.topic = parts[-1]
         elif line_type == '<title>' and args.title:
             start = 2 if parts[1] == 'Topic:' else 1
-            entry.extend(parts[start:])
+            tracker.text.extend(parts[start:])
         elif line_type == '<desc>':
-            record = args.description
+            tracker.recording = args.description
         elif line_type == '<narr>':
-            record = args.narrative
+            tracker.recording = args.narrative
         elif line_type == '</top>':
-            record = False
-        elif record:
-            entry.append(line)
+            assert(tracker)
+            log.info(tracker.topic)
+            path = args.output.joinpath(tracker.topic)
+            with path.open('w') as op:
+                print(tracker, file=op)
+
+            tracker = Tracker()
+        elif tracker.recording:
+            tracker.text.append(line)
