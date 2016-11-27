@@ -31,7 +31,7 @@ def func(corpus_directory, incoming, outgoing):
 #
 # Setup the variables
 #
-log = logger.getlogger()
+log = logger.getlogger(True)
 
 arguments = ArgumentParser()
 arguments.add_argument('--corpus', type=Path)
