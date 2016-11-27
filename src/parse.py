@@ -52,6 +52,9 @@ arguments.add_argument('--raw-data', type=Path)
 arguments.add_argument('--strainer', action='append')
 args = arguments.parse_args()
 
+log = logger.getlogger(True)
+log.info('>| begin')
+
 document_queue = mp.JoinableQueue()
 with mp.Pool(initializer=func, initargs=(args, document_queue)):
     args.output_data.mkdir(parents=True, exist_ok=True)
@@ -63,3 +66,5 @@ with mp.Pool(initializer=func, initargs=(args, document_queue)):
     for i in files:
         document_queue.put(i)
     document_queue.join()
+
+log.info('<| complete')
