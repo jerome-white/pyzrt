@@ -1,10 +1,11 @@
+import gzip
 from pathlib import Path
 from argparse import ArgumentParser
 
 from zrtlib import logger
 
 arguments = ArgumentParser()
-arguments.add_argument('--topics', type=Path)
+arguments.add_argument('--topics')
 arguments.add_argument('--output', type=Path)
 arguments.add_argument('--title', action='store_true')
 arguments.add_argument('--description', action='store_true')
@@ -13,16 +14,17 @@ args = arguments.parse_args()
 
 log = logger.getlogger()
 
-with args.topics.open() as fp:
-    num = None
-    record = False
-    entry = []
-    
-    for line in fp:
-        parts = line.split()
-        if not parts:
+num = None
+record = False
+entry = []
+
+with gzip.open(args.topics) as fp:
+    for i in fp:
+        line = i.decode().strip()
+        if not line:
             continue
 
+        parts = line.split()
         line_type = parts[0]
         if line_type == '<num>':
             if num is not None:
@@ -42,4 +44,4 @@ with args.topics.open() as fp:
         elif line_type == '</top>':
             record = False
         elif record:
-            entry.append(line.strip())
+            entry.append(line)
