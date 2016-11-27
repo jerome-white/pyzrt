@@ -110,7 +110,7 @@ with mp.Pool(processes=workers, initializer=func, initargs=initargs):
         # Save
         #
         if args.incremental or i == args.max_gram:
-            path = args.output.join(fname.format(i))
+            path = args.output.joinpath(fname.format(i))
             with path.with_suffix('.csv').open('w') as fp:
                 log.info(fp.name)
                 suffix.write(fp)
