@@ -119,9 +119,15 @@ class SuffixTree:
     # Write the suffix tree as a CSV file.
     #
     def write(self, fp):
+        def f(row):
+            for (i, j) in enumerate(row):
+                if i == 0:
+                    yield j
+                else:
+                    yield from map(repr, j)
+
         writer = csv.writer(fp)
-        for (i, j) in self.each():
-            writer.writerow([ i ] + [ repr(x) for x in j ])
+        writer.writerows(map(f, self.each()))
 
     #
     # Insert n-grams from a suffix tree written by 'write'
