@@ -168,23 +168,24 @@ class SuffixTree:
     def fold(self, min_gram, max_gram):
         for i in zutils.count(min_gram, max_gram):
             for j in self.ngrams(i):
-                sr = self.lookup(j)
+                sr = None
                 for k in zutils.substrings(j):
                     jr = self.lookup(k)
-                    if jr and jr.tokens.issubset(sr.tokens):
-                        jr.tokens.clear()
+                    if jr:
+                        if sr is None:
+                            sr = self.lookup(j)
+                        if jr.tokens.issubset(sr.tokens):
+                            jr.tokens.clear()
 
     #
     # Convenience method for fold.
     #
     def compress(self, length=None):
         c = self.lf()
-        if len(c) < 2:
-            return
-
-        if length is None:
-            (x, y) = zutils.minmax(c.keys())
-            self.fold(x + 1, y)
-        else:
-            self.fold(length, length)
-        self.prune()
+        if len(c) > 1:
+            if length is None:
+                (x, y) = zutils.minmax(c.keys())
+                self.fold(x + 1, y)
+            else:
+                self.fold(length, length)
+            self.prune()
