@@ -29,11 +29,10 @@ with mp.Pool(initializer=func, initargs=(outgoing, incoming)):
         outgoing.put(document)
         jobs += 1
 
+    keys = [ 'type', 'number', 'text' ]
     query = et.Element('parameter')
-    while jobs > 0:
+    for i in range(jobs):
         text = incoming.get()
-        et.SubElement(query, 'type').text = 'indri'
-        et.SubElement(query, 'number').text = str(jobs)
-        et.SubElement(query, 'text').text = text
-        jobs -= 1
+        for (j, k) in zip(keys, ('indri', str(i), text)):
+            et.SubElement(query, j).text = k
     print(et.tostring(query, encoding='unicode'))
