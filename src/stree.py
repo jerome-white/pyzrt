@@ -60,7 +60,7 @@ initargs = (args.corpus, outgoing, incoming)
 with mp.Pool(processes=workers, initializer=func, initargs=initargs):
     if args.existing:
         log.info('+ existing')
-        suffix = Suffix.builder(args.existing, unstream, TokenSet)
+        suffix = SuffixTree.builder(args.existing, unstream, TokenSet)
         (min_gram, max_gram) = zutils.minmax(suffix.lf().keys())
         if args.min_gram <= max_gram:
             args.min_gram = max_gram + 1
