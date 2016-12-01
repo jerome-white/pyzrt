@@ -35,6 +35,7 @@ args = arguments.parse_args()
 log = logger.getlogger(True)
 jobs = mp.JoinableQueue()
 
+log.info('>| begin')
 with mp.Pool(initializer=func, initargs=(jobs, args.output)):
     postings = defaultdict(list)
 
@@ -58,3 +59,4 @@ with mp.Pool(initializer=func, initargs=(jobs, args.output)):
     for i in postings.items():
         jobs.put(i)
     jobs.join()
+log.info('<| complete')
