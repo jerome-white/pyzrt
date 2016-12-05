@@ -3,14 +3,23 @@
 memory=60
 hours=4
 
-while getopts "r:fh" OPTION; do
+install() {
+    rm --recursive --force $1
+    mkdir --parents $1
+}
+
+while getopts "r:tih" OPTION; do
     case $OPTION in
 	r) root=$OPTARG ;;
+	t) mkterms=1 ;;
+	i) mkindex=1 ;;
 	h)
 	    cat<<EOF
 $0 [options]
      -r top level run directory (usually directory containing the
         directory of trees
+     -t Generate term files from a suffix tree
+     -i Generate Indri indexes from term files
 EOF
 	    exit
 	    ;;
@@ -18,35 +27,56 @@ EOF
     esac
 done
 
-for i in $root/trees/*; do
-    index=$root/indri/`basename $i .csv`
-    rm --recursive --force $index
-    mkdir --parents $index
+if [ ! $mkterms ] && [ ! $mkindex ]; then
+    $0 -h
+    exit 1
+fi
 
-    tmp=`mktemp`
-    for j in `seq 2`; do
-	tmp=( ${tmp[@]} `mktemp --directory` )
+rm --force jobs
+for i in $root/trees/*; do
+    echo $i
+    qsub=`mktemp`
+
+    unset path
+    for j in pseudoterms indri; do
+	path=( ${path[@]} $root/$j/`basename $i .csv` )
     done
 
-    cat <<EOF > ${tmp[0]}
+    #
+    # Convert the suffix trees to term files
+    #
+    if [ $mkterms ]; then
+	install ${path[0]}
+	cat <<EOF >> $qsub
 python3 $HOME/src/pyzrt/src/suffix2terms.py \
   --suffix-tree $i \
-  --output ${tmp[1]} \
-  --documents-only
-
-python3 $HOME/src/pyzrt/src/parse.py \
-  --raw-data ${tmp[1]} \
-  --output-data ${tmp[2]} \
-  --parser pt \
-  --strainer trec
+  --output ${path[0]}
+EOF
+    fi
+    
+    #
+    # Generate Indir indexes from term files
+    #
+    if [ $mkindex ]; then
+	install ${path[1]}
+	tmp=`mktemp --directory`
+	cat <<EOF >> $qsub
+find ${path[0]} -not -name 'WSJQ*' | \
+  python3 $HOME/src/pyzrt/src/parse.py \
+    --output-data $tmp \
+    --parser pt \
+    --strainer trec \
+    --consolidate
 
 IndriBuildIndex \
-  -corpus.path=${tmp[2]} \
+  -corpus.path=$tmp \
   -corpus.class=trectext \
-  -index=$index
+  -index=${path[1]}
 
-for i in ${tmp[@]}; do rm --recursive --force $i; done
+rm --recursive --force $tmp
 EOF
+    fi
+
     qsub \
 	-j oe \
 	-l nodes=1:ppn=20,mem=${memory}GB,walltime=${hours}:00:00 \
@@ -54,7 +84,7 @@ EOF
 	-M jsw7@nyu.edu \
 	-N index \
 	-V \
-	$qsub
-done > jobs
+	$qsub >> jobs
+done
 
 # leave a blank line at the end
