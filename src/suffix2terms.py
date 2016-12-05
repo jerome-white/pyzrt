@@ -6,7 +6,6 @@ from argparse import ArgumentParser
 from collections import namedtuple, defaultdict
 
 from zrtlib import logger
-from zrtlib.query import QueryDoc
 from zrtlib.corpus import Character
 
 Term = namedtuple('Term', 'term, ngram, start, end')
@@ -31,7 +30,6 @@ arguments = ArgumentParser()
 arguments.add_argument('--suffix-tree', type=Path)
 arguments.add_argument('--output', type=Path)
 arguments.add_argument('--term-prefix', default='pt')
-arguments.add_argument('--documents-only', action='store_true')
 args = arguments.parse_args()
 
 log = logger.getlogger(True)
@@ -56,8 +54,6 @@ with mp.Pool(initializer=func, initargs=(jobs, args.output)):
                 toks = j.split()
                 for k in range(0, len(toks), 3):
                     char = Character.fromlist(toks[k:k+3])
-                    if args.document_only and QueryDoc.isquery(char.docno):
-                        continue
                     term = Term(prefix, ngram, char.start, char.end)
                     postings[char.docno].append(term)
 
