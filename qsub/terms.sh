@@ -6,13 +6,11 @@ hours=4
 while getopts "r:fh" OPTION; do
     case $OPTION in
 	r) root=$OPTARG ;;
-	f) force=1 ;;
 	h)
 	    cat<<EOF
 $0 [options]
      -r top level run directory (usually directory containing the
         directory of trees
-     -f Force term creation even if output directory exists
 EOF
 	    exit
 	    ;;
@@ -21,24 +19,42 @@ EOF
 done
 
 for i in $root/trees/*; do
-    out=$root/pseudoterms/`basename $i .csv`
-    if [ -d $out ] && [ ! $force ]; then
-	continue
-    fi
-    mkdir --parents $out
+    index=$root/indri/`basename $i .csv`
+    rm --recursive --force $index
+    mkdir --parents $index
 
     tmp=`mktemp`
-cat <<EOF > $tmp
-python3 $HOME/src/pyzrt/src/suffix2terms.py --suffix-tree $i --output $out
+    for j in `seq 2`; do
+	tmp=( ${tmp[@]} `mktemp --directory` )
+    done
+
+    cat <<EOF > ${tmp[0]}
+python3 $HOME/src/pyzrt/src/suffix2terms.py \
+  --suffix-tree $i \
+  --output ${tmp[1]} \
+  --documents-only
+
+python3 $HOME/src/pyzrt/src/parse.py \
+  --raw-data ${tmp[1]} \
+  --output-data ${tmp[2]} \
+  --parser pt \
+  --strainer trec
+
+IndriBuildIndex \
+  -corpus.path=${tmp[2]} \
+  -corpus.class=trectext \
+  -index=$index
+
+for i in ${tmp[@]}; do rm --recursive --force $i; done
 EOF
     qsub \
 	-j oe \
 	-l nodes=1:ppn=20,mem=${memory}GB,walltime=${hours}:00:00 \
 	-m abe \
 	-M jsw7@nyu.edu \
-	-N pseudoterms \
+	-N index \
 	-V \
-	$tmp
+	$qsub
 done > jobs
 
 # leave a blank line at the end
