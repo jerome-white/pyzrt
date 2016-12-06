@@ -54,9 +54,10 @@ def func(args, document_queue):
     }
 
     s = strainer.Strainer()
-    for i in args.strainer:
-        Strainer = strain_selector[i.lower()]
-        s = Strainer(s)
+    if args.strainer:
+        for i in args.strainer:
+            Strainer = strain_selector[i.lower()]
+            s = Strainer(s)
     parser = Parser(s)
 
     recorder = Recorder(args.output_data, args.consolidate)
@@ -74,7 +75,7 @@ arguments = ArgumentParser()
 arguments.add_argument('--parser')
 arguments.add_argument('--output-data', type=Path)
 arguments.add_argument('--raw-data', type=Path)
-arguments.add_argument('--strainer', action='append', default=list)
+arguments.add_argument('--strainer', action='append')
 arguments.add_argument('--consolidate', action='store_true')
 args = arguments.parse_args()
 
