@@ -65,7 +65,6 @@ find ${path[0]} -not -name 'WSJQ*' | \
   python3 $HOME/src/pyzrt/src/parse.py \
     --output-data $tmp \
     --parser pt \
-    --strainer trec \
     --consolidate
 
 IndriBuildIndex \
