@@ -74,7 +74,7 @@ arguments = ArgumentParser()
 arguments.add_argument('--parser')
 arguments.add_argument('--output-data', type=Path)
 arguments.add_argument('--raw-data', type=Path)
-arguments.add_argument('--strainer', action='append')
+arguments.add_argument('--strainer', action='append', default=list)
 arguments.add_argument('--consolidate', action='store_true')
 args = arguments.parse_args()
 

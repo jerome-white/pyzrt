@@ -2,7 +2,7 @@ import xml.etree.ElementTree as et
 
 class Strainer:
     def __init__(self, strainer=None):
-        self.strainer = strainer
+        self.strainer = strainer if strainer else self
         self.fmt = None
 
     def strain(self, document):
