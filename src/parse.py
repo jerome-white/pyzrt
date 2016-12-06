@@ -27,6 +27,7 @@ class Recorder:
             fp = self.fp
 
         fp.write(data)
+        fp.flush()
 
         if self.single_file:
             fp.close()
