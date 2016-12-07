@@ -61,7 +61,7 @@ EOF
 	install ${path[1]}
 	tmp=`mktemp --directory`
 	cat <<EOF >> $qsub
-find ${path[0]} -not -name 'WSJQ*' | \
+find ${path[0]} -name 'WSJ*' -not -name 'WSJQ*' | \
   python3 $HOME/src/pyzrt/src/parse.py \
     --output-data $tmp \
     --parser pt \
