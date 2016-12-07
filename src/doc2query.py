@@ -4,7 +4,15 @@ from pathlib import Path
 from argparse import ArgumentParser
 
 from zrtlib import logger
-from zrtlib.zparser import PseudoTermParser
+from zrtlib import zutils
+from zrtlib.zparser import WSJParser
+
+def mkelement(name, parent=None, text='\n', tail='\n'):
+    element = et.SubElement(parent, name) if parent else et.Element(name)
+    element.text = text
+    element.tail = tail
+
+    return element
 
 def func(incoming, outgoing):
     log = logger.getlogger()
@@ -15,7 +23,13 @@ def func(incoming, outgoing):
         log.info(document)
 
         for i in parser.parse(document):
-            outgoing.put(i.text)
+            query = mkelement('query')
+            for (j, k) in zip(('type', 'text'), ('indri', i.text)):
+                # mkelement(j, text=k, parent=query)
+                e = et.SubElement(query, j)
+                e.text = k
+                e.tail = '\n'
+            outgoing.put(query)
 
 arguments = ArgumentParser()
 arguments.add_argument('--input', type=Path)
@@ -25,14 +39,16 @@ incoming = mp.Queue()
 outgoing = mp.Queue()
 with mp.Pool(initializer=func, initargs=(outgoing, incoming)):
     jobs = 0
-    for document in args.input.iterdir():
+    for document in zutils.walk(args.input):
         outgoing.put(document)
         jobs += 1
 
     keys = [ 'type', 'number', 'text' ]
-    query = et.Element('parameter')
+
+    doc = mkelement('parameter')
     for i in range(jobs):
-        text = incoming.get()
-        for (j, k) in zip(keys, ('indri', str(i), text)):
-            et.SubElement(query, j).text = k
-    print(et.tostring(query, encoding='unicode'))
+        query = incoming.get()
+        mkelement('number', text=str(i), parent=query)
+        doc.append(query)
+
+    print(et.tostring(doc, encoding='unicode'))

@@ -1,3 +1,4 @@
+import operator as op
 import xml.etree.ElementTree as et
 
 class Strainer:
@@ -37,8 +38,14 @@ class AlphaNumericStrainer(Strainer):
 class TRECStrainer(Strainer):
     def strain(self, document):
         top = et.Element('DOC')
-        et.SubElement(top, 'DOCNO').text = document.docno
-        et.SubElement(top, 'TEXT').text = document.text
+        top.text = '\n'
 
-        document.text = et.tostring(top, encoding="unicode")
+        for i in [ 'docno', 'text' ]:
+            e = et.SubElement(top, i.upper())
+            e.text = op.attrgetter(i)(document)
+            if i == 'text':
+                e.text = '\n' + e.text + '\n'
+            e.tail = '\n'
+
+        document.text = et.tostring(top, encoding="unicode") + '\n'
         return self.strainer.strain(document)
