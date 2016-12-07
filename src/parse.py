@@ -11,26 +11,24 @@ from zrtlib import strainer
 class Recorder:
     def __init__(self, path, single_file):
         self.path = path
-        self.single_file = single_file
 
-        if self.single_file:
+        if single_file:
             directory = str(self.path)
             self.fp = NamedTemporaryFile(mode='w', dir=directory, delete=False)
         else:
             self.fp = None
 
     def write(self, data, location):
-        if self.single_file:
+        single_use = not self.fp or self.fp.closed
+        if single_use:
             path = self.path.joinpath(location)
-            fp = path.open('w')
-        else:
-            fp = self.fp
+            self.fp = path.open('w')
 
-        fp.write(data)
-        fp.flush()
+        self.fp.write(data)
+        self.fp.flush()
 
-        if self.single_file:
-            fp.close()
+        if single_use:
+            self.fp.close()
 
 def directory_walker(path):
     for p in path.iterdir():
