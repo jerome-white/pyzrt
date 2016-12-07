@@ -5,6 +5,7 @@ from argparse import ArgumentParser
 from tempfile import NamedTemporaryFile
 
 from zrtlib import logger
+from zrtlib import zutils
 from zrtlib import zparser
 from zrtlib import strainer
 
@@ -29,13 +30,6 @@ class Recorder:
 
         if single_use:
             self.fp.close()
-
-def directory_walker(path):
-    for p in path.iterdir():
-        if p.is_dir():
-            yield from directory_walker(p)
-        else:
-            yield p
 
 def func(args, document_queue):
     log = logger.getlogger()
@@ -84,12 +78,7 @@ document_queue = mp.JoinableQueue()
 with mp.Pool(initializer=func, initargs=(args, document_queue)):
     args.output_data.mkdir(parents=True, exist_ok=True)
 
-    if args.raw_data:
-        files = directory_walker(args.raw_data)
-    else:
-        files = map(lambda x: Path(x.strip()), sys.stdin)
-
-    for i in files:
+    for i in zutils.walk(args.raw_data):
         document_queue.put(i)
     document_queue.join()
 

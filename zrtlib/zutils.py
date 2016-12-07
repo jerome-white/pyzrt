@@ -1,5 +1,8 @@
+import sys
 import itertools
 import operator as op
+from pathlib import Path
+from functools import singledispatch
 
 def cut(word, pos=1):
     return (word[0:pos], word[pos:])
@@ -36,3 +39,19 @@ def count(start=0, stop=None, inclusive=True):
         if stop and rel(i, stop):
             break
         yield i
+
+@singledispatch
+def walk(path):
+    for p in path.iterdir():
+        if p.is_dir():
+            yield from walk(p)
+        else:
+            yield p
+
+@walk.register(str)
+def _(path):
+    yield from walk(Path(path))
+
+@walk.register(type(None))
+def _(path):
+    yield from map(lambda x: Path(x.strip()), sys.stdin)
