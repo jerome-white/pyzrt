@@ -1,6 +1,10 @@
 import pandas as pd
+from collections import namedtuple
+
+QueryID = namedtuple('QueryID', 'topic, number')
 
 class QueryDoc:
+    separator = '-'
     prefix = 'WSJQ00'
 
     def __init__(self, path):
@@ -17,10 +21,21 @@ class QueryDoc:
     def isquery(cls, doc):
         return doc.stem[:len(cls.prefix)] == cls.prefix
 
+    @classmethod
+    def components(cls, doc):
+        if not cls.isquery(doc):
+            raise ValueError()
+
+        (name, number) = doc.stem.split('-')
+        topic = name[len(QueryDoc.prefix):]
+
+        return QueryID(topic, number)
+
     def add(self, query):
-        docno = '{0}{1}-{2:04d}'.format(QueryDoc.prefix,
-                                        self.name,
-                                        len(self.docs))
+        docno = '{0}{1}{2}{3:04d}'.format(QueryDoc.prefix,
+                                          self.name,
+                                          QueryDoc.separator,
+                                          len(self.docs))
 
         doc = et.Element('DOC')
         et.SubElement(doc, 'DOCNO').text = docno
