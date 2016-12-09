@@ -15,7 +15,10 @@ class QuerySet:
         self.output = output.joinpath(topic)
 
 def mkelement(name, parent=None, text='\n', tail='\n'):
-    element = et.SubElement(parent, name) if parent else et.Element(name)
+    if parent is None:
+        element = et.Element(name)
+    else:
+        element = et.SubElement(parent, name)
     element.text = text
     element.tail = tail
 
@@ -32,7 +35,6 @@ def func(qset):
         log.info(document.stem)
         for j in parser.parse(document):
             q = mkelement('query', query)
-            log.debug(str(q))
             for (x, y) in zip(keys, ('indri', str(i), j.text)):
                 mkelement(x, q, y)
 
