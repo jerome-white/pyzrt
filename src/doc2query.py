@@ -8,6 +8,7 @@ from zrtlib import logger
 from zrtlib import zutils
 from zrtlib.query import QueryDoc
 from zrtlib.zparser import WSJParser
+from zrtlib.strainer import Strainer, AlphaNumericStrainer
 
 class QuerySet:
     def __init__(self, topic, documents, output):
@@ -28,7 +29,7 @@ def func(qset):
     log = logger.getlogger()
 
     keys = [ 'type', 'number', 'text' ]
-    parser = WSJParser()
+    parser = WSJParser(AlphaNumericStrainer(Strainer()))
     query = mkelement('parameter')
 
     for (i, document) in enumerate(qset.documents):
@@ -40,33 +41,6 @@ def func(qset):
 
     with qset.output.open('w') as fp:
         fp.write(et.tostring(query, encoding='unicode'))
-
-    #     outgoing.put(document)
-    #     jobs += 1
-
-    # keys = [ 'type', 'number', 'text' ]
-
-    # doc = mkelement('parameter')
-    # for i in range(jobs):
-    #     query = incoming.get()
-    #     mkelement('number', text=str(i), parent=query)
-    #     doc.append(query)
-
-    # print(et.tostring(doc, encoding='unicode'))
-
-    
-    # while True:
-    #     document = incoming.get()
-    #     log.info(document)
-
-    #     for i in parser.parse(document):
-    #         query = mkelement('query')
-    #         for (j, k) in zip(('type', 'text'), ('indri', i.text)):
-    #             # mkelement(j, text=k, parent=query)
-    #             e = et.SubElement(query, j)
-    #             e.text = k
-    #             e.tail = '\n'
-    #         outgoing.put(query)
 
 arguments = ArgumentParser()
 arguments.add_argument('--input', type=Path)
