@@ -1,5 +1,5 @@
 import multiprocessing as mp
-import xml.etree.ElementTree as et
+
 from pathlib import Path
 from argparse import ArgumentParser
 from collections import defaultdict, namedtuple
@@ -7,6 +7,7 @@ from collections import defaultdict, namedtuple
 from zrtlib import logger
 from zrtlib import zutils
 from zrtlib.query import QueryDoc
+from zrtlib.indri import IndriQuery
 from zrtlib.zparser import WSJParser
 from zrtlib.strainer import Strainer, AlphaNumericStrainer
 
@@ -15,32 +16,19 @@ class QuerySet:
         self.documents = documents
         self.output = output.joinpath(topic)
 
-def mkelement(name, parent=None, text='\n', tail='\n'):
-    if parent is None:
-        element = et.Element(name)
-    else:
-        element = et.SubElement(parent, name)
-    element.text = text
-    element.tail = tail
-
-    return element
-
 def func(qset):
     log = logger.getlogger()
 
-    keys = [ 'type', 'number', 'text' ]
     parser = WSJParser(AlphaNumericStrainer(Strainer()))
-    query = mkelement('parameter')
+    query = IndriQuery()
 
     for (i, document) in enumerate(qset.documents):
         log.info(document.stem)
         for j in parser.parse(document):
-            q = mkelement('query', query)
-            for (x, y) in zip(keys, ('indri', str(i), j.text)):
-                mkelement(x, q, y)
+            query.add(j.text)
 
     with qset.output.open('w') as fp:
-        fp.write(et.tostring(query, encoding='unicode'))
+        fp.write(str(query))
 
 arguments = ArgumentParser()
 arguments.add_argument('--input', type=Path)
