@@ -1,7 +1,11 @@
 import pandas as pd
-from collections import namedtuple
+import operator as op
+import itertools
+import collections
 
-QueryID = namedtuple('QueryID', 'topic, number')
+from zrtlib.indri import IndriQuery
+
+QueryID = collections.namedtuple('QueryID', 'topic, number')
 
 class QueryDoc:
     separator = '-'
@@ -43,6 +47,15 @@ class QueryDoc:
 
         self.docs.append(doc)
 
+class Term:
+    def __init__(self, term, start, end):
+        self.term = term
+        self.start = start
+        self.end = end
+
+    def __lt__(self, other):
+        return self.end - self.start < other.end - other.start
+
 class TermDocument:
     def __init__(self, doc):
         self.df = pd.read_csv(doc)
@@ -54,3 +67,61 @@ class TermDocument:
                               index=False,
                               line_terminator=' ',
                               sep=' ')
+
+    def __iter__(self):
+        for row in self.df.itertuples():
+            yield Term(row.term, row.start, row.end)
+
+class Query:
+    def __init__(self, path):
+        self.doc = TermDocument(str(path))
+
+    def __str__(self):
+        query = IndriQuery()
+        query.add(' '.join(list(self)))
+
+        return str(query)
+
+class BagOfWords(Query):
+    def __iter__(self):
+        for i in self.doc:
+            yield i.term
+
+class Retainer:
+    def retain(self, terms):
+        yield from map(op.attrgetter('term'), self._retain(terms))
+
+    def _retain(self, terms):
+        yield from terms
+
+class RetainLongest(Retainer):
+    def __init__(self, n=None):
+        self.n = n
+
+    def _retain(self, terms):
+        terms.sort()
+        yield from itertools.islice(reversed(terms), 0, self.n)
+
+class Clustered(Query):
+    def __init__(self, path, indri_operator, retainer=None):
+        super().__init__(path)
+        self.operator = indri_operator
+        self.retainer = Retainer() if retainer is None else retainer
+
+    def __iter__(self):
+        last = None
+        terms = []
+        f = lambda x: '{0}({1})'.format(self.operator,
+                                        ' '.join(self.retainer.retain(x)))
+
+        for i in self.doc:
+            if last is not None:
+                if i.start > last.end:
+                    yield f(terms)
+                    terms = []
+                else:
+                    terms.append(i)
+            last = i
+
+        if terms:
+            yield f(terms)
