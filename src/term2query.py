@@ -13,21 +13,23 @@ def func(args):
     log.info(terms.stem)
 
     models_ = {
-        'ua': query.BagOfWords,
-        'sa': query.Clustered,
-        'u1': query.Clustered,
-        # 'un': None,
+        'ua': (query.BagOfWords, {}),
+        'sa': (query.Clustered, {
+            'indri_operator': 'syn',
+        }),
+        'u1': (query.Clustered, {
+            'indri_operator': 'syn',
+            'retainer': query.RetainLongest(1),
+        }),
+        'un': (query.Clustered, {
+            'retainer': query.RetainPath(),
+        }),
         # 'uaw': None,
         # 'saw': None,
     }
 
-    kwargs = {}
-    if model == 'sa' or model == 'u1':
-        kwargs['indri_operator'] = 'syn'
-        if model == 'u1':
-            kwargs['retainer'] = query.RetainLongest(1)
-
-    q = models_[model](terms, **kwargs)
+    (Model, kwargs) = models_[model]
+    q = Model(terms, **kwargs)
     with output.joinpath(terms.stem).open('w') as fp:
         fp.write(str(q))
     
