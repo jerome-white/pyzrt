@@ -3,8 +3,12 @@ import operator as op
 import itertools
 import collections
 
+import numpy as np
+import networkx as nx
+
 from zrtlib.indri import IndriQuery
 
+Term = collections.namedtuple('Term', 'term, start, end')
 QueryID = collections.namedtuple('QueryID', 'topic, number')
 
 class QueryDoc:
@@ -47,19 +51,15 @@ class QueryDoc:
 
         self.docs.append(doc)
 
-class Term:
-    def __init__(self, term, start, end):
-        self.term = term
-        self.start = start
-        self.end = end
-
-    def __lt__(self, other):
-        return self.end - self.start < other.end - other.start
-
 class TermDocument:
-    def __init__(self, doc):
+    def __init__(self, doc, drop_partial=False):
         self.df = pd.read_csv(doc)
         self.df.sort_values(by=[ 'start', 'end' ], inplace=True)
+
+        if drop_partial:
+            length = self.df['ngram'].str.len()
+            fulls = length == self.df['end'] - self.df['start']
+            self.df = self.df[fulls]
 
     def __str__(self):
         return self.df.to_csv(columns=[ 'term' ],
@@ -94,34 +94,61 @@ class Retainer:
     def _retain(self, terms):
         yield from terms
 
+class RetainPath(Retainer):
+    def _retain(self, terms):
+        graph = nx.DiGraph()
+
+        for (u, v) in itertools.combinations(terms, 2):
+            if u.end >= v.start and u.start != v.start:
+                weight = u.end - v.start
+                graph.add_edge(u, v, weight=weight)
+
+        paths = {}
+        (source, target) = [ terms[x] for x in (0, -1) ]
+        for i in nx.all_shortest_paths(graph, source, target, weight='weight'):
+            weights = []
+            for (u, v) in zip(i, i[1:]):
+                d = graph.get_edge_data(u, v)
+                weights.append(d['weight'])
+            key = np.std(weights)
+            paths[key] = i
+        best = min(paths.keys())
+
+        yield from paths[best]
+
 class RetainLongest(Retainer):
     def __init__(self, n=None):
         self.n = n
 
     def _retain(self, terms):
-        terms.sort()
         yield from itertools.islice(reversed(terms), 0, self.n)
 
 class Clustered(Query):
-    def __init__(self, path, indri_operator, retainer=None):
+    def __init__(self, path, indri_operator=None, retainer=None):
         super().__init__(path)
-        self.operator = indri_operator
+
+        if indri_operator is None:
+            self.operator = '{0}'
+        else:
+            self.operator = indri_operator + '({0})'
+
         self.retainer = Retainer() if retainer is None else retainer
+
+    def tostring(self, terms):
+        return self.operator.format(' '.join(self.retainer.retain(terms)))
 
     def __iter__(self):
         last = None
         terms = []
-        f = lambda x: '{0}({1})'.format(self.operator,
-                                        ' '.join(self.retainer.retain(x)))
 
         for i in self.doc:
             if last is not None:
                 if i.start > last.end:
-                    yield f(terms)
+                    yield self.tostring(terms)
                     terms = []
                 else:
                     terms.append(i)
             last = i
 
         if terms:
-            yield f(terms)
+            yield self.tostring(terms)
