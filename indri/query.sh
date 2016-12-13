@@ -12,10 +12,9 @@ while getopts "r:c:q:h" OPTION; do
 	h)
 	    cat <<EOF
 $0
-  -i index
-  -q queries
+  -r root
   -c count (default $count)
-  -r relevance judgements (QRELS)
+  -q relevance judgements (QRELS)
 EOF
 	    exit
 	    ;;
