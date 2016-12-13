@@ -5,8 +5,11 @@ hours=3
 root=$WORK/wsj/2016_1128_014701
 count=1000
 
+rm --force jobs
 for i in $root/indri/*; do
     for j in ua sa u1 un; do
+	echo $i $j
+
 	qsub=`mktemp`
 	cat <<"EOF" > $qsub
 terms=`basename $i`
