@@ -11,7 +11,13 @@ for i in $root/indri/*; do
 	echo $i $j
 
 	qsub=`mktemp`
-	cat <<"EOF" > $qsub
+	cat <<EOF > $qsub
+i=$i
+j=$j
+root=$root
+count=$count
+EOF
+	cat <<"EOF" >> $qsub
 terms=`basename $i`
 queries=$root/queries/$terms/$j
 mkdir --parents $queries

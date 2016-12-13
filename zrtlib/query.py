@@ -130,7 +130,7 @@ class Clustered(Query):
         if indri_operator is None:
             self.operator = '{0}'
         else:
-            self.operator = indri_operator + '({0})'
+            self.operator = '#{0}({{0}})'.format(indri_operator)
 
         self.retainer = Retainer() if retainer is None else retainer
 
