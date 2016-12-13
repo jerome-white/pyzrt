@@ -3,8 +3,9 @@ import multiprocessing as mp
 from pathlib import Path
 from argparse import ArgumentParser
 
-from zrtlib import logger
 from zrtlib import query
+from zrtlib import zutils
+from zrtlib import logger
 
 def func(args):
     (terms, model, output) = args
@@ -41,5 +42,5 @@ args = arguments.parse_args()
 
 with mp.Pool() as pool:
     f = lambda x: (x, args.model.lower(), args.output)
-    for _ in pool.imap(func, map(f, args.input.iterdir())):
+    for _ in pool.imap(func, map(f, zutils.walk(args.input))):
         pass
