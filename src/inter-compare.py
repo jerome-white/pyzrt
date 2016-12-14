@@ -35,33 +35,22 @@ metrics = {
     'recip_rank': 'Reciprocal Rank',
     }
 
-baseline = summary_stats(args.baseline, args.metric, args.all)
+labels = [ 'std' ]
+baseline = [ summary_stats(args.baseline, args.metric, args.all) ]
 
-#
-# Gather the stats
-#
-results = defaultdict(dict)
 for ngram in args.zrt.iterdir():
     for model in ngram.iterdir():
+        lbl = '{0}-{1}'.format(ngram, model.lower())
         stats = summary_stats(model, args.metric, args.all)
-        results[model.stem][ngram.stem] = stats
-
-#
-# Plot
-#
-for model in results:
-    labels = [ '' ]
-    data = [ baseline ]
-    
-    for (ngram, stats) in results[model].items():
-        labels.append(ngram)
+        
+        labels.append(lbl)
         data.append(stats)
         
-    plt.boxplot(data, labels=labels, showfliers=False)
-    plt.ylim(ymin=0)
-    plt.grid(which='both', axis='y')
-    plt.title(model)
-    plt.ylabel(metrics[args.metric])
+plt.boxplot(data, labels=labels, showfliers=False)
 
-    fname = args.plots.joinpath(model).with_suffix('.png')
-    plt.savefig(str(fname))
+plt.ylim(ymin=0)
+plt.grid(which='both', axis='y')
+plt.title(model)
+plt.ylabel(metrics[args.metric])
+
+plt.savefig(args.metric + '.png')

@@ -12,9 +12,9 @@ def get_stats(directory, metric, summary):
                     yield (i.stem, float(value))
 
 arguments = ArgumentParser()
-arguments.add_argument('--evals', action='append', type=Path)
 arguments.add_argument('--metric')
-arguments.add_argument('--all', action='store_true')
+arguments.add_argument('--all', action='store_true') # all or runs only?
+arguments.add_argument('--evals', action='append', type=Path)
 args = arguments.parse_args()
 
 results = {}
