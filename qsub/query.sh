@@ -2,8 +2,22 @@
 
 memory=60
 hours=3
-root=$WORK/wsj/2016_1128_014701
 count=1000
+
+while getopts "r:h" OPTION; do
+    case $OPTION in
+	r) root=$OPTARG ;;
+	h)
+	    cat<<EOF
+$0 [options]
+     -r top level run directory (usually directory containing the
+        directory of trees)
+EOF
+	    exit
+	    ;;
+        *) exit 1 ;;
+    esac
+done
 
 rm --force jobs
 for i in $root/indri/*; do
@@ -35,12 +49,14 @@ for k in $queries/*; do
 	-trecFormat=true $k > \
 	$tmp
 
-    topic=`cut --delimiter='-' --fields=1 <<< $(basename $k)`
-    trec=$root/evals/$terms/$j
-    mkdir --parents $trec
+    if [ `stat --format=%s $tmp` -gt 0 ]; then
+	topic=`cut --delimiter='-' --fields=1 <<< $(basename $k)`
+	trec=$root/evals/$terms/$j
+	mkdir --parents $trec
 
-    trec_eval -q -c -M$count $WORK/qrels/${topic:(-3)} $tmp > \
-        $trec/`basename $k`
+	trec_eval -q -c -M$count $WORK/qrels/${topic:(-3)} $tmp > \
+	    $trec/`basename $k`
+    fi
 done
 rm $tmp
 EOF
