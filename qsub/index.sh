@@ -17,7 +17,7 @@ while getopts "r:tih" OPTION; do
 	    cat<<EOF
 $0 [options]
      -r top level run directory (usually directory containing the
-        directory of trees
+        directory of trees)
      -t Generate term files from a suffix tree
      -i Generate Indri indexes from term files
 EOF
@@ -34,13 +34,15 @@ fi
 
 rm --force jobs
 for i in $root/trees/*; do
-    echo $i
-    qsub=`mktemp`
+    term=`basename $i .csv`
+    echo $term
 
     unset path
-    for j in pseudoterms indri; do
-	path=( ${path[@]} $root/$j/`basename $i .csv` )
+    for j in pseudoterms documents indri; do
+	path=( ${path[@]} $root/$j/$term )
     done
+
+    qsub=`mktemp`
 
     #
     # Convert the suffix trees to term files
@@ -55,24 +57,24 @@ EOF
     fi
     
     #
-    # Generate Indir indexes from term files
+    # Generate Indri indexes from term files
     #
     if [ $mkindex ]; then
-	install ${path[1]}
-	tmp=`mktemp --directory`
+	for j in ${path[@]:1}; do
+	    install $j
+	done
 	cat <<EOF >> $qsub
 find ${path[0]} -name 'WSJ*' -not -name 'WSJQ*' | \
   python3 $HOME/src/pyzrt/src/parse.py \
-    --output-data $tmp \
+    --output-data ${path[1]} \
     --parser pt \
+    --strainer trec \
     --consolidate
 
 IndriBuildIndex \
-  -corpus.path=$tmp \
+  -corpus.path=${path[1]} \
   -corpus.class=trectext \
-  -index=${path[1]}
-
-rm --recursive --force $tmp
+  -index=${path[2]}
 EOF
     fi
 
