@@ -52,14 +52,31 @@ class QueryDoc:
         self.docs.append(doc)
 
 class TermDocument:
-    def __init__(self, doc, drop_partial=False):
-        self.df = pd.read_csv(doc)
+    def __init__(self, document):
+        self.df = pd.read_csv(document)
         self.df.sort_values(by=[ 'start', 'end' ], inplace=True)
 
-        if drop_partial:
-            length = self.df['ngram'].str.len()
-            fulls = length == self.df['end'] - self.df['start']
-            self.df = self.df[fulls]
+        # if drop_partial:
+        #     length = self.df['ngram'].str.len()
+        #     fulls = length == self.df['end'] - self.df['start']
+        #     self.df = self.df[fulls]
+
+        region = 0
+        column = 'region'
+        updates = {}
+        last = None
+
+        self.df[column] = region
+        for row in self.df.itertuples():
+            if last is not None:
+                if row.start > last.end:
+                    region += 1
+                updates[row.Index] = region
+            last = row
+        df = pd.DataFrame(list(updates.values()),
+                          index=updates.keys(),
+                          columns=[ column ])
+        self.df.update(df)
 
     def __str__(self):
         return self.df.to_csv(columns=[ 'term' ],
@@ -67,25 +84,6 @@ class TermDocument:
                               index=False,
                               line_terminator=' ',
                               sep=' ')
-
-    def __iter__(self):
-        for row in self.df.itertuples():
-            yield Term(row.term, row.start, row.end)
-
-class Query:
-    def __init__(self, path):
-        self.doc = TermDocument(str(path))
-
-    def __str__(self):
-        query = IndriQuery()
-        query.add(' '.join(list(self)))
-
-        return str(query)
-
-class BagOfWords(Query):
-    def __iter__(self):
-        for i in self.doc:
-            yield i.term
 
 class Retainer:
     def retain(self, terms):
@@ -122,6 +120,21 @@ class RetainLongest(Retainer):
 
     def _retain(self, terms):
         yield from itertools.islice(reversed(terms), 0, self.n)
+
+class Query:
+    def __init__(self, path):
+        self.doc = TermDocument(str(path))
+
+    def __str__(self):
+        query = IndriQuery()
+        query.add(' '.join(list(self)))
+
+        return str(query)
+
+class BagOfWords(Query):
+    def __iter__(self):
+        for i in self.doc:
+            yield i.term
 
 class Clustered(Query):
     def __init__(self, path, indri_operator=None, retainer=None):
