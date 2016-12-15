@@ -9,17 +9,30 @@ import matplotlib.pyplot as plt
 from zrtlib import logger
 
 class Colors:
-    def __init__(self):
-        self.used = set()
-        self.fmt = '#' + '{:02X}' * 3
+    def __init__(self, buff=30):
+        self.buff = buff
+        self.used = defaultdict(list)
 
     def get(self):
-        while True:
-            vals = [ random.randrange(256) for _ in range(3) ]
-            c = self.fmt.format(*vals)
-            if c not in self.used:
-                self.used.add(c)
-                return c
+        keys = ['r', 'g', 'b']
+        i = 0
+        while i < len(keys):
+            k = keys[i]
+            v = random.randrange(256)
+
+            exists = False
+            for j in range(v - self.buff, v + self.buff):
+                if j in self.used[k]:
+                    exists = True
+                    break
+
+            if not exists:
+                self.used[k].append(v)
+                i += 1
+
+        vals = [ self.used[x][-1] for x in keys ]
+
+        return ('#' + '{:02X}' * 3).format(*vals)
 
 def get_stats(directory, metric, summary):
     for i in directory.iterdir():
@@ -56,10 +69,10 @@ metrics = {
 
 ngrams = []
 models = []
-for i in args.zrt.iterdir():
+for i in sorted(args.zrt.iterdir()):
     if i.stem not in ngrams:
         ngrams.append(i.stem)
-    for j in i.iterdir():
+    for j in sorted(i.iterdir(), reverse=True):
         if j.stem not in models:
             models.append(j.stem)
 
@@ -67,30 +80,26 @@ for metric in args.metric:
     colors = Colors()
     plots = []
     legend = []
-    xticks = []
+    plt.clf()
     
     for m in models:
-        log.debug(m)
-        
         (x, y) = ([], [])
         for n in ngrams:
             path = Path(args.zrt, n, m)
-            xticks.append(m + '/' + n)
             if not path.exists():
                 log.warning('{0} does not exist'.format(path))
                 continue
             stats = np.mean(summary_stats(path, metric, args.all))
             
             x.append(stats)
-            y.append(ngrams.index(n) + models.index(m))
-        
+            y.append(int(n))
+
         legend.append(m)
         p = plt.scatter(x, y, marker='o', c=colors.get(), edgecolors='face')
         plots.append(p)
 
     plt.legend(plots, legend, loc='best')
     plt.grid()
-    plt.yticks(range(len(xticks)), xticks)
     plt.axis('tight')
     plt.xlabel(metrics[metric])
     plt.ylabel('model / n-grams')
