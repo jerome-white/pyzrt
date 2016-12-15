@@ -1,7 +1,8 @@
 import random
+import operator as op
 from pathlib import Path
 from argparse import ArgumentParser
-from collections import defaultdict
+from collections import OrderedDict
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -9,19 +10,26 @@ import matplotlib.pyplot as plt
 from zrtlib import logger
 
 class Colors:
-    def __init__(self, buff=30):
+    def __init__(self, buff=0.3):
+        self.rgb = 256
         self.buff = buff
-        self.used = defaultdict(list)
+        self.used = OrderedDict([ (x, []) for x in [ 'r', 'g', 'b' ]])
+
+    def ball(self, center):
+        plus_minus = self.rgb * self.buff
+        rng = [ round(f(center, plus_minus)) for f in (op.add, op.sub) ]
+        yield from range(*rng)
 
     def get(self):
-        keys = ['r', 'g', 'b']
         i = 0
+        keys = list(self.used.keys())
+
         while i < len(keys):
             k = keys[i]
-            v = random.randrange(256)
+            v = random.randrange(self.rgb)
 
             exists = False
-            for j in range(v - self.buff, v + self.buff):
+            for j in self.ball(v):
                 if j in self.used[k]:
                     exists = True
                     break
@@ -85,6 +93,7 @@ for metric in args.metric:
     for m in models:
         (x, y) = ([], [])
         for n in ngrams:
+            log.info('{0} {1}'.format(m, n))
             path = Path(args.zrt, n, m)
             if not path.exists():
                 log.warning('{0} does not exist'.format(path))
