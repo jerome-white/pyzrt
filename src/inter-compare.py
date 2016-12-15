@@ -49,13 +49,13 @@ for metric in args.metric:
             lbl = '{0}\n{1}'.format(ngram.stem, model.stem.lower())
             stats = summary_stats(model, metric, args.all)
         
-            log.info(lbl)
+            log.info(lbl.replace('\n', ' '))
             
             labels.append(lbl)
             data.append(stats)
 
     width = len(labels) * 0.75
-    plt.figure(figsize=(width, 6))
+    plt.figure(figsize=(width, 12))
     plt.boxplot(data, labels=labels, showfliers=False)
 
     plt.ylim(ymin=0)
