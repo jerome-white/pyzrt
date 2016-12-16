@@ -5,26 +5,7 @@ from collections import defaultdict
 import matplotlib.pyplot as plt
 
 from zrtlib import logger
-
-def get_stats(directory, metric, summary):
-    for i in directory.iterdir():
-        with i.open() as fp:
-            for line in fp:
-                (metric_, run, value) = line.strip().split()
-                aggregate = run == 'all'
-                if not (summary ^ aggregate) and metric == metric_:
-                    yield (i.stem, float(value))
-
-def summary_stats(directory, metric, summary):
-    return [ x for (_, x) in get_stats(directory, metric, summary) ]
-
-# def pairs(directory, reverse=False):
-#     for i in directory.iterdir():
-#         for j in i.iterdir():
-#             pair = [ i, j ]
-#             if reverse:
-#                 pair = reversed(pair)
-#             yield tuple(pair)
+from zrtlib import zutils
 
 arguments = ArgumentParser()
 arguments.add_argument('--metric', action='append')
@@ -42,12 +23,12 @@ metrics = {
 
 for metric in args.metric:
     labels = [ '\nSTD' ]
-    data = [ summary_stats(args.baseline, metric, args.all) ]
+    data = [ zutils.summary_stats(args.baseline, metric, args.all) ]
     
     for ngram in args.zrt.iterdir():
         for model in ngram.iterdir():
             lbl = '{0}\n{1}'.format(ngram.stem, model.stem.lower())
-            stats = summary_stats(model, metric, args.all)
+            stats = zutils.summary_stats(model, metric, args.all)
         
             log.info(lbl.replace('\n', ' '))
             

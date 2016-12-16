@@ -4,6 +4,18 @@ import operator as op
 from pathlib import Path
 from functools import singledispatch
 
+def get_stats(directory, metric, summary):
+    for i in directory.iterdir():
+        with i.open() as fp:
+            for line in fp:
+                (metric_, run, value) = line.strip().split()
+                aggregate = run == 'all'
+                if not (summary ^ aggregate) and metric == metric_:
+                    yield (i.stem, float(value))
+
+def summary_stats(directory, metric, summary):
+    return [ x for (_, x) in get_stats(directory, metric, summary) ]
+
 def cut(word, pos=1):
     return (word[0:pos], word[pos:])
 
