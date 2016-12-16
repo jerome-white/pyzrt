@@ -8,7 +8,6 @@ import networkx as nx
 
 from zrtlib.indri import IndriQuery
 
-Term = collections.namedtuple('Term', 'term, start, end')
 QueryID = collections.namedtuple('QueryID', 'topic, number')
 
 class QueryDoc:
@@ -56,13 +55,8 @@ class TermDocument:
         self.df = pd.read_csv(document)
         self.df.sort_values(by=[ 'start', 'end' ], inplace=True)
 
-        # if drop_partial:
-        #     length = self.df['ngram'].str.len()
-        #     fulls = length == self.df['end'] - self.df['start']
-        #     self.df = self.df[fulls]
-
+        self.region_column = 'region'
         region = 0
-        column = 'region'
         updates = {}
         last = None
 
@@ -85,41 +79,9 @@ class TermDocument:
                               line_terminator=' ',
                               sep=' ')
 
-class Retainer:
-    def retain(self, terms):
-        yield from map(op.attrgetter('term'), self._retain(terms))
-
-    def _retain(self, terms):
-        yield from terms
-
-class RetainPath(Retainer):
-    def _retain(self, terms):
-        graph = nx.DiGraph()
-
-        for (u, v) in itertools.combinations(terms, 2):
-            if u.end >= v.start and u.start != v.start:
-                weight = u.end - v.start
-                graph.add_edge(u, v, weight=weight)
-
-        paths = {}
-        (source, target) = [ terms[x] for x in (0, -1) ]
-        for i in nx.all_shortest_paths(graph, source, target, weight='weight'):
-            weights = []
-            for (u, v) in zip(i, i[1:]):
-                d = graph.get_edge_data(u, v)
-                weights.append(d['weight'])
-            key = np.std(weights)
-            paths[key] = i
-        best = min(paths.keys())
-
-        yield from paths[best]
-
-class RetainLongest(Retainer):
-    def __init__(self, n=None):
-        self.n = n
-
-    def _retain(self, terms):
-        yield from itertools.islice(reversed(terms), 0, self.n)
+    def regions(self):
+        groups = self.df.groupby(by=[self.region_column], sort=False)
+        yield from map(op.itemgetter(1), groups)
 
 class Query:
     def __init__(self, path):
@@ -127,41 +89,55 @@ class Query:
 
     def __str__(self):
         query = IndriQuery()
-        query.add(' '.join(list(self)))
+        query.add(' '.join(map(self.format_region, self.doc.regions())))
 
         return str(query)
 
 class BagOfWords(Query):
-    def __iter__(self):
-        for i in self.doc:
-            yield i.term
+    def format_region(self, region):
+        return ' '.join(region.terms.tolist())
 
-class Clustered(Query):
-    def __init__(self, path, indri_operator=None, retainer=None):
+class Synonym(Query):
+    def format_region(self, region):
+        return '#syn({0})'.format(' '.join(region.terms.tolist()))
+
+class ShortestPath(Query):
+    def __init__(self, path, partials=True):
         super().__init__(path)
+        self.partials = partials
 
-        if indri_operator is None:
-            self.operator = '{0}'
-        else:
-            self.operator = '#{0}({{0}})'.format(indri_operator)
+    def remove_partials(self, region):
+        length = region['ngram'].str.len()
+        fulls = length == region['end'] - region['start']
 
-        self.retainer = Retainer() if retainer is None else retainer
+        return region[fulls]
 
-    def tostring(self, terms):
-        return self.operator.format(' '.join(self.retainer.retain(terms)))
+    def format_region(self, region):
+        df = region if self.partials else self.remove_partials(region)
+        graph = nx.DiGraph()
 
-    def __iter__(self):
-        last = None
-        terms = []
+        for i in range(len(df)):
+            u = df.iloc[i]
+            for j in range(i + 1, len(df)):
+                v = df.iloc[j]
+                if v.start > u.end:
+                    break
+                if u.start != v.start:
+                    weight = u.end - v.start
+                    graph.add_edge(u, v, weight=weight)
 
-        for i in self.doc:
-            if last is not None:
-                if i.start > last.end:
-                    yield self.tostring(terms)
-                    terms = []
-                else:
-                    terms.append(i)
-            last = i
+        paths = {}
+        (source, target) = [ df.iloc[x] for x in (0, -1) ]
 
-        if terms:
-            yield self.tostring(terms)
+        for i in nx.all_shortest_paths(graph, source, target, weight='weight'):
+            weights = []
+            for (u, v) in zip(i, i[1:]):
+                d = graph.get_edge_data(u, v)
+                weights.append(d['weight'])
+            key = np.std(weights)
+            paths[key] = i
+
+        best = min(paths.keys())
+        path = map(op.attrgetter('term'), paths[best])
+
+        return ' '.join(path)
