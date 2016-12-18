@@ -1,3 +1,7 @@
+#
+# XXX use http://matplotlib.org/examples/color/named_colors.html
+#
+
 import random
 import operator as op
 from collections import OrderedDict
