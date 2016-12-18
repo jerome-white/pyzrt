@@ -9,9 +9,12 @@ import networkx as nx
 from zrtlib.indri import IndriQuery
 
 class TermDocument:
-    def __init__(self, document):
+    def __init__(self, document, lengths=False):
         self.df = pd.read_csv(document)
         self.df.sort_values(by=[ 'start', 'end' ], inplace=True)
+
+        if lengths:
+            self.df['length'] = self.df['end'] - self.df['start']
 
         self.region_column = 'region'
         region = 0
@@ -35,15 +38,15 @@ class TermDocument:
                               index=False,
                               line_terminator=' ',
                               sep=' ')
-
+        
     def regions(self):
         groups = self.df.groupby(by=[self.region_column], sort=False)
         yield from map(op.itemgetter(1), groups)
 
 class Query:
     def __init__(self, path):
-        self.doc = TermDocument(str(path))
-
+        self.doc = TermDocument(str(path), True)
+        
     def __str__(self):
         terms = map(self.regionalize, self.doc.regions())
         query = IndriQuery()
@@ -56,32 +59,82 @@ class BagOfWords(Query):
         yield from map(op.attrgetter('term'), region.itertuples())
 
 class Synonym(BagOfWords):
-    def __init__(self, path, longest=0):
+    def __init__(self, path, n_longest=None):
         super().__init__(path)
-        self.n = longest
+        self.n = n_longest
 
     def regionalize(self, region):
-        if self.n > 0:
-            df = region.assign(length = lambda x: x.end - x.start)
-            df = df.sort_values('length').drop('length', axis=1).tail(self.n)
-        else:
-            df = region
+        n = len(region) if self.n is None else self.n
+        df = region.nlargest(n, 'length')
 
         yield from itertools.chain(['#syn('], super().regionalize(df), [')'])
+
+class Weighted(Query):
+    def __init__(self, path, alpha=0.5):
+        super().__init__(path)
+        self.alpha = alpha
+
+    def discount(self, df):
+        previous = []
+        
+        for row in df.itertuples():
+            i = self.weight(row)
+            j = np.prod(previous) if previous else 1
+            
+            yield (row.Index, i * j)
+            
+            previous.append(1 - j)
+        
+    def weight(self, term):
+        w = self.alpha * (term.end - term.start)
+        return w / (1 + w)
+
+    def combine(self, region, weights):
+        for row in region.itertuples():
+            yield '{0} {1}'.format(weights[row.Index], row.term)
+
+    def regionalize(self, region):
+        if self.weights:
+            df = region.update(self.weights)
+        else:
+            df = region.nlargest(len(region), 'length')
+            weights = dict(discount(df))
+
+        # XXX this should take place in the child
+        prefix = '#{0}{'.format(self.prefix)
+        weights = dict(self.weights(region))
+
+        yield from itertools.chain([prefix], combine(df, weights), [')'])
+            
+class TotalWeight(Weighted):
+    def __init__(self, path, alpha=0.5):
+        super().__init__(path, alpha)
+        self.prefix = 'weight'
+
+        by = ['length', 'start', 'end']
+        df = self.doc.df.sort_values(by=by, descending=True)
+        self.computed = dict(self.discount(df))
+
+    def weights(self, region):
+        for row in region.itertuples():
+            yield (row['Index'], self.computed[row['Index']])
+
+class LongestWeight(Weighted):
+    def __init__(self, path, alpha=0.5):
+        super().__init__(path, alpha)
+        self.prefix = 'wsyn'
 
 class ShortestPath(Query):
     def __init__(self, path, partials=True):
         super().__init__(path)
         self.partials = partials
 
-    def remove_partials(self, region):
-        length = region['ngram'].str.len()
-        fulls = length == region['end'] - region['start']
-
-        return region[fulls]
-
     def regionalize(self, region):
-        df = region if self.partials else self.remove_partials(region)
+        if self.partials:
+            df = region
+        else:
+            df = region[region['ngram'].str.len() == region['length']]
+
         graph = nx.DiGraph()
 
         for i in range(len(df)):
