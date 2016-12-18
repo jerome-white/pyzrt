@@ -15,15 +15,12 @@ def func(args):
 
     models_ = {
         'ua': (query.BagOfWords, {}),
-        'sa': (query.Clustered, {
-            'indri_operator': 'syn',
+        'sa': (query.Synonym, {}),
+        'u1': (query.Synonym, {
+            'longest': 1,
         }),
-        'u1': (query.Clustered, {
-            'indri_operator': 'syn',
-            'retainer': query.RetainLongest(1),
-        }),
-        'un': (query.Clustered, {
-            'retainer': query.RetainPath(),
+        'un': (query.ShortestPath, {
+            'partials': False,
         }),
         # 'uaw': None,
         # 'saw': None,
