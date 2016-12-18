@@ -18,16 +18,16 @@ class TermDocument:
         updates = {}
         last = None
 
-        self.df[column] = region
+        self.df[self.region_column] = region
         for row in self.df.itertuples():
             if last is not None:
                 region += row.start > last.end
                 updates[row.Index] = region
             last = row
-        df = pd.DataFrame(list(updates.values()),
-                          index=updates.keys(),
-                          columns=[ column ])
-        self.df.update(df)
+        groups = pd.DataFrame(list(updates.values()),
+                              index=updates.keys(),
+                              columns=[ self.region_column ])
+        self.df.update(groups)
 
     def __str__(self):
         return self.df.to_csv(columns=[ 'term' ],
@@ -37,18 +37,17 @@ class TermDocument:
                               sep=' ')
 
     def regions(self):
-        return self.df.groupby(by=[self.region_column], sort=False)
+        groups = self.df.groupby(by=[self.region_column], sort=False)
+        yield from map(op.itemgetter(1), groups)
 
 class Query:
     def __init__(self, path):
         self.doc = TermDocument(str(path))
 
     def __str__(self):
-        groups = self.doc.regions()
-        strings = groups.apply(self.regionalize)
-
+        terms = map(self.regionalize, self.doc.regions())
         query = IndriQuery()
-        query.add(' '.join(strings))
+        query.add(' '.join(itertools.chain.from_iterable(terms)))
 
         return str(query)
 
@@ -62,15 +61,13 @@ class Synonym(BagOfWords):
         self.n = longest
 
     def regionalize(self, region):
-        if self.longest > 0:
-            length = lambda x: x.end - x.start
-
-            df = region.assign(length)
+        if self.n > 0:
+            df = region.assign(length = lambda x: x.end - x.start)
             df = df.sort_values('length').drop('length', axis=1).tail(self.n)
         else:
             df = region
 
-        yield from itertools.chain('#syn(', super().regionalize(df), ')')
+        yield from itertools.chain(['#syn('], super().regionalize(df), [')'])
 
 class ShortestPath(Query):
     def __init__(self, path, partials=True):
