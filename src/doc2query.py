@@ -6,8 +6,7 @@ from collections import defaultdict, namedtuple
 
 from zrtlib import logger
 from zrtlib import zutils
-from zrtlib.query import QueryDoc
-from zrtlib.indri import IndriQuery
+from zrtlib.indri import IndriQuery, QueryDoc
 from zrtlib.zparser import WSJParser
 from zrtlib.strainer import Strainer, AlphaNumericStrainer
 

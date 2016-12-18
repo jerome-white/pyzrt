@@ -7,7 +7,7 @@ import xml.etree.ElementTree as et
 from pathlib import Path
 from argparse import ArgumentParser
 
-from zrtlib.query import QueryDoc
+from zrtlib.indri import QueryDoc
 
 arguments = ArgumentParser()
 arguments.add_argument('--input', type=Path)
