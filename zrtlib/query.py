@@ -1,9 +1,9 @@
-import pandas as pd
-import operator as op
 import itertools
 import collections
+import operator as op
 
 import numpy as np
+import pandas as pd
 import networkx as nx
 
 from zrtlib.indri import IndriQuery
@@ -63,8 +63,7 @@ class TermDocument:
         self.df[column] = region
         for row in self.df.itertuples():
             if last is not None:
-                if row.start > last.end:
-                    region += 1
+                region += row.start > last.end
                 updates[row.Index] = region
             last = row
         df = pd.DataFrame(list(updates.values()),
@@ -80,26 +79,40 @@ class TermDocument:
                               sep=' ')
 
     def regions(self):
-        groups = self.df.groupby(by=[self.region_column], sort=False)
-        yield from map(op.itemgetter(1), groups)
+        return self.df.groupby(by=[self.region_column], sort=False)
 
 class Query:
     def __init__(self, path):
         self.doc = TermDocument(str(path))
 
     def __str__(self):
+        groups = self.doc.regions()
+        strings = groups.apply(self.regionalize)
+
         query = IndriQuery()
-        query.add(' '.join(map(self.format_region, self.doc.regions())))
+        query.add(' '.join(strings))
 
         return str(query)
 
 class BagOfWords(Query):
-    def format_region(self, region):
-        return ' '.join(region.terms.tolist())
+    def regionalize(self, region):
+        yield from map(op.attrgetter('term'), region.itertuples())
 
-class Synonym(Query):
-    def format_region(self, region):
-        return '#syn({0})'.format(' '.join(region.terms.tolist()))
+class Synonym(BagOfWords):
+    def __init__(self, path, longest=0):
+        super().__init__(path)
+        self.n = longest
+
+    def regionalize(self, region):
+        if self.longest > 0:
+            length = lambda x: x.end - x.start
+
+            df = region.assign(length)
+            df = df.sort_values('length').drop('length', axis=1).tail(self.n)
+        else:
+            df = region
+
+        yield from itertools.chain('#syn(', super().regionalize(df), ')')
 
 class ShortestPath(Query):
     def __init__(self, path, partials=True):
@@ -112,7 +125,7 @@ class ShortestPath(Query):
 
         return region[fulls]
 
-    def format_region(self, region):
+    def regionalize(self, region):
         df = region if self.partials else self.remove_partials(region)
         graph = nx.DiGraph()
 
@@ -124,10 +137,10 @@ class ShortestPath(Query):
                     break
                 if u.start != v.start:
                     weight = u.end - v.start
-                    graph.add_edge(u, v, weight=weight)
+                    graph.add_edge(u.term, v.term, weight=weight)
 
         paths = {}
-        (source, target) = [ df.iloc[x] for x in (0, -1) ]
+        (source, target) = [ df.iloc[x].term for x in (0, -1) ]
 
         for i in nx.all_shortest_paths(graph, source, target, weight='weight'):
             weights = []
@@ -137,7 +150,4 @@ class ShortestPath(Query):
             key = np.std(weights)
             paths[key] = i
 
-        best = min(paths.keys())
-        path = map(op.attrgetter('term'), paths[best])
-
-        return ' '.join(path)
+        yield from paths[min(paths.keys())]
