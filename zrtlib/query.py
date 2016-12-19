@@ -61,7 +61,7 @@ class Query:
 
 class BagOfWords(Query):
     def regionalize(self, region):
-        yield from map(op.attrgetter('term'), region.itertuples())
+        yield from map(op.attrgetter('term'), region.df.itertuples())
 
 class Synonym(BagOfWords):
     def __init__(self, path, n_longest=None):
@@ -91,8 +91,8 @@ class Weighted(Query):
             
             previous.append(1 - i)
 
-    def combine(self, region, weights):
-        for row in region.itertuples():
+    def combine(self, df, weights):
+        for row in df.itertuples():
             if row.Index in weights:
                 yield '{0:.10f} {1}'.format(weights[row.Index], row.term)
 
