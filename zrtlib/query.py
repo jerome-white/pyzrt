@@ -71,13 +71,17 @@ class Synonym(BagOfWords):
     def regionalize(self, region):
         n = len(region.df) if self.n is None else self.n
         df = region.df.nlargest(n, 'length')
+        r = Region(*region[:3], df)
 
-        yield from itertools.chain(['#syn('], super().regionalize(df), [')'])
+        yield from itertools.chain(['#syn('], super().regionalize(r), [')'])
 
 class Weighted(Query):
     def __init__(self, path, alpha=0.5):
         super().__init__(path)
         self.alpha = alpha
+
+    def regionalize(self, region):
+        raise NotImplementedError()
 
     def discount(self, df):
         previous = []
