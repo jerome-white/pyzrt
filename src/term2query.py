@@ -17,7 +17,7 @@ def func(args):
         'ua': (query.BagOfWords, {}),
         'sa': (query.Synonym, {}),
         'u1': (query.Synonym, {
-            'longest': 1,
+            'n_longest': 1,
         }),
         'un': (query.ShortestPath, {
             'partials': False,
