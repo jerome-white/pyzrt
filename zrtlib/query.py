@@ -8,6 +8,8 @@ import networkx as nx
 
 from zrtlib.indri import IndriQuery
 
+Region = collections.namedtuple('Region', 'n, first, last, df')
+
 class TermDocument:
     def __init__(self, document, lengths=False):
         self.df = pd.read_csv(document)
@@ -41,7 +43,10 @@ class TermDocument:
         
     def regions(self):
         groups = self.df.groupby(by=[self.region_column], sort=False)
-        yield from map(op.itemgetter(1), groups)
+        n = groups.size().count() - 1
+
+        for (i, (j, df)) in enumerate(groups):
+            yield Region(j, i == 0, i == n, df)
 
 class Query:
     def __init__(self, path):
@@ -64,8 +69,8 @@ class Synonym(BagOfWords):
         self.n = n_longest
 
     def regionalize(self, region):
-        n = len(region) if self.n is None else self.n
-        df = region.nlargest(n, 'length')
+        n = len(region.df) if self.n is None else self.n
+        df = region.df.nlargest(n, 'length')
 
         yield from itertools.chain(['#syn('], super().regionalize(df), [')'])
 
@@ -78,51 +83,43 @@ class Weighted(Query):
         previous = []
         
         for row in df.itertuples():
-            i = self.weight(row)
+            w = self.alpha * (row.end - row.start)
+            i = w / (1 + w)
             j = np.prod(previous) if previous else 1
             
             yield (row.Index, i * j)
             
-            previous.append(1 - j)
-        
-    def weight(self, term):
-        w = self.alpha * (term.end - term.start)
-        return w / (1 + w)
+            previous.append(1 - i)
 
     def combine(self, region, weights):
         for row in region.itertuples():
-            yield '{0} {1}'.format(weights[row.Index], row.term)
+            if row.Index in weights:
+                yield '{0:.10f} {1}'.format(weights[row.Index], row.term)
 
-    def regionalize(self, region):
-        if self.weights:
-            df = region.update(self.weights)
-        else:
-            df = region.nlargest(len(region), 'length')
-            weights = dict(discount(df))
-
-        # XXX this should take place in the child
-        prefix = '#{0}{'.format(self.prefix)
-        weights = dict(self.weights(region))
-
-        yield from itertools.chain([prefix], combine(df, weights), [')'])
-            
 class TotalWeight(Weighted):
     def __init__(self, path, alpha=0.5):
         super().__init__(path, alpha)
-        self.prefix = 'weight'
 
-        by = ['length', 'start', 'end']
-        df = self.doc.df.sort_values(by=by, descending=True)
+        by = [ 'length', 'start', 'end' ]
+        df = self.doc.df.sort_values(by=by, ascending=False)
         self.computed = dict(self.discount(df))
 
-    def weights(self, region):
-        for row in region.itertuples():
-            yield (row['Index'], self.computed[row['Index']])
+    def regionalize(self, region):
+        if region.first:
+            yield '#weight('
+
+        yield from self.combine(region.df, self.computed)
+
+        if region.last:
+            yield ')'
 
 class LongestWeight(Weighted):
-    def __init__(self, path, alpha=0.5):
-        super().__init__(path, alpha)
-        self.prefix = 'wsyn'
+    def regionalize(self, region):
+        df = region.df.nlargest(len(region.df), 'length')
+        weights = dict(self.discount(df))
+        body = super().combine(df, weights)
+
+        yield from itertools.chain(['#wsyn('], body, [')'])
 
 class ShortestPath(Query):
     def __init__(self, path, partials=True):
@@ -130,10 +127,10 @@ class ShortestPath(Query):
         self.partials = partials
 
     def regionalize(self, region):
-        if self.partials:
-            df = region
-        else:
-            df = region[region['ngram'].str.len() == region['length']]
+        df = region.df
+        if not self.partials:
+            condition = df['ngram'].str.len() == df['length']
+            df = df[condition]
 
         graph = nx.DiGraph()
 

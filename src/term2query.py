@@ -22,8 +22,8 @@ def func(args):
         'un': (query.ShortestPath, {
             'partials': False,
         }),
-        # 'uaw': None,
-        # 'saw': None,
+        'uaw': (query.TotalWeight, {}),
+        'saw': (query.LongestWeight, {}),
     }
 
     (Model, kwargs) = models_[model]
