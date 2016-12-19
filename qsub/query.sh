@@ -1,7 +1,7 @@
 #!/bin/bash
 
 memory=60
-hours=4
+hours=6
 count=1000
 models=(
     ua
@@ -38,6 +38,7 @@ for j in ${models[@]}; do
 EOF
     cat <<"EOF" >> $qsub
     echo $terms $j
+
     queries=$root/queries/$terms/$j
     rm --recursive --force $queries
     mkdir --parents $queries
