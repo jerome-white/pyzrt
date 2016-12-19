@@ -12,7 +12,7 @@ while getopts "r:c:q:h" OPTION; do
 	h)
 	    cat <<EOF
 $0
-  -r root
+  -r root (directory containing 'queries' directory)
   -c count (default $count)
   -q relevance judgements (QRELS)
 EOF

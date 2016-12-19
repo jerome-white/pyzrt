@@ -1,8 +1,16 @@
 #!/bin/bash
 
 memory=60
-hours=3
+hours=4
 count=1000
+models=(
+    ua
+    sa
+    u1
+    un
+    uaw
+    saw
+)
 
 while getopts "r:h" OPTION; do
     case $OPTION in
@@ -21,7 +29,7 @@ done
 
 rm --force jobs
 for i in $root/indri/*; do
-    for j in ua sa u1 un; do
+    for j in ${models[@]}; do
 	echo $i $j
 
 	qsub=`mktemp`
@@ -33,7 +41,9 @@ count=$count
 EOF
 	cat <<"EOF" >> $qsub
 terms=`basename $i`
+
 queries=$root/queries/$terms/$j
+rm --recursive --force $queries
 mkdir --parents $queries
 
 find $root/pseudoterms/$terms -name 'WSJQ*' | \
@@ -51,7 +61,9 @@ for k in $queries/*; do
 
     if [ `stat --format=%s $tmp` -gt 0 ]; then
 	topic=`cut --delimiter='-' --fields=1 <<< $(basename $k)`
+
 	trec=$root/evals/$terms/$j
+        rm --recursive --force $trec
 	mkdir --parents $trec
 
 	trec_eval -q -c -M$count $WORK/qrels/${topic:(-3)} $tmp > \
@@ -59,6 +71,7 @@ for k in $queries/*; do
     fi
 done
 rm $tmp
+echo DONE >&2
 EOF
 	qsub \
 	    -j oe \
