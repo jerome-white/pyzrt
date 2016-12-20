@@ -1,29 +1,20 @@
 #!/bin/bash
 
-basenames() {
-    unset names
-    for ii in $@; do
-	names=( ${names[@]} `basename $ii` )
-    done
-    echo ${names[@]}
-}
+#PBS -V
+#PBS -l nodes=1:ppn=20,mem=60GB,walltime=4:00:00
+#PBS -m abe
+#PBS -M jsw7@nyu.edu
+#PBS -N pyzrt
+#PBS -j oe
 
+module purge
+module load parallel/20140722
+
+root=$WORK/wsj/2016_1128_014701
 count=1000
 
-while getopts "r:h" OPTION; do
-    case $OPTION in
-	r) root=$OPTARG ;;
-	h)
-	    cat<<EOF
-$0 [options]
-     -r top level run directory (usually directory containing the
-        directory of trees)
-EOF
-	    exit
-	    ;;
-        *) exit 1 ;;
-    esac
-done
+# nodes=( `cat $PBS_NODEFILE | uniq` )
+# n=${#nodes[@]}
 
 for term in $root/queries/*; do
     terms=`basename $term`
@@ -34,23 +25,14 @@ for term in $root/queries/*; do
 	mkdir --parents $trec
 
 	for query in $model/*; do
-	    results=`mktemp`
-	    IndriRunQuery \
-		-count=$count \
-		-index=$root/indri/$terms \
-		-trecFormat=true \
-		$query > \
-		$results
-
-	    q=`basename $query`
-	    topic=`cut --delimiter='-' --fields=1 <<< $q`
-	    topic=${topic:(-3)}
-
-	    echo "[ `date` ] `basenames $term $model $query` $topic"
-
-	    trec_eval -q -c -M$count $WORK/qrels/$topic $results > \
-		      $trec/$q
-	    rm $results
+	    cat <<EOF
+$HOME/src/pyzrt/indri/qe.sh \
+  -c $count \
+  -i $root/indri/$terms \
+  -q $query \
+  -r $WORK/qrels \
+  -o $trec
+EOF
 	done
     done
-done
+done | parallel --no-notice
