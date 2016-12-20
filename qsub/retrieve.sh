@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #PBS -V
-#PBS -l nodes=1:ppn=20,mem=60GB,walltime=4:00:00
+#PBS -l nodes=1:ppn=20,mem=60GB,walltime=2:00:00
 #PBS -m abe
 #PBS -M jsw7@nyu.edu
 #PBS -N pyzrt
@@ -12,9 +12,6 @@ module load parallel/20140722
 
 root=$WORK/wsj/2016_1128_014701
 count=1000
-
-# nodes=( `cat $PBS_NODEFILE | uniq` )
-# n=${#nodes[@]}
 
 for term in $root/queries/*; do
     terms=`basename $term`
