@@ -1,5 +1,15 @@
 #!/bin/bash
 
+basenames() {
+    unset names
+    for ii in $@; do
+	names=( ${names[@]} `basename $ii` )
+    done
+    echo ${names[@]}
+}
+
+count=1000
+
 while getopts "r:h" OPTION; do
     case $OPTION in
 	r) root=$OPTARG ;;
@@ -15,7 +25,6 @@ EOF
     esac
 done
 
-results=`mktemp`
 for term in $root/queries/*; do
     terms=`basename $term`
 
@@ -25,10 +34,8 @@ for term in $root/queries/*; do
 	mkdir --parents $trec
 
 	for query in $model/*; do
-	    echo $term $model $query
-
+	    results=`mktemp`
 	    IndriRunQuery \
-		-baseline=tfidf \
 		-count=$count \
 		-index=$root/indri/$terms \
 		-trecFormat=true \
@@ -37,8 +44,13 @@ for term in $root/queries/*; do
 
 	    q=`basename $query`
 	    topic=`cut --delimiter='-' --fields=1 <<< $q`
-	    trec_eval -q -c -M$count $WORK/qrels/${topic:(-3)} $results > \
+	    topic=${topic:(-3)}
+
+	    echo "[ `date` ] `basenames $term $model $query` $topic"
+
+	    trec_eval -q -c -M$count $WORK/qrels/$topic $results > \
 		      $trec/$q
+	    rm $results
 	done
     done
 done
