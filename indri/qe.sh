@@ -8,7 +8,7 @@ basenames() {
     echo ${names[@]}
 }
 
-while getopts "c:t:q:r:o:" OPTION; do
+while getopts "c:i:q:r:o:" OPTION; do
     case $OPTION in
 	c) count=$OPTARG ;;
 	i) index=$OPTARG ;;
