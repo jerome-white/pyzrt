@@ -23,9 +23,9 @@ q=`basename $query`
 topic=`cut --delimiter='-' --fields=1 <<< $q`
 topic=${topic:(-3)}
 
-echo "[ `date` ] `basenames $term $model $query` $topic"
+echo "[ `date` ] $query"
 
 results=`mktemp`
 IndriRunQuery -count=$count -index=$index -trecFormat=true $query > $results
-trec_eval -q -c -M$count $qrels/$topic $results > $output/$q
-rm $results
+trec_eval -q -c -M$count $qrels/$topic $results > $output/$q && \
+    rm $results
