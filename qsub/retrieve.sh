@@ -28,7 +28,8 @@ $HOME/src/pyzrt/indri/qe.sh \
   -i $root/indri/$terms \
   -q $query \
   -r $WORK/qrels \
-  -o $trec
+  -o $trec \
+  -b tfidf
 EOF
 	done
     done

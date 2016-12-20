@@ -8,24 +8,30 @@ basenames() {
     echo ${names[@]}
 }
 
-while getopts "c:i:q:r:o:" OPTION; do
+while getopts "c:i:q:r:o:b:" OPTION; do
     case $OPTION in
 	c) count=$OPTARG ;;
 	i) index=$OPTARG ;;
 	q) query=$OPTARG ;;
 	r) qrels=$OPTARG ;;
 	o) output=$OPTARG ;;
+	b) baseline="-baseline=$OPTARG" ;;
 	*) exit 1 ;;
     esac
 done
 
 q=`basename $query`
 topic=`cut --delimiter='-' --fields=1 <<< $q`
-topic=${topic:(-3)}
+qrels=$qrels/${topic:(-3)}
+
+if [ $baseline ]; then
+    grep --quiet '#' $query || unset baseline
+fi
 
 echo "[ `date` ] $query"
 
 results=`mktemp`
-IndriRunQuery -count=$count -index=$index -trecFormat=true $query > $results
-trec_eval -q -c -M$count $qrels/$topic $results > $output/$q && \
+IndriRunQuery $baseline -trecFormat=true -count=$count -index=$index $query > \
+	      $results
+trec_eval -q -c -M$count $qrels $results > $output/$q && \
     rm $results
