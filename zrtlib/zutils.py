@@ -4,6 +4,9 @@ import operator as op
 from pathlib import Path
 from functools import singledispatch
 
+#
+# Read Indri stat output
+#
 def get_stats(directory, metric, summary):
     for i in directory.iterdir():
         with i.open() as fp:
@@ -13,6 +16,9 @@ def get_stats(directory, metric, summary):
                 if not (summary ^ aggregate) and metric == metric_:
                     yield (i.stem, float(value))
 
+#
+# Return on the metric value from Indri stat output
+#
 def summary_stats(directory, metric, summary):
     return [ x for (_, x) in get_stats(directory, metric, summary) ]
 
