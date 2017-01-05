@@ -3,50 +3,10 @@ import collections
 import operator as op
 
 import numpy as np
-import pandas as pd
 import networkx as nx
 
 from zrtlib.indri import IndriQuery
-
-Region = collections.namedtuple('Region', 'n, first, last, df')
-
-class TermDocument:
-    def __init__(self, document, lengths=False):
-        self.df = pd.read_csv(document)
-        self.df.sort_values(by=[ 'start', 'end' ], inplace=True)
-
-        if lengths:
-            self.df['length'] = self.df['end'] - self.df['start']
-
-        self.region_column = 'region'
-        region = 0
-        updates = {}
-        last = None
-
-        self.df[self.region_column] = region
-        for row in self.df.itertuples():
-            if last is not None:
-                region += row.start > last.end
-                updates[row.Index] = region
-            last = row
-        groups = pd.DataFrame(list(updates.values()),
-                              index=updates.keys(),
-                              columns=[ self.region_column ])
-        self.df.update(groups)
-
-    def __str__(self):
-        return self.df.to_csv(columns=[ 'term' ],
-                              header=False,
-                              index=False,
-                              line_terminator=' ',
-                              sep=' ')
-        
-    def regions(self):
-        groups = self.df.groupby(by=[self.region_column], sort=False)
-        n = groups.size().count() - 1
-
-        for (i, (j, df)) in enumerate(groups):
-            yield Region(j, i == 0, i == n, df)
+from zrtlib.document import TermDocument, Region
 
 class Query:
     def __init__(self, path):
