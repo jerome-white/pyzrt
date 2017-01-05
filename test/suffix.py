@@ -1,4 +1,4 @@
-import pickle
+import sys
 import random
 from pathlib import Path
 from argparse import ArgumentParser
@@ -7,7 +7,6 @@ from collections import Counter
 
 from zrtlib.suffix import SuffixTree
 from zrtlib.tokenizer import TokenSet, unstream
-from zrtlib.pseudoterm import PseudoTermWriter
 
 ROWS_ = 70
 
@@ -32,7 +31,7 @@ args = arguments.parse_args()
 c = Counter()
 
 if args.existing:
-    s = Suffix.builder(args.existing, unstream, TokenSet)
+    s = SuffixTree.builder(args.existing, unstream, TokenSet)
 else:
     s = SuffixTree(set)
     for i in range(4, 6):
@@ -54,9 +53,10 @@ else:
 #     for j in s.ngrams(i):
 #         print(fmtkey(j), list(s.get(j)))
 
-# if args.output:
-#     with args.output.open('w') as fp:
-#         s.write(fp)
+if args.output:
+    with args.output.open('w') as fp:
+        s.write(fp)
+sys.exit()
 
 # print('.' * ROWS_)
 # for (i, j) in s.each():
