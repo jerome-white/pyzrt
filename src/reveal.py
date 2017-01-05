@@ -1,11 +1,14 @@
+import csv
 # import multiprocessing as mp
 from pathlib import Path
 from argparse import ArgumentParser
+from tempfile import NamedTemporaryFile
 
 import numpy as np
 
 from zrtlib import query
 from zrtlib import logger
+from zrtlib import zutils
 from zrtlib.indri import QueryDoc, QueryExecutor
 from zrtlib.document import HiddenDocument
 from zrtlib.selector import RandomSelector
@@ -33,14 +36,16 @@ args = arguments.parse_args()
     }),
     'uaw': (query.TotalWeight, {}),
     'saw': (query.LongestWeight, {}),
-}[model]
+}[args.model]
 
+log = logger.getlogger()
 queries = {}
 documents = RandomSelector()
 
 for i in zutils.walk(args.input):
-    doc = HiddenDocument(q)
-    
+    log.info(i)
+
+    doc = HiddenDocument(i)
     if QueryDoc.isquery(i):
         info = QueryDoc.components(i)
         queries[info.topic] = doc
@@ -55,7 +60,7 @@ with QueryExecutor() as query:
 
         results = {}
 
-        for term in selector:
+        for term in documents:
             results['term'] = term
             changed = False
 
@@ -80,5 +85,5 @@ with QueryExecutor() as query:
             if not args.compress_output or args.compress_output and changed:
                 writer.writerow(results)
 
-    if not any(queries.values()):
-        break
+            if not any(queries.values()):
+                break
