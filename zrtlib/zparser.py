@@ -5,8 +5,8 @@ from pathlib import Path
 from functools import singledispatch
 
 from zrtlib import logger
-from zrtlib.query import TermDocument
 from zrtlib.strainer import Strainer
+from zrtlib.document import TermDocument
 
 @singledispatch
 def normalize(string, fmt=None):
