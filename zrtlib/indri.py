@@ -1,5 +1,8 @@
+import shlex
+import subprocess
 import collections
 import xml.etree.ElementTree as et
+from tempfile import NamedTemporaryFile
 
 QueryID = collections.namedtuple('QueryID', 'topic, number')
 
@@ -28,6 +31,40 @@ class IndriQuery:
         
     def __str__(self):
         return et.tostring(self.query, encoding='unicode')
+
+class QueryExecutor:
+    def __init__(self):
+        self.results = NamedTemporaryFile(mode='w')
+        self.query_command = '''
+IndriRunQuery -trecFormat=true -count={count} -index={index} {query}>{results}
+'''
+        self.evaluation_command = '''
+trec_eval -q -c -M{count} {qrels} {results}
+'''
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.results.close()
+
+    def query(self, query, index, count):
+        cmd = self.query_command.format(query=query,
+                                        index=index,
+                                        count=count,
+                                        results=self.results.name)
+        subprocess.run(shlex.split(cmd))
+
+    def evaluate(self, qrels, count):
+        cmd = self.evaluation_command.format(qrels=qrels,
+                                             count=count,
+                                             results=self.results.name)
+
+        with subprocess.Popen(shlex.split(cmd),
+                              bufsize=1,
+                              stdout=subprocess.PIPE,
+                              universal_newlines=True) as fp:
+            yield from fp.stdout
 
 class QueryDoc:
     separator = '-'
