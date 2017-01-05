@@ -18,4 +18,4 @@ class RandomSelector(TermSelector):
         yield from self.terms
 
     def add(self, document):
-        self.terms.update(document.term.values)
+        self.terms.update(document.df.term.values)
