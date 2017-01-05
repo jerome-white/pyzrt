@@ -13,7 +13,7 @@ def func(args):
     log = logger.getlogger()
     log.info(terms.stem)
 
-    models_ = {
+    (Model, kwargs) = {
         'ua': (query.BagOfWords, {}),
         'sa': (query.Synonym, {}),
         'u1': (query.Synonym, {
@@ -24,10 +24,9 @@ def func(args):
         }),
         'uaw': (query.TotalWeight, {}),
         'saw': (query.LongestWeight, {}),
-    }
-
-    (Model, kwargs) = models_[model]
+    }[model]
     q = Model(terms, **kwargs)
+
     with output.joinpath(terms.stem).open('w') as fp:
         fp.write(str(q))
     
