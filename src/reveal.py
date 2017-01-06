@@ -44,10 +44,8 @@ def func(incoming, outgoing, opts):
 
                 values = []
                 qrels = opts.qrels.joinpath(payload.topic)
-                for line in engine.evaluate(qrels, opts.count):
-                    (metric, run, value) = line.strip().split()
-                    if run.isdigit() and metric == opts.metric:
-                        values.append(float(value))
+                for i in engine.evaluate(qrels, opts.count):
+                    values.append(i[opts.metric])
                 assert(values)
 
                 outgoing.put((payload.topic, np.mean(values)))

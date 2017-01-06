@@ -56,7 +56,7 @@ class QueryExecutor:
 
         return subprocess.run(cmd, stdout=self.results)
 
-    def evaluate(self, qrels, count):
+    def evaluate(self, qrels, count, aggregate=False):
         cmd = [
             self.trec,
             '-q',
@@ -70,7 +70,20 @@ class QueryExecutor:
                               bufsize=1,
                               stdout=subprocess.PIPE,
                               universal_newlines=True) as fp:
-            yield from fp.stdout
+            previous = None
+            results = {}
+
+            for line in fp.stdout:
+                (metric, run, value) = line.strip().split()
+                if not run.isdigit():
+                    continue
+
+                if previous is not None and previous != run:
+                    yield results
+                    results = {} # probably not necessary, but safe
+
+                results[metric] = float(value)
+                previous = run
 
 class QueryDoc:
     separator = '-'
