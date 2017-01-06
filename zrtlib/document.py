@@ -50,10 +50,17 @@ class HiddenDocument(TermDocument):
         self.df['term'] = self.df.apply(lambda row: row[term][::-1], axis=1)
 
     def __bool__(self):
-        return len(self.df[self.df['pt'] != self.df['term']]) == 0
+        '''
+        True if hidden terms remain
+        '''
+        return len(self.df[self.df['pt'] != self.df['term']]) > 0
 
     def flip(self, term):
         matches = self.df['pt'] == term
         self.df.loc[matches, 'term'] = term
 
         return len(self.df[matches])
+
+    def reveal(self):
+        for i in self.df.pt.unique():
+            self.flip(i)
