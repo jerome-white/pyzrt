@@ -7,9 +7,9 @@ from collections import namedtuple
 
 import numpy as np
 
-from zrtlib import query
 from zrtlib import logger
 from zrtlib import zutils
+from zrtlib.query import QueryBuilder
 from zrtlib.indri import QueryDoc, QueryExecutor
 from zrtlib.document import HiddenDocument
 from zrtlib.selector import RandomSelector
@@ -18,20 +18,6 @@ QueryPackage = namedtuple('Query', 'topic, query')
 
 def func(incoming, outgoing, opts):
     log = logger.getlogger()
-
-    # XXX Should become a factory method in zrtlib.query
-    (Model, kwargs) = {
-        'ua': (query.BagOfWords, {}),
-        'sa': (query.Synonym, {}),
-        'u1': (query.Synonym, {
-            'n_longest': 1,
-        }),
-        'un': (query.ShortestPath, {
-            'partials': False,
-        }),
-        'uaw': (query.TotalWeight, {}),
-        'saw': (query.LongestWeight, {}),
-    }[opts.model]
 
     with QueryExecutor() as engine:
         while True:
@@ -45,25 +31,27 @@ def func(incoming, outgoing, opts):
                     topic = info.topic
                 else:
                     topic = None
+
                 outgoing.put((topic, HiddenDocument(payload)))
             elif job == 'query':
                 log.info('{0} {1}'.format(job, payload.topic))
 
-                model = Model(payload.query, **kwargs)
-
                 with NamedTemporaryFile(mode='w') as tmp:
-                    tmp.write(str(model))
-                    engine.query(tmp.name, opts.index, opts.count)
+                    print(QueryBuilder(opts.model, payload.query), file=tmp)
+                    result = engine.query(tmp.name, opts.index, opts.count)
+                    assert(result.returncode == 0)
 
                 values = []
                 qrels = opts.qrels.joinpath(payload.topic)
-                for line in engine.evaluate(str(qrels), args.count):
+                for line in engine.evaluate(str(qrels), opts.count):
                     (metric, run, value) = line.strip().split()
-                    if run.isdigit() and metric == args.metric:
+                    if run.isdigit() and metric == opts.metric:
                         values.append(metric)
                 assert(values)
 
                 outgoing.put((payload.topic, np.mean(values)))
+            elif job == 'quit':
+                break
 
 arguments = ArgumentParser()
 arguments.add_argument('--model')
@@ -127,3 +115,6 @@ with mp.Pool(initializer=func, initargs=(outgoing, incoming, args)):
 
             if not any(queries.values()):
                 break
+
+    for _ in range(mp.cpu_count()):
+        outgoing.put(('quit', None))
