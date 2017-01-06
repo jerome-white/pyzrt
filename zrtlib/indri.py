@@ -1,4 +1,5 @@
 import shlex
+import shutil
 import subprocess
 import collections
 import xml.etree.ElementTree as et
@@ -34,8 +35,8 @@ class IndriQuery:
 
 class QueryExecutor:
     def __init__(self, indri='IndriRunQuery', trec='trec_eval'):
-        self.indri = indri
-        self.trec = trec
+        self.indri = shutil.which(indri)
+        self.trec = shutil.which(trec)
         self.results = NamedTemporaryFile(mode='w')
 
     def __enter__(self):
@@ -50,9 +51,8 @@ class QueryExecutor:
             '-trecFormat=true',
             '-count={0}'.format(count),
             '-index={0}'.format(index),
-            str(query)
+            str(query),
             ]
-        print(' '.join(cmd))
 
         return subprocess.run(cmd, stdout=self.results)
 
@@ -63,7 +63,7 @@ class QueryExecutor:
             '-c',
             '-M{0}'.format(count),
             str(qrels),
-            self.results.name
+            self.results.name,
             ]
 
         with subprocess.Popen(cmd,
