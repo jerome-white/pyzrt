@@ -23,10 +23,11 @@ log = logger.getlogger()
 
 with QueryExecutor(args.indri, args.trec_eval) as engine:
     count = 1000
+    query = QueryBuilder('ua', TermDocument(args.query))
     
     with NamedTemporaryFile(mode='w', delete=False) as tmp:
         log.debug(tmp.name)
-        print(QueryBuilder('ua', args.query), file=tmp, flush=True)
+        print(QueryBuilder('ua', query, file=tmp, flush=True)
         result = engine.query(tmp.name, args.index, count)
         result.check_returncode()
 
