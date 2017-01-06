@@ -3,9 +3,9 @@ import multiprocessing as mp
 from pathlib import Path
 from argparse import ArgumentParser
 
-from zrtlib import query
 from zrtlib import zutils
 from zrtlib import logger
+from zrtlib.query import QueryBuilder
 
 def func(args):
     (terms, model, output) = args
@@ -13,21 +13,8 @@ def func(args):
     log = logger.getlogger()
     log.info(terms.stem)
 
-    (Model, kwargs) = {
-        'ua': (query.BagOfWords, {}),
-        'sa': (query.Synonym, {}),
-        'u1': (query.Synonym, {
-            'n_longest': 1,
-        }),
-        'un': (query.ShortestPath, {
-            'partials': False,
-        }),
-        'uaw': (query.TotalWeight, {}),
-        'saw': (query.LongestWeight, {}),
-    }[model]
-    q = Model(terms, **kwargs)
-
     with output.joinpath(terms.stem).open('w') as fp:
+        q = QueryBuilder(model, terms)
         fp.write(str(q))
     
 arguments = ArgumentParser()
