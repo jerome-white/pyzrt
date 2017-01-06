@@ -56,7 +56,7 @@ class QueryExecutor:
 
         return subprocess.run(cmd, stdout=self.results)
 
-    def evaluate(self, qrels, count, aggregate=False):
+    def evaluate(self, qrels, count):
         cmd = [
             self.trec,
             '-q',
@@ -84,6 +84,9 @@ class QueryExecutor:
 
                 results[metric] = float(value)
                 previous = run
+
+            if results and previous.isdigit():
+                yield results
 
 class QueryDoc:
     separator = '-'
