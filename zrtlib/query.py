@@ -8,6 +8,22 @@ import networkx as nx
 from zrtlib.indri import IndriQuery
 from zrtlib.document import TermDocument, Region
 
+def QueryBuilder(model, terms):
+    (Model, kwargs) = {
+        'ua': (BagOfWords, {}),
+        'sa': (Synonym, {}),
+        'u1': (Synonym, {
+            'n_longest': 1,
+        }),
+        'un': (ShortestPath, {
+            'partials': False,
+        }),
+        'uaw': (TotalWeight, {}),
+        'saw': (LongestWeight, {}),
+    }[model]
+
+    return Model(terms, **kwargs)
+
 class Query:
     def __init__(self, path):
         self.doc = TermDocument(str(path), True)
