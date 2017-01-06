@@ -37,16 +37,17 @@ def func(incoming, outgoing, opts):
                 log.info('{0} {1}'.format(job, payload.topic))
 
                 with NamedTemporaryFile(mode='w') as tmp:
-                    print(QueryBuilder(opts.model, payload.query), file=tmp)
+                    query = QueryBuilder(opts.model, payload.query)
+                    print(query, file=tmp, flush=True)
                     result = engine.query(tmp.name, opts.index, opts.count)
-                    assert(result.returncode == 0)
+                    result.check_returncode()
 
                 values = []
                 qrels = opts.qrels.joinpath(payload.topic)
-                for line in engine.evaluate(str(qrels), opts.count):
+                for line in engine.evaluate(qrels, opts.count):
                     (metric, run, value) = line.strip().split()
                     if run.isdigit() and metric == opts.metric:
-                        values.append(metric)
+                        values.append(float(value))
                 assert(values)
 
                 outgoing.put((payload.topic, np.mean(values)))
