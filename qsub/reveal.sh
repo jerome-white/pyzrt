@@ -13,7 +13,7 @@ n=`printf "%02d" $ngrams`
 python3 $HOME/src/pyzrt/src/reveal.py \
     --model ua \
     --index $WORK/wsj/2016_1128_014701/indri/$n \
-    --metric MAP \
+    --metric map \
     --qrels $WORK/qrels \
     --input $WORK/wsj/2016_1128_014701/pseudoterms/$n \
     --output $TMPDIR/$n.csv
