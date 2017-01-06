@@ -53,7 +53,7 @@ trec_eval -q -c -M{count} {qrels} {results}
                                         index=index,
                                         count=count,
                                         results=self.results.name)
-        subprocess.run(shlex.split(cmd))
+        return subprocess.run(shlex.split(cmd))
 
     def evaluate(self, qrels, count):
         cmd = self.evaluation_command.format(qrels=qrels,
