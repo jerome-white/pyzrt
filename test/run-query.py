@@ -23,7 +23,7 @@ with QueryExecutor() as engine:
     with NamedTemporaryFile(mode='w') as tmp:
         print(QueryBuilder('ua', document), file=tmp)
         result = engine.query(tmp.name, args.index, count)
-        assert(result.returncode == 0)
+        result.check_returncode()
 
     values = []
     info = QueryDoc.components(args.query)
