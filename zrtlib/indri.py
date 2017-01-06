@@ -33,14 +33,10 @@ class IndriQuery:
         return et.tostring(self.query, encoding='unicode')
 
 class QueryExecutor:
-    def __init__(self):
+    def __init__(self, indri='IndriRunQuery', trec='trec_eval'):
+        self.indri = indri
+        self.trec = trec
         self.results = NamedTemporaryFile(mode='w')
-        self.query_command = '''
-IndriRunQuery -trecFormat=true -count={count} -index={index} {query}>{results}
-'''
-        self.evaluation_command = '''
-trec_eval -q -c -M{count} {qrels} {results}
-'''
 
     def __enter__(self):
         return self
@@ -49,18 +45,28 @@ trec_eval -q -c -M{count} {qrels} {results}
         self.results.close()
 
     def query(self, query, index, count):
-        cmd = self.query_command.format(query=query,
-                                        index=index,
-                                        count=count,
-                                        results=self.results.name)
-        return subprocess.run(shlex.split(cmd))
+        cmd = [
+            self.indri,
+            '-trecFormat=true',
+            '-count={0}'.format(count),
+            '-index={0}'.format(index),
+            str(query)
+            ]
+        print(' '.join(cmd))
+
+        return subprocess.run(cmd, stdout=self.results)
 
     def evaluate(self, qrels, count):
-        cmd = self.evaluation_command.format(qrels=qrels,
-                                             count=count,
-                                             results=self.results.name)
+        cmd = [
+            self.trec,
+            '-q',
+            '-c',
+            '-M{0}'.format(count),
+            str(qrels),
+            self.results.name
+            ]
 
-        with subprocess.Popen(shlex.split(cmd),
+        with subprocess.Popen(cmd,
                               bufsize=1,
                               stdout=subprocess.PIPE,
                               universal_newlines=True) as fp:
