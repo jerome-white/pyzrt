@@ -27,7 +27,7 @@ with QueryExecutor(args.indri, args.trec_eval) as engine:
     
     with NamedTemporaryFile(mode='w', delete=False) as tmp:
         log.debug(tmp.name)
-        print(QueryBuilder('ua', query, file=tmp, flush=True)
+        print(query, file=tmp, flush=True)
         result = engine.query(tmp.name, args.index, count)
         result.check_returncode()
 
