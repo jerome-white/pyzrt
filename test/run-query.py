@@ -14,14 +14,14 @@ arguments = ArgumentParser()
 arguments.add_argument('--index')
 arguments.add_argument('--query', type=Path)
 arguments.add_argument('--qrels', type=Path)
-arguments.add_argument('--indri')
-arguments.add_argument('--trec-eval')
+# arguments.add_argument('--indri')
+# arguments.add_argument('--trec-eval')
 arguments.add_argument('--metric', default='map')
 args = arguments.parse_args()
 
 log = logger.getlogger()
 
-with QueryExecutor(args.indri, args.trec_eval) as engine:
+with QueryExecutor() as engine:
     count = 1000
     query = QueryBuilder('ua', TermDocument(args.query))
     
@@ -31,13 +31,9 @@ with QueryExecutor(args.indri, args.trec_eval) as engine:
         result = engine.query(tmp.name, args.index, count)
         result.check_returncode()
 
-    values = []
     info = QueryDoc.components(args.query)
     qrels = args.qrels.joinpath(info.topic)
-    for line in engine.evaluate(str(qrels), count):
-        (metric, run, value) = line.strip().split()
-        if run.isdigit() and metric == args.metric:
-            values.append(float(value))
+    values = [ x[args.metric] for x in engine.evaluate(str(qrels), count) ]
     assert(values)
 
     print(info.topic, np.mean(values))
