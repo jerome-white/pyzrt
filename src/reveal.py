@@ -11,7 +11,7 @@ from zrtlib import logger
 from zrtlib import zutils
 from zrtlib.query import QueryBuilder
 from zrtlib.indri import QueryDoc, QueryExecutor
-from zrtlib.document import HiddenDocument
+from zrtlib.document import TermDocument, HiddenDocument
 from zrtlib.selector import RandomSelector
 
 QueryPackage = namedtuple('Query', 'topic, query')
@@ -28,11 +28,11 @@ def func(incoming, outgoing, opts):
 
                 if QueryDoc.isquery(payload):
                     info = QueryDoc.components(payload)
-                    topic = info.topic
+                    value = (info.topic, HiddenDocument(payload))
                 else:
-                    topic = None
+                    value = (None, TermDocument(payload))
 
-                outgoing.put((topic, HiddenDocument(payload)))
+                outgoing.put(value)
             elif job == 'query':
                 log.info('{0} {1}'.format(job, payload.topic))
 
