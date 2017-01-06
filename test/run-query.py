@@ -28,9 +28,10 @@ with QueryExecutor() as engine:
     values = []
     info = QueryDoc.components(args.query)
     qrels = opts.qrels.joinpath(info.topic)
-    for line in engine.evaluate(str(qrels), count)
+    for line in engine.evaluate(str(qrels), count):
         (metric, run, value) = line.strip().split()
         if run.isdigit() and metric == opts.metric:
             values.append(metric)
     assert(values)
+
     print(info.topic, np.mean(values))
