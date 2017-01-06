@@ -25,8 +25,8 @@ def QueryBuilder(model, terms):
     return Model(terms, **kwargs)
 
 class Query:
-    def __init__(self, path):
-        self.doc = TermDocument(str(path), True)
+    def __init__(self, doc):
+        self.doc = doc
         
     def __str__(self):
         terms = map(self.regionalize, self.doc.regions())

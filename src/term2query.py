@@ -14,7 +14,7 @@ def func(args):
     log.info(terms.stem)
 
     with output.joinpath(terms.stem).open('w') as fp:
-        q = QueryBuilder(model, terms)
+        q = QueryBuilder(model, TermDocument(terms))
         fp.write(str(q))
     
 arguments = ArgumentParser()

@@ -5,8 +5,8 @@ import pandas as pd
 Region = namedtuple('Region', 'n, first, last, df')
 
 class TermDocument:
-    def __init__(self, document, include_lengths=False):
-        self.df = pd.read_csv(document)
+    def __init__(self, document, include_lengths=True):
+        self.df = pd.read_csv(str(document))
         self.df.sort_values(by=[ 'start', 'end' ], inplace=True)
 
         if include_lengths:

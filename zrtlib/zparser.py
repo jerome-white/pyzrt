@@ -60,6 +60,6 @@ class WSJParser(Parser):
 
 class PseudoTermParser(Parser):
     def _parse(self, doc):
-        document = TermDocument(str(doc))
+        document = TermDocument(doc, False)
 
         yield Document(doc.stem, str(document))
