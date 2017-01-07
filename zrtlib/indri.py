@@ -1,3 +1,4 @@
+import sys
 import shlex
 import shutil
 import subprocess
@@ -53,6 +54,9 @@ class QueryExecutor:
             '-index={0}'.format(index),
             str(query),
             ]
+
+        self.results.seek(0)
+        self.results.truncate()
 
         return subprocess.run(cmd, stdout=self.results)
 
