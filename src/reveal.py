@@ -11,8 +11,8 @@ from zrtlib import logger
 from zrtlib import zutils
 from zrtlib.query import QueryBuilder
 from zrtlib.indri import QueryDoc, QueryExecutor
-from zrtlib.document import TermDocument, HiddenDocument
 from zrtlib.selector import RandomSelector
+from zrtlib.document import TermDocument, HiddenDocument
 
 QueryPackage = namedtuple('Query', 'topic, query')
 
