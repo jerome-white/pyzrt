@@ -3,7 +3,6 @@ import multiprocessing as mp
 from pathlib import Path
 from argparse import ArgumentParser
 from tempfile import NamedTemporaryFile
-from collections import namedtuple
 
 import numpy as np
 
@@ -14,41 +13,46 @@ from zrtlib.indri import QueryDoc, QueryExecutor
 from zrtlib.selector import RandomSelector
 from zrtlib.document import TermDocument, HiddenDocument
 
-QueryPackage = namedtuple('Query', 'topic, query')
-
 def func(incoming, outgoing, opts):
     log = logger.getlogger()
 
     with QueryExecutor() as engine:
         while True:
-            (job, payload) = incoming.get()
+            (job, *payload) = incoming.get()
 
             if job == 'document':
-                log.info('{0} {1}'.format(job, payload))
+                (document, ) = payload
+                log.info('{0} {1}'.format(job, document))
 
-                if QueryDoc.isquery(payload):
-                    info = QueryDoc.components(payload)
-                    value = (info.topic, HiddenDocument(payload))
+                if QueryDoc.isquery(document):
+                    info = QueryDoc.components(document)
+                    value = (info.topic, HiddenDocument(document))
                 else:
-                    value = (None, TermDocument(payload))
+                    value = (None, TermDocument(document))
 
                 outgoing.put(value)
             elif job == 'query':
-                log.info('{0} {1}'.format(job, payload.topic))
+                (topic, query) = payload
+                log.info('{0} {1}'.format(job, topic))
 
                 with NamedTemporaryFile(mode='w') as tmp:
-                    query = QueryBuilder(opts.model, payload.query)
+                    query = QueryBuilder(opts.model, query)
                     print(query, file=tmp, flush=True)
                     result = engine.query(tmp.name, opts.index, opts.count)
                     result.check_returncode()
 
                 values = []
-                qrels = opts.qrels.joinpath(payload.topic)
+                qrels = opts.qrels.joinpath(topic)
                 for i in engine.evaluate(qrels, opts.count):
                     values.append(i[opts.metric])
-                assert(values)
 
-                outgoing.put((payload.topic, np.mean(values)))
+                if values:
+                    result = np.mean(values)
+                else:
+                    log.error('{0}: No values obtained'.format(topic))
+                    result = np.nan
+
+                outgoing.put((topic, result))
             elif job == 'quit':
                 break
 
@@ -63,6 +67,8 @@ arguments.add_argument('--input', type=Path)
 arguments.add_argument('--output', type=Path)
 args = arguments.parse_args()
 
+log = logger.getlogger()
+
 incoming = mp.Queue()
 outgoing = mp.Queue()
 
@@ -70,6 +76,7 @@ with mp.Pool(initializer=func, initargs=(outgoing, incoming, args)):
     #
     #
     #
+    results = {}
     queries = {}
     documents = RandomSelector()
 
@@ -84,6 +91,7 @@ with mp.Pool(initializer=func, initargs=(outgoing, incoming, args)):
             documents.add(doc)
         else:
             queries[topic] = doc
+            results[topic] = float(0)
 
     #
     #
@@ -93,21 +101,21 @@ with mp.Pool(initializer=func, initargs=(outgoing, incoming, args)):
         writer = csv.DictWriter(fp, fieldnames=fieldnames)
         writer.writeheader()
 
-        results = {}
-
         for term in documents:
+            log.info(term)
+
             changed = 0
             results['term'] = term
 
-            for i in queries.items():
-                package = QueryPackage(*i)
-                if package.query.flip(term) > 0:
-                    outgoing.put(('query', package))
+            for (topic, query) in queries.items():
+                if query.flip(term) > 0:
+                    outgoing.put(('query', topic, query))
                     changed += 1
 
             for _ in range(changed):
                 (topic, value) = incoming.get()
-                results[topic] = value
+                if not np.isnan(value):
+                    results[topic] = value
 
             if not args.compress_output or args.compress_output and changed:
                 writer.writerow(results)
@@ -116,4 +124,4 @@ with mp.Pool(initializer=func, initargs=(outgoing, incoming, args)):
                 break
 
     for _ in range(mp.cpu_count()):
-        outgoing.put(('quit', None))
+        outgoing.put('quit')
