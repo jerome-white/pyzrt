@@ -107,7 +107,10 @@ with mp.Pool(initializer=func, initargs=(outgoing, incoming, args)):
         predicate = lambda x: x < args.guesses
         for i in itertools.takewhile(predicate, itertools.count()):
             prior = results if i > 0 else None
-            guess = next(terms.pick(prior))
+            try:
+                guess = terms.pick(prior)
+            except EOFError:
+                break
             log.info(guess)
 
             changed = 0

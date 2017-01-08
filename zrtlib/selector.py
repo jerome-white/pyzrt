@@ -13,13 +13,23 @@ Selector = lambda x: {
 
 class TermSelector:
     def __init__(self):
-        self.documents = []
+        self.prior = None
+        self.iterator = None
 
     def pick(self, prior=None):
-        raise NotImplementedError
+        if self.iterator is None:
+            self.iterator = iter(self)
+
+        self.prior = prior
+
+        try:
+            return next(self.iterator)
+        except StopIteration:
+            self.iterator = None
+            raise EOFError
 
     def add(self, document):
-        self.documents.append(document)
+        raise NotImplementedError
 
 class RandomSelector(TermSelector):
     def __init__(self, seed=None):
@@ -28,7 +38,7 @@ class RandomSelector(TermSelector):
         self.terms = set()
         random.seed(seed)
         
-    def pick(self, prior=None):
+    def __iter__(self):
         terms = list(self.terms)
         random.shuffle(terms)
 
@@ -45,7 +55,7 @@ class Frequency(TermSelector):
         self.df = Counter()
         self.counter = None
 
-    def pick(self, prior=None):
+    def __iter__(self):
         if self.counter is None:
             raise NotImplementedError
 
@@ -73,7 +83,7 @@ class Entropy:
         super().__init__()
         self.relative_tf = defaultdict(list)
 
-    def pick(self, prior=None):
+    def __iter__(self):
         ent = { x: st.entropy(y) for (x, y) in self.relative_tf.items() }
 
         df = pd.Series(ent)
