@@ -1,5 +1,16 @@
+import random
 import operator as op
+from itertools import takwhile
 from collections import Counter
+
+import scipy.stats as st
+
+Selector = lambda x: {
+    'random': RandomSelector,
+    'df': DocumentFrequency,
+    'tf': TermFrequency,
+    'entropy': Entropy,
+}[x]()
 
 class TermSelector:
     def __init__(self):
@@ -12,13 +23,17 @@ class TermSelector:
         self.documents.append(document)
 
 class RandomSelector(TermSelector):
-    def __init__(self):
+    def __init__(self, seed=None):
         super().__init__()
-        
+
         self.terms = set()
+        random.seed(seed)
         
     def __iter__(self):
-        yield from self.terms
+        terms = list(self.terms)
+        random.shuffle(terms)
+
+        yield from terms
 
     def add(self, document):
         self.terms.update(document.df.term.values)
@@ -52,3 +67,24 @@ class TermFrequency(Frequency):
     def __init__(self):
         super().__init__()
         self.counter = self.tf
+
+class Entropy:
+    def __init__(self):
+        super().__init__()
+        self.relative_tf = defaultdict(list)
+
+    def __iter__(self):
+        ent = { x: st.entropy(y) for (x, y) in self.relative_tf.items() }
+
+        df = pd.Series(ent)
+        df.sort_values(ascending=False, inplace=True)
+
+        yield from df.index
+
+    def add(self, document):
+        counts = df.term.value_counts()
+        terms = counts.sum()
+
+        for (term, appearances) in counts.iteritems():
+            prob = appearances / terms
+            self.relative_tf[term].append(prob)
