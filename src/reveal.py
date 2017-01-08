@@ -1,4 +1,5 @@
 import csv
+import itertools
 import multiprocessing as mp
 from pathlib import Path
 from argparse import ArgumentParser
@@ -60,11 +61,13 @@ arguments = ArgumentParser()
 arguments.add_argument('--model')
 arguments.add_argument('--index')
 arguments.add_argument('--metric')
-arguments.add_argument('--compress-output', action='store_true')
+arguments.add_argument('--selector')
+arguments.add_argument('--guesses', type=int, default=np.inf)
 arguments.add_argument('--count', type=int, default=1000)
 arguments.add_argument('--qrels', type=Path)
 arguments.add_argument('--input', type=Path)
 arguments.add_argument('--output', type=Path)
+arguments.add_argument('--compress-output', action='store_true')
 args = arguments.parse_args()
 
 log = logger.getlogger()
@@ -78,7 +81,7 @@ with mp.Pool(initializer=func, initargs=(outgoing, incoming, args)):
     #
     results = {}
     queries = {}
-    documents = RandomSelector()
+    terms = RandomSelector()
 
     jobs = 0
     for i in zutils.walk(args.input):
@@ -88,7 +91,7 @@ with mp.Pool(initializer=func, initargs=(outgoing, incoming, args)):
     for _ in range(jobs):
         (topic, doc) = incoming.get()
         if topic is None:
-            documents.add(doc)
+            terms.add(doc)
         else:
             queries[topic] = doc
             results[topic] = float(0)
@@ -101,14 +104,17 @@ with mp.Pool(initializer=func, initargs=(outgoing, incoming, args)):
         writer = csv.DictWriter(fp, fieldnames=fieldnames)
         writer.writeheader()
 
-        for term in documents:
-            log.info(term)
+        predictate = lambda x: x < args.guesses
+        for i in itertools.takewhile(predicate, itertools.count()):
+            prior = results if i > 0 else None
+            guess = terms.pick(prior)
+            log.info(guess)
 
             changed = 0
-            results['term'] = term
+            results['term'] = guess
 
             for (topic, query) in queries.items():
-                if query.flip(term) > 0:
+                if query.flip(guess) > 0:
                     outgoing.put(('query', topic, query))
                     changed += 1
 
