@@ -1,21 +1,39 @@
 #!/bin/bash
 
-#PBS -V
-#PBS -l nodes=1:ppn=20,mem=180GB,walltime=6:00:00
-#PBS -m abe
-#PBS -M jsw7@nyu.edu
-#PBS -N pyzrt-reveal
-#PBS -j oe
-
 ngrams=6
+data=2016_1128_014701
+selectors=(
+    random
+    df
+    tf
+    entropy
+)
 
 n=`printf "%02d" $ngrams`
+path=$WORK/wsj/$data
+output=$path/selector/$n
+mkdir --parents $output
+
+for i in ${selectors[@]}; do
+    qsub=`mktemp`
+    cat <<EOF > $qsub
 python3 $HOME/src/pyzrt/src/reveal.py \
     --model ua \
-    --index $WORK/wsj/2016_1128_014701/indri/$n \
     --metric map \
     --qrels $WORK/qrels \
-    --input $WORK/wsj/2016_1128_014701/pseudoterms/$n \
-    --output $TMPDIR/$n.csv
+    --index $path/indri/$n \
+    --input $path/pseudoterms/$n \
+    --output $output \
+    --selector $i
+EOF
+    qsub \
+	-j oe \
+	-l nodes=1:ppn=20,mem=60GB,walltime=6:00:00 \
+	-m abe \
+	-M jsw7@nyu.edu \
+	-N reveal-$i \
+	-V \
+	$qsub >> jobs
+done
 
 # leave a blank line at the end
