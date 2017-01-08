@@ -11,7 +11,7 @@ from zrtlib import logger
 from zrtlib import zutils
 from zrtlib.query import QueryBuilder
 from zrtlib.indri import QueryDoc, QueryExecutor
-from zrtlib.selector import RandomSelector
+from zrtlib.selector import Selector
 from zrtlib.document import TermDocument, HiddenDocument
 
 def func(incoming, outgoing, opts):
@@ -81,7 +81,7 @@ with mp.Pool(initializer=func, initargs=(outgoing, incoming, args)):
     #
     results = {}
     queries = {}
-    terms = RandomSelector()
+    terms = Selector(args.selector)
 
     jobs = 0
     for i in zutils.walk(args.input):
