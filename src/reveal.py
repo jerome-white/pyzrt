@@ -104,10 +104,10 @@ with mp.Pool(initializer=func, initargs=(outgoing, incoming, args)):
         writer = csv.DictWriter(fp, fieldnames=fieldnames)
         writer.writeheader()
 
-        predictate = lambda x: x < args.guesses
+        predicate = lambda x: x < args.guesses
         for i in itertools.takewhile(predicate, itertools.count()):
             prior = results if i > 0 else None
-            guess = terms.pick(prior)
+            guess = next(terms.pick(prior))
             log.info(guess)
 
             changed = 0
