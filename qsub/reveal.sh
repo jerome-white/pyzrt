@@ -25,12 +25,12 @@ python3 $HOME/src/pyzrt/src/reveal.py \
     --qrels $WORK/qrels \
     --index $path/indri/$n \
     --input $path/pseudoterms/$n \
-    --output $output \
+    --output $output/$i \
     --selector $i
 EOF
     qsub \
 	-j oe \
-	-l nodes=1:ppn=20,mem=180GB,walltime=6:00:00 \
+	-l nodes=1:ppn=20,mem=60GB,walltime=6:00:00 \
 	-m abe \
 	-M jsw7@nyu.edu \
 	-N reveal-$i \
