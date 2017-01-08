@@ -13,8 +13,10 @@ n=`printf "%02d" $ngrams`
 path=$WORK/wsj/$data
 output=$path/selector/$n
 mkdir --parents $output
+rm --force jobs
 
 for i in ${selectors[@]}; do
+    echo "[ `date` ] $i"
     qsub=`mktemp`
     cat <<EOF > $qsub
 python3 $HOME/src/pyzrt/src/reveal.py \
