@@ -2,6 +2,7 @@ import random
 import operator as op
 from collections import Counter, defaultdict
 
+import pandas as pd
 import scipy.stats as st
 
 Selector = lambda x: {
@@ -26,10 +27,10 @@ class TermSelector:
             return next(self.iterator)
         except StopIteration:
             self.iterator = None
-            raise EOFError
+            raise EOFError()
 
     def add(self, document):
-        raise NotImplementedError
+        raise NotImplementedError()
 
 class RandomSelector(TermSelector):
     def __init__(self, seed=None):
@@ -57,7 +58,7 @@ class Frequency(TermSelector):
 
     def __iter__(self):
         if self.counter is None:
-            raise NotImplementedError
+            raise NotImplementedError()
 
         yield from map(op.itemgetter(0), self.counter.most_common())
 
@@ -78,7 +79,7 @@ class TermFrequency(Frequency):
         self.counter = self.tf
 
 # http://www.cs.bham.ac.uk/~pxt/IDA/term_selection.pdf
-class Entropy:
+class Entropy(TermSelector):
     def __init__(self):
         super().__init__()
         self.relative_tf = defaultdict(list)
@@ -92,7 +93,7 @@ class Entropy:
         yield from df.index
 
     def add(self, document):
-        counts = df.term.value_counts()
+        counts = document.df.term.value_counts()
         terms = counts.sum()
 
         for (term, appearances) in counts.iteritems():
