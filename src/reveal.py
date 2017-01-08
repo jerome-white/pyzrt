@@ -99,7 +99,7 @@ with mp.Pool(initializer=func, initargs=(outgoing, incoming, args)):
     #
     #
     #
-    with args.output.open('w') as fp:
+    with args.output.open('w', buffering=1) as fp:
         fieldnames = [ 'term' ] + list(queries.keys())
         writer = csv.DictWriter(fp, fieldnames=fieldnames)
         writer.writeheader()
