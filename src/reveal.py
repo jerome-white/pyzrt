@@ -96,6 +96,11 @@ with mp.Pool(initializer=func, initargs=(outgoing, incoming, args)):
             queries[topic] = doc
             results[topic] = float(0)
 
+    try:
+        terms.divulge(args.qrels, queries)
+    except NotImplementedError:
+        pass
+
     #
     #
     #
