@@ -115,6 +115,7 @@ with mp.Pool(initializer=func, initargs=(outgoing, incoming, args)):
             try:
                 guess = terms.pick(prior)
             except EOFError:
+                log.debug('guesses exhausted')
                 break
             log.info(guess)
 
