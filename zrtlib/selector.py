@@ -96,8 +96,8 @@ class Relevance(Frequency):
 
     def divulge(self, qrels, queries):
         document_terms = Counter()
-        relevance = QueryRelevance(qrels)
-        for i in relevance.documents:
+        relevant = QueryRelevance(qrels)
+        for i in relevant.documents:
             document_terms.update(self.documents[i])
 
         query_terms = Counter()
