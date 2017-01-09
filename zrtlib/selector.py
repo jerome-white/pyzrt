@@ -102,13 +102,16 @@ class Relevance(Frequency):
                 log.warning('{0} not in corpus'.format(i))
                 continue
             document_terms.update(self.documents[i])
+        log.debug('document terms: {0}'.format(len(document_terms)))
 
         query_terms = Counter()
         for (topic, document) in queries.items():
-            query_terms.update(document.df.term.values)
+            query_terms.update(document.df.pt.values)
+        log.debug('query terms: {0}'.format(len(query_terms)))
 
         common = set(query_terms.keys())
         common.intersection_update(document_terms.keys())
+        assert(common)
 
         self.counter = Counter()
         for i in (document_terms, query_terms):
