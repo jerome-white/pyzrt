@@ -5,12 +5,16 @@ from collections import Counter, defaultdict
 import pandas as pd
 import scipy.stats as st
 
-Selector = lambda x: {
-    'random': RandomSelector,
-    'df': DocumentFrequency,
-    'tf': TermFrequency,
-    'entropy': Entropy,
-}[x]()
+from zrtlib.indri import QueryRelevance
+
+def Selector(x, **kwargs):
+    return {
+        'random': RandomSelector,
+        'df': DocumentFrequency,
+        'tf': TermFrequency,
+        'entropy': Entropy,
+        'relevance': Relevance,
+    }[x](**kwargs)
 
 class TermSelector:
     def __init__(self):
@@ -30,6 +34,9 @@ class TermSelector:
             raise EOFError()
 
     def add(self, document):
+        raise NotImplementedError()
+
+    def divulge(self, qrels, queries):
         raise NotImplementedError()
 
 class RandomSelector(TermSelector):
@@ -77,6 +84,32 @@ class TermFrequency(Frequency):
     def __init__(self):
         super().__init__()
         self.counter = self.tf
+
+class Relevance(Frequency):
+    def __init__(self):
+        super().__init__()
+        self.documents = {}
+
+    def add(self, document):
+        assert(document.name not in self.documents)
+        self.documents[document.name] = document.df.values
+
+    def divulge(self, qrels, queries):
+        document_terms = Counter()
+        relevance = QueryRelevance(qrels)
+        for i in relevance.documents:
+            document_terms.update(self.documents[i])
+
+        query_terms = Counter()
+        for (topic, document) in queries:
+            query_terms.update(document.df.term.values)
+
+        common = set(query_terms.keys())
+        common.intersection_update(document_terms.keys())
+
+        self.counters = Counter()
+        for i in (document_terms, query_terms):
+            self.counters.update({ x: i[x] for x in common })
 
 # http://www.cs.bham.ac.uk/~pxt/IDA/term_selection.pdf
 class Entropy(TermSelector):
