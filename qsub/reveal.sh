@@ -7,7 +7,7 @@ selectors=(
     df
     tf
     entropy
-    reveal
+    relevance
 )
 
 n=`printf "%02d" $ngrams`
