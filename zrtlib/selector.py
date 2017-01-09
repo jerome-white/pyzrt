@@ -5,6 +5,7 @@ from collections import Counter, defaultdict
 import pandas as pd
 import scipy.stats as st
 
+from zrtlib import logger
 from zrtlib.indri import QueryRelevance
 
 def Selector(x, **kwargs):
@@ -19,18 +20,15 @@ def Selector(x, **kwargs):
 class TermSelector:
     def __init__(self):
         self.prior = None
-        self.iterator = None
+        self.iterator = iter(self)
 
     def pick(self, prior=None):
-        if self.iterator is None:
-            self.iterator = iter(self)
-
         self.prior = prior
 
         try:
             return next(self.iterator)
         except StopIteration:
-            self.iterator = None
+            self.iterator = iter(self)
             raise EOFError()
 
     def add(self, document):
@@ -92,24 +90,29 @@ class Relevance(Frequency):
 
     def add(self, document):
         assert(document.name not in self.documents)
-        self.documents[document.name] = document.df.values
+        self.documents[document.name] = document.df.term.values
 
     def divulge(self, qrels, queries):
+        log = logger.getlogger()
+
         document_terms = Counter()
         relevant = QueryRelevance(qrels)
         for i in relevant.documents:
+            if i not in self.documents:
+                log.warning('{0} not in corpus'.format(i))
+                continue
             document_terms.update(self.documents[i])
 
         query_terms = Counter()
-        for (topic, document) in queries:
+        for (topic, document) in queries.items():
             query_terms.update(document.df.term.values)
 
         common = set(query_terms.keys())
         common.intersection_update(document_terms.keys())
 
-        self.counters = Counter()
+        self.counter = Counter()
         for i in (document_terms, query_terms):
-            self.counters.update({ x: i[x] for x in common })
+            self.counter.update({ x: i[x] for x in common })
 
 # http://www.cs.bham.ac.uk/~pxt/IDA/term_selection.pdf
 class Entropy(TermSelector):
