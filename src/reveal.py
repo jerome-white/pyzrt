@@ -1,9 +1,9 @@
 import csv
 import itertools
-import multiprocessing as mp
 from pathlib import Path
 from argparse import ArgumentParser
-from tempfile import NamedTemporaryFile
+from collections import defaultdict
+from multiprocessing import Pool
 
 import numpy as np
 
@@ -14,129 +14,105 @@ from zrtlib.indri import QueryDoc, QueryExecutor
 from zrtlib.selector import Selector
 from zrtlib.document import TermDocument, HiddenDocument
 
-def func(incoming, outgoing, opts):
-    log = logger.getlogger()
+class CSVWriter:
+    def __init__(self, fname):
+        self.fp = fname.open('w', buffering=1)
+        self.writer = None
 
-    with QueryExecutor() as engine:
-        while True:
-            (job, *payload) = incoming.get()
+    def __enter__(self):
+        return self
 
-            if job == 'document':
-                (document, ) = payload
-                log.info('{0} {1}'.format(job, document))
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.fp.close()
 
-                if QueryDoc.isquery(document):
-                    info = QueryDoc.components(document)
-                    value = (info.topic, HiddenDocument(document))
-                else:
-                    value = (None, TermDocument(document))
-
-                outgoing.put(value)
-            elif job == 'query':
-                (topic, query) = payload
-                log.info('{0} {1}'.format(job, topic))
-
-                with NamedTemporaryFile(mode='w') as tmp:
-                    query = QueryBuilder(opts.model, query)
-                    print(query, file=tmp, flush=True)
-                    result = engine.query(tmp.name, opts.index, opts.count)
-                    result.check_returncode()
-
-                values = []
-                qrels = opts.qrels.joinpath(topic)
-                for i in engine.evaluate(qrels, opts.count):
-                    values.append(i[opts.metric])
-
-                if values:
-                    result = np.mean(values)
-                else:
-                    log.error('{0}: No values obtained'.format(topic))
-                    result = np.nan
-
-                outgoing.put((topic, result))
-            elif job == 'quit':
-                break
+    def writerow(self, row):
+        if self.writer is None:
+            self.writer = csv.DictWriter(self.fp, fieldnames=row.keys())
+            self. writer.writeheader()
+        self.writer.writerow(row)
 
 arguments = ArgumentParser()
 arguments.add_argument('--model')
 arguments.add_argument('--index')
-arguments.add_argument('--metric')
 arguments.add_argument('--selector')
-arguments.add_argument('--guesses', type=int, default=np.inf)
-arguments.add_argument('--count', type=int, default=1000)
+arguments.add_argument('--query', type=Path)
 arguments.add_argument('--qrels', type=Path)
 arguments.add_argument('--input', type=Path)
 arguments.add_argument('--output', type=Path)
-arguments.add_argument('--compress-output', action='store_true')
+arguments.add_argument('--count', type=int, default=1000)
+arguments.add_argument('--guesses', type=int, default=np.inf)
 args = arguments.parse_args()
 
 log = logger.getlogger()
 
-incoming = mp.Queue()
-outgoing = mp.Queue()
+#
+# Initialise the query and the selector
+#
+query = HiddenDocument(args.query)
+terms = Selector(args.selector)
 
-with mp.Pool(initializer=func, initargs=(outgoing, incoming, args)):
-    #
-    #
-    #
+with Pool() as pool:
+    iterable = itertools.filterfalse(QueryDoc.isquery, zutils.walk(args.input))
+    for i in pool.imap_unordered(TermDocument, iterable):
+        terms.add(i)
+try:
+    terms.divulge(args.qrels, query)
+except NotImplementedError:
+    pass
+
+#
+# Begin revealing
+#
+with CSVWriter(args.output) as writer, QueryExecutor(args.index) as engine:
     results = {}
-    queries = {}
-    terms = Selector(args.selector)
 
-    jobs = 0
-    for i in zutils.walk(args.input):
-        outgoing.put(('document', i))
-        jobs += 1
 
-    for _ in range(jobs):
-        (topic, doc) = incoming.get()
-        if topic is None:
-            terms.add(doc)
+    predicate = lambda x: x < args.guesses and query
+    for i in itertools.takewhile(predicate, itertools.count()):
+        #
+        # Pick the term
+        #
+        prior = results if i > 0 else None
+        try:
+            guess = terms.pick(prior)
+        except EOFError:
+            log.debug('guesses exhausted')
+            break
+        log.info(guess)
+
+        #
+        # Turn it over
+        #
+        flipped = query.flip(guess)
+        log.info('{0}: {1}'.format(guess, flipped))
+        if not flipped:
+            continue
+
+        results['guess'] = i
+        results['term'] = guess
+
+        #
+        # Run the query
+        #
+        q = QueryBuilder(args.model, query)
+        result = engine.query(q, args.count)
+        result.check_returncode()
+
+        #
+        # Collect the results
+        #
+        collect = defaultdict(list)
+        for entry in engine.evaluate(args.qrels):
+            for (metric, value) in entry:
+                collect[metric].append(value)
+        if collect:
+            f = np.mean
         else:
-            queries[topic] = doc
-            results[topic] = float(0)
+            log.error('No values obtained')
+            f = lambda x: np.nan
+        results.update({ x: f(y) for (x, y) in collect })
 
-    try:
-        terms.divulge(args.qrels, queries)
-    except NotImplementedError:
-        pass
-
-    #
-    #
-    #
-    with args.output.open('w', buffering=1) as fp:
-        fieldnames = [ 'term' ] + list(queries.keys())
-        writer = csv.DictWriter(fp, fieldnames=fieldnames)
-        writer.writeheader()
-
-        predicate = lambda x: x < args.guesses
-        for i in itertools.takewhile(predicate, itertools.count()):
-            prior = results if i > 0 else None
-            try:
-                guess = terms.pick(prior)
-            except EOFError:
-                log.debug('guesses exhausted')
-                break
-            log.info(guess)
-
-            changed = 0
-            results['term'] = guess
-
-            for (topic, query) in queries.items():
-                if query.flip(guess) > 0:
-                    outgoing.put(('query', topic, query))
-                    changed += 1
-
-            for _ in range(changed):
-                (topic, value) = incoming.get()
-                if not np.isnan(value):
-                    results[topic] = value
-
-            if not args.compress_output or args.compress_output and changed:
-                writer.writerow(results)
-
-            if not any(queries.values()):
-                break
-
-    for _ in range(mp.cpu_count()):
-        outgoing.put('quit')
+        #
+        # Record
+        #
+        writer.writerow(results)
