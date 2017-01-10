@@ -35,37 +35,44 @@ class IndriQuery:
         return et.tostring(self.query, encoding='unicode')
 
 class QueryExecutor:
-    def __init__(self, indri='IndriRunQuery', trec='trec_eval'):
+    def __init__(self, index, indri='IndriRunQuery', trec='trec_eval'):
+        self.index = index
         self.indri = shutil.which(indri)
         self.trec = shutil.which(trec)
+        self.count = None
+
+        self.query = NamedTemporaryFile(mode='w')
         self.results = NamedTemporaryFile(mode='w')
 
     def __enter__(self):
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
+        self.query.close()
         self.results.close()
 
-    def query(self, query, index, count):
+    def query(self, query, count):
+        self.count = count
+        for i in (self.query, self.results):
+            zutils.fclear(i)
+
+        print(query, file=self.query, flush=True)
         cmd = [
             self.indri,
             '-trecFormat=true',
-            '-count={0}'.format(count),
-            '-index={0}'.format(index),
+            '-count={0}'.format(self.count),
+            '-index={0}'.format(self.index),
             str(query),
             ]
 
-        self.results.seek(0)
-        self.results.truncate()
-
         return subprocess.run(cmd, stdout=self.results)
 
-    def evaluate(self, qrels, count):
+    def evaluate(self, qrels):
         cmd = [
             self.trec,
             '-q',
             '-c',
-            '-M{0}'.format(count),
+            '-M{0}'.format(self.count),
             str(qrels),
             self.results.name,
             ]
