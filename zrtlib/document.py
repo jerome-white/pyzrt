@@ -44,7 +44,7 @@ class TermDocument:
             yield Region(j, i == 0, i == n, df)
 
 class HiddenDocument(TermDocument):
-    def __init__(self, document, include_lengths=False):
+    def __init__(self, document, include_lengths=True):
         super().__init__(document, include_lengths)
 
         term = 'pt'
