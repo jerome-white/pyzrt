@@ -1,42 +1,60 @@
 #!/bin/bash
 
-ngrams=6
-data=2016_1128_014701
-selectors=(
-    random
-    df
-    tf
-    entropy
-    relevance
-)
+nodes=20
+data=$WORK/wsj/2016_1128_014701
+model=ua
 
-n=`printf "%02d" $ngrams`
-path=$WORK/wsj/$data
-output=$path/selector/$n
+while getopts "g:d:m:n:s:h" OPTION; do
+    case $OPTION in
+        g) ngrams=`printf "%02d" $OPTARG` ;;
+        d) data=$OPTARG ;;
+        m) model=$OPTARG ;;
+        n) nodes=$OPTARG ;;
+        s) selector=$OPTARG ;;
+        h)
+            exit
+            ;;
+        *) exit 1 ;;
+    esac
+done
+
+output=$data/selector/$ngrams/$selector
 mkdir --parents $output
 rm --force jobs
 
-for i in ${selectors[@]}; do
-    echo "[ `date` ] $i"
-    qsub=`mktemp`
-    cat <<EOF > $qsub
+qsub=`mktemp`
+queries=( `find $data/pseudoterms -name 'WSJQ*'` )
+last=`${queries[${#queries[@]}-1]}`
+
+for i in ${queries[@]}; do
+    if [ `wc --lines $qsub` -lt $nodes ] || [ $i != $last  ]; then
+        q=`basename $i`
+        topic=${q:6:3}
+        
+        cat <<EOF >> $qsub
 python3 $HOME/src/pyzrt/src/reveal.py \
     --model ua \
-    --metric map \
-    --qrels $WORK/qrels \
-    --index $path/indri/$n \
-    --input $path/pseudoterms/$n \
-    --output $output/$i \
-    --selector $i
+    --qrels $WORK/qrels/$topic \
+    --index $data/indri/$ngrams \
+    --input $data/pseudoterms/$ngrams \
+    --output $output/$topic \
+    --selector $selector \
+    --query $i
 EOF
-    qsub \
-	-j oe \
-	-l nodes=1:ppn=20,mem=60GB,walltime=6:00:00 \
-	-m abe \
-	-M jsw7@nyu.edu \
-	-N reveal-$i \
-	-V \
-	$qsub >> jobs
+    else
+        echo "[ `date` ] $qsub"        
+        qsub \
+	    -j oe \
+	    -l nodes=1:ppn=$nodes,mem=60GB,walltime=6:00:00 \
+	    -m abe \
+	    -M jsw7@nyu.edu \
+	    -N reveal-$qsub \
+	    -V \
+ 	    parallel $qsub >> jobs
+        if [ $i != $last ]; then
+            qsub=`mktemp`
+        fi
+    fi
 done
 
 # leave a blank line at the end

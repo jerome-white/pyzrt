@@ -34,7 +34,7 @@ class TermSelector:
     def add(self, document):
         raise NotImplementedError()
 
-    def divulge(self, qrels, queries):
+    def divulge(self, qrels, query):
         raise NotImplementedError()
 
 class RandomSelector(TermSelector):
@@ -92,7 +92,7 @@ class Relevance(Frequency):
         assert(document.name not in self.documents)
         self.documents[document.name] = document.df.term.values
 
-    def divulge(self, qrels, queries):
+    def divulge(self, qrels, query):
         log = logger.getlogger()
 
         document_terms = Counter()
@@ -104,9 +104,7 @@ class Relevance(Frequency):
             document_terms.update(self.documents[i])
         log.debug('document terms: {0}'.format(len(document_terms)))
 
-        query_terms = Counter()
-        for (topic, document) in queries.items():
-            query_terms.update(document.df.pt.values)
+        query_terms = Counter(query.df.pt.values)
         log.debug('query terms: {0}'.format(len(query_terms)))
 
         common = set(query_terms.keys())
