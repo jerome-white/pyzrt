@@ -37,7 +37,7 @@ o2=`dirname $o2`
 #
 # Build the corpus
 #
-o3=$SCRATCH/zrt/wsj/corpus
+o3=$SCRATCH/zrt/wsj/`date +'%Y_%m%d_%H%M%S'`/corpus
 rm --force --recursive $o3
 mkdir --parents $o3
 
@@ -45,8 +45,6 @@ python3 $HOME/src/pyzrt/src/parse.py \
     --raw-data $o2 \
     --output-data $o3 \
     --parser wsj \
-    --strainer alpha \
-    --strainer lower \
-    --strainer space
+    --strainer space:lower:alpha
 
 # leave a blank line at the end
