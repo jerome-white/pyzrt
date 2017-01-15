@@ -8,15 +8,6 @@ from zrtlib import logger
 from zrtlib.strainer import Strainer
 from zrtlib.document import TermDocument
 
-@singledispatch
-def normalize(string, fmt=None):
-    s = ' '.join(string.split())
-    return s if fmt is None else fmt(s)
-
-@normalize.register(list)
-def _(string, fmt=None):
-    return normalize(' '.join(string), fmt)
-
 class Document:
     def __init__(self, docno, text):
         self.docno = docno
@@ -54,7 +45,7 @@ class WSJParser(Parser):
             for j in [ 'LP', 'TEXT' ]:
                 for k in i.findall(j):
                     text.append(k.text)
-            text = normalize(text, self.strainer.fmt)
+            text = ' '.join(text)
 
             yield Document(docno, text)
 

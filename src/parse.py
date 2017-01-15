@@ -40,17 +40,7 @@ def func(args, document_queue):
         'test': zparser.TestParser,
     }[args.parser.lower()]
 
-    strain_selector = {
-        'trec': strainer.TRECStrainer,
-        'alpha': strainer.AlphaNumericStrainer,
-    }
-
-    s = strainer.Strainer()
-    if args.strainer:
-        for i in args.strainer:
-            Strainer = strain_selector[i.lower()]
-            s = Strainer(s)
-    parser = Parser(s)
+    parser = Parser(strainer.builder(args.strainer))
 
     recorder = Recorder(args.output_data, args.consolidate)
 

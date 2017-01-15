@@ -45,6 +45,8 @@ python3 $HOME/src/pyzrt/src/parse.py \
     --raw-data $o2 \
     --output-data $o3 \
     --parser wsj \
-    --strainer alpha
+    --strainer alpha \
+    --strainer lower \
+    --strainer space
 
 # leave a blank line at the end
