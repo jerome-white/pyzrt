@@ -8,15 +8,11 @@
 #PBS -j oe
 
 n=4
-m=18
+m=12
 path=$SCRATCH/zrt/wsj
+tld=2017_0115_001558
 
-# Replace this with the directory containing existing trees to
-# continue with a previous run.
-
-# output=$path/`date +'%Y_%m%d_%H%M%S'`/trees
-output=$path/2016_1128_014701/trees
-
+output=$path/$tld/trees
 if [ -e $output ]; then
     existing="--existing $output/`ls --sort=time $output | head --lines=1`"
 else
@@ -24,7 +20,7 @@ else
 fi
 
 python3 -u $HOME/src/pyzrt/src/stree.py $existing \
-    --corpus $path/corpus \
+    --corpus $path/$tld/corpus \
     --output $output \
     --min-gram $n \
     --max-gram $m \
