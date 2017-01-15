@@ -1,3 +1,4 @@
+import string
 import operator as op
 import xml.etree.ElementTree as et
 
@@ -27,7 +28,7 @@ class Strainer:
 class CaseStrainer(Strainer):
     def __init__(self, strainer, casing='lower'):
         super().__init__(strainer)
-        self.casing = op.methodcaller('casing')
+        self.casing = op.methodcaller(casing)
 
     def strain(self, document):
         document.text = self.casing(document.text)
@@ -52,6 +53,7 @@ class AlphaNumericStrainer(Strainer):
         replacements = {
             '&': ' and ',
             '%': ' percent ',
+            '-': ' ',
         }
 
         self.table = {}
@@ -64,6 +66,8 @@ class AlphaNumericStrainer(Strainer):
             c = chr(i)
             if c in replacements:
                 c = replacements[c]
+            elif c in string.whitespace:
+                c = ' '
             elif not c.isalnum():
                 c = ''
             self.table[i] = c
