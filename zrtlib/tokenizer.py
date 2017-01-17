@@ -45,6 +45,9 @@ class Token(tuple):
 
         return True
 
+    def continuous(self):
+        return len(set(map(op.attrgetter('docno'), self))) == 1
+
 class TokenSet(set):
     def issubset(self, other):
         d = defaultdict(bool)
@@ -76,6 +79,10 @@ class Tokenizer:
         # since the last line of the file doesn't get included
         if token:
             yield (previous, Token(token))
+
+class BoundaryTokenizer(Tokenizer):
+    def __iter__(self):
+        yield from filter(lambda x: x[1].continuous(), super().__iter__())
 
 def unstream(string, sep=' ', ch_attrs=3):
     line = []

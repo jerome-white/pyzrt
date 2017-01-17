@@ -9,10 +9,12 @@ from zrtlib import zutils
 from zrtlib import logger
 from zrtlib.suffix import SuffixTree
 from zrtlib.corpus import CompleteCorpus, WindowStreamer
-from zrtlib.tokenizer import Tokenizer, TokenSet, unstream
+from zrtlib.tokenizer import Tokenizer, BoundaryTokenizer, TokenSet, unstream
 
-def func(corpus_directory, incoming, outgoing):
+def func(corpus_directory, boundaries, incoming, outgoing):
     log = logger.getlogger()
+
+    Tok = BoundaryTokenizer if boundaries else Tokenizer
 
     corpus = CompleteCorpus(corpus_directory)
     while True:
@@ -21,7 +23,7 @@ def func(corpus_directory, incoming, outgoing):
         log.info(','.join(map(str, [ block_size, offset ])))
 
         stream = WindowStreamer(corpus, block_size, skip, offset)
-        tokenizer = Tokenizer(stream)
+        tokenizer = Tok(stream)
 
         for (_, i) in tokenizer:
             ngram = i.tostring(corpus)
@@ -42,6 +44,7 @@ arguments.add_argument('--workers', type=int, default=mp.cpu_count())
 arguments.add_argument('--min-gram', type=int, default=1)
 arguments.add_argument('--max-gram', type=int)
 arguments.add_argument('--incremental', action='store_true')
+arguments.add_argument('--document-boundaries', action='store_true')
 args = arguments.parse_args()
 
 incoming = mp.Queue()
@@ -55,7 +58,7 @@ log.info('>| begin')
 workers = min(mp.cpu_count(), max(1, args.workers))
 if workers != args.workers:
     log.warning('Worker request adjusted -> {0}'.format(workers))
-initargs = (args.corpus, outgoing, incoming)
+initargs = (args.corpus, args.document_boundaries, outgoing, incoming)
 
 with mp.Pool(processes=workers, initializer=func, initargs=initargs):
     if args.existing:
