@@ -14,5 +14,5 @@ data to results.
 4. `query.sh` Build Indri-friendly queries from the TREC formatted
    queries (Step 1.2).
 5. Process:
-   o `retrieve.sh` Run and evaluate queries over Indri index.
-   o `reveal.sh` Play the reveal game.
+   * `retrieve.sh` Run and evaluate queries over Indri index.
+   * `reveal.sh` Play the reveal game.
