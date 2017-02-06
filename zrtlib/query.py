@@ -1,12 +1,16 @@
 import itertools
-import collections
 import operator as op
+from collections import namedtuple
 
 import numpy as np
 import networkx as nx
+import matplotlib.pyplot as plt
 
 from zrtlib.indri import IndriQuery
 from zrtlib.document import TermDocument, Region
+
+Node = namedtuple('Node', 'term, offset')
+OptimalPath = namedtuple('OptimalPath', 'deviation, path')
 
 def QueryBuilder(model, terms):
     (Model, kwargs) = {
@@ -115,30 +119,42 @@ class ShortestPath(Query):
         if len(df) == 0:
             return ''
 
+        f = lambda x: Node(x.term, x.start)
+
         graph = nx.DiGraph()
 
         for i in range(len(df)):
-            u = df.iloc[i]
+            source = df.iloc[i]
+            u = None
             for j in range(i + 1, len(df)):
-                v = df.iloc[j]
-                if v.start > u.end:
+                target = df.iloc[j]
+                if target.start > source.end:
                     break
-                if u.start != v.start:
-                    weight = u.end - v.start
-                    graph.add_edge(u.term, v.term, weight=weight)
+                if target.start <= source.start:
+                    continue
+
+                if u is None:
+                    u = f(source)
+                weight = source.end - target.start
+
+                graph.add_edge(u, f(target), weight=weight)
 
         if len(graph) == 0:
-            return u
+            return source.term
+        assert(nx.is_directed_acyclic_graph(graph))
 
-        paths = {}
-        (source, target) = [ df.iloc[x].term for x in (0, -1) ]
+        (source, target) = [ f(df.iloc[x]) for x in (0, -1) ]
+        optimal = OptimalPath(np.inf, None)
 
         for i in nx.all_shortest_paths(graph, source, target, weight='weight'):
             weights = []
             for (u, v) in zip(i, i[1:]):
                 d = graph.get_edge_data(u, v)
                 weights.append(d['weight'])
-            key = np.std(weights)
-            paths[key] = i
 
-        yield from paths[min(paths.keys())]
+            deviation = np.std(weights)
+            if deviation < optimal.deviation:
+                optimal = OptimalPath(deviation, i)
+        assert(optimal.path is not None)
+
+        yield from map(op.attrgetter('term'), optimal.path)
