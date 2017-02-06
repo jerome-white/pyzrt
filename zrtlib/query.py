@@ -112,6 +112,9 @@ class ShortestPath(Query):
             condition = df['ngram'].str.len() == df['length']
             df = df[condition]
 
+        if len(df) == 0:
+            return ''
+
         graph = nx.DiGraph()
 
         for i in range(len(df)):
@@ -123,6 +126,9 @@ class ShortestPath(Query):
                 if u.start != v.start:
                     weight = u.end - v.start
                     graph.add_edge(u.term, v.term, weight=weight)
+
+        if len(graph) == 0:
+            return u
 
         paths = {}
         (source, target) = [ df.iloc[x].term for x in (0, -1) ]
