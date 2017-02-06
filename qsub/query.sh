@@ -31,11 +31,18 @@ rm --force jobs
 for i in $root/indri/*; do
     qsub=`mktemp`
     echo $i $qsub
+
+    #
+    # Establish the variables within the script...
+    #
     cat <<EOF > $qsub
 root=$root
 terms=`basename $i`
 for j in ${models[@]}; do
 EOF
+    #
+    # ... so their variable form can be left to interpretation.
+    #
     cat <<"EOF" >> $qsub
     echo $terms $j
 
@@ -44,9 +51,7 @@ EOF
     mkdir --parents $queries
 
     find $root/pseudoterms/$terms -name 'WSJQ*' | \
-	python $HOME/src/pyzrt/src/term2query.py \
-	--output $queries \
-	--model $j
+	python $HOME/src/pyzrt/src/term2query.py --output $queries --model $j
 done
 echo $terms DONE
 EOF

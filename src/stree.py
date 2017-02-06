@@ -5,16 +5,14 @@ from tempfile import NamedTemporaryFile
 
 from scipy import constants
 
+import zrtlib.tokenizer as tkn
 from zrtlib import zutils
 from zrtlib import logger
 from zrtlib.suffix import SuffixTree
 from zrtlib.corpus import CompleteCorpus, WindowStreamer
-from zrtlib.tokenizer import Tokenizer, BoundaryTokenizer, TokenSet, unstream
 
-def func(corpus_directory, boundaries, incoming, outgoing):
+def func(incoming, outgoing, corpus_directory, Tokenizer, Streamer):
     log = logger.getlogger()
-
-    Tok = BoundaryTokenizer if boundaries else Tokenizer
 
     corpus = CompleteCorpus(corpus_directory)
     while True:
@@ -22,9 +20,7 @@ def func(corpus_directory, boundaries, incoming, outgoing):
         (block_size, skip, offset) = incoming.get()
         log.info(','.join(map(str, [ block_size, offset ])))
 
-        stream = WindowStreamer(corpus, block_size, skip, offset)
-        tokenizer = Tok(stream)
-
+        tokenizer = Tokenizer(Streamer(corpus, block_size, skip, offset))
         for (_, i) in tokenizer:
             ngram = i.tostring(corpus)
             outgoing.put((ngram, i))
@@ -58,12 +54,19 @@ log.info('>| begin')
 workers = min(mp.cpu_count(), max(1, args.workers))
 if workers != args.workers:
     log.warning('Worker request adjusted -> {0}'.format(workers))
-initargs = (args.corpus, args.document_boundaries, outgoing, incoming)
+
+if args.document_boundaries:
+    tokenizer = tkn.BoundaryTokenizer
+else:
+    tokenizer = tkn.Tokenizer
+streamer = WindowStreamer
+
+initargs = (outgoing, incoming, args.corpus, tokenizer, streamer)
 
 with mp.Pool(processes=workers, initializer=func, initargs=initargs):
     if args.existing:
         log.info('+ existing')
-        suffix = SuffixTree.builder(args.existing, unstream, TokenSet)
+        suffix = SuffixTree.builder(args.existing, tkn.unstream, tkn.TokenSet)
         (min_gram, max_gram) = zutils.minmax(suffix.lf().keys())
         if args.min_gram <= max_gram:
             args.min_gram = max_gram + 1
@@ -71,7 +74,7 @@ with mp.Pool(processes=workers, initializer=func, initargs=initargs):
             log.warning(msg.format(max_gram, args.min_gram))
         log.info('- existing ({0} {1})'.format(min_gram, args.min_gram))
     else:
-        suffix = SuffixTree(TokenSet)
+        suffix = SuffixTree(tkn.TokenSet)
         min_gram = args.min_gram
 
     plogger = logger.PeriodicLogger(constants.minute * 5)

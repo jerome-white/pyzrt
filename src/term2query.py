@@ -6,6 +6,7 @@ from argparse import ArgumentParser
 from zrtlib import zutils
 from zrtlib import logger
 from zrtlib.query import QueryBuilder
+from zrtlib.document import TermDocument
 
 def func(args):
     (terms, model, output) = args
