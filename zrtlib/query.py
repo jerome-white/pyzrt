@@ -145,6 +145,5 @@ class ShortestPath(Query):
             deviation = np.std(weights)
             if deviation < optimal.deviation:
                 optimal = OptimalPath(deviation, i)
-        assert(optimal.path is not None)
 
         yield from map(op.attrgetter('term'), optimal.path)
