@@ -1,5 +1,6 @@
 from pathlib import Path
 from argparse import ArgumentParser
+from multiprocessing import Pool
 
 import pandas as pd
 import seaborn as sns
@@ -8,6 +9,32 @@ import matplotlib.pyplot as plt
 from zrtlib import logger
 from zrtlib import zutils
 from zrtlib.indri import QueryDoc
+
+def walk(path):
+    for ngram in path.iterdir():
+        for model in ngram.iterdir():
+            yield (ngram, model)
+
+def func(args):
+    (ngram, model, metric, aggregate) = args
+
+    stats = []
+    for (topic, value) in zutils.get_stats(model, metric, aggregate):
+        qid = QueryDoc.components(Path(topic))
+        entry = [ ngram.stem, model.stem, qid.topic, value ]
+        log.info(' '.join(map(str, entry[:-1])))
+
+        stats.append(entry)
+
+    return stats
+
+def aquire(args):
+    with Pool() as pool:
+        keys = [ 'n-grams', 'model', 'topic', metric ]
+        iterable = map(lambda x: (*x, args.metric, args.all), walk(args.zrt))
+        for models in pool.imap_unordered(func, iterable):
+            for i in models:
+                yield dict(zip(keys, i))
 
 arguments = ArgumentParser()
 arguments.add_argument('--metric')
@@ -23,22 +50,11 @@ metric = {
     'recip_rank': 'Reciprocal Rank',
 }[args.metric]
 
-stats = []
-for ngram in args.zrt.iterdir():
-    for model in ngram.iterdir():
-        for (topic, value) in zutils.get_stats(model, args.metric, args.all):
-            qid = QueryDoc.components(Path(topic))
-            stats.append({
-                'n-grams': ngram.stem,
-                'model': model.stem,
-                'topic': qid.topic,
-                metric: value,
-            })
-            log.debug(stats[-1].keys())
-data = pd.DataFrame(stats)
-fname = 'inter-{0}.png'.format(args.metric)
+df = pd.DataFrame(aquire(args))
 
 plt.figure(figsize=(24, 6))
-#sns.set_context('tab')
-sns.barplot(x='n-grams', y=metric, hue='model', data=data)
+# sns.set_context('paper')
+sns.barplot(x='n-grams', y=metric, hue='model', data=df, errwidth=0.1)
+
+fname = 'inter-{0}.png'.format(args.metric)
 plt.savefig(fname, bbox_inches='tight')
