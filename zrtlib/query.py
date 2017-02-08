@@ -116,9 +116,8 @@ class ShortestPath(Query):
         if not self.partials:
             condition = df['ngram'].str.len() == df['length']
             df = df[condition]
-
-        if len(df) == 0:
-            return ''
+            if len(df) == 0:
+                return ''
 
         graph = nx.DiGraph()
 
@@ -126,11 +125,12 @@ class ShortestPath(Query):
             u = Node(source)
             dest = df[(df.start > source.start) & (df.start <= source.end)]
             for target in dest.itertuples():
+                v = Node(target)
                 weight = source.end - target.start
-                graph.add_edge(u, Node(target), weight=weight)
+                graph.add_edge(u, v, weight=weight)
 
         if len(graph) == 0:
-            return source.term
+            return u.term
         # assert(nx.is_directed_acyclic_graph(graph))
 
         (source, target) = [ Node(df.iloc[x]) for x in (0, -1) ]
