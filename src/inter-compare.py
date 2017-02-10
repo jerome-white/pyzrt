@@ -38,6 +38,7 @@ def aquire(args):
 
 arguments = ArgumentParser()
 arguments.add_argument('--metric')
+arguments.add_argument('--kind')
 arguments.add_argument('--all', action='store_true') # "all" or runs only?
 arguments.add_argument('--zrt', type=Path)
 arguments.add_argument('--baseline', type=Path)
@@ -45,16 +46,31 @@ args = arguments.parse_args()
 
 log = logger.getlogger()
 
+#
+# Get the plotter options together first so that if they're wrong we
+# haven't wasted any time mucking with data.
+#
 metric = {
     'map': 'MAP',
     'recip_rank': 'Reciprocal Rank',
 }[args.metric]
 
+(plotter, kwargs) = {
+    'bar': (sns.barplot, { 'errwidth': 0.1 })
+    'point': (sns.pointplot, { 'ci': None })
+}[args.kind]
+
+#
+# Aquire the data
+#
 df = pd.DataFrame(aquire(args))
 
+#
+# Plot
+#
 plt.figure(figsize=(24, 6))
 # sns.set_context('paper')
-sns.barplot(x='n-grams', y=metric, hue='model', data=df, errwidth=0.1)
+plotter(x='n-grams', y=metric, hue='model', data=df, **kwargs)
 
-fname = 'inter-{0}.png'.format(args.metric)
+fname = 'inter-{1}-{0}.png'.format(args.kind, args.metric)
 plt.savefig(fname, bbox_inches='tight')
