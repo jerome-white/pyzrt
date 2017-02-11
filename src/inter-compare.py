@@ -56,8 +56,8 @@ metric = {
 }[args.metric]
 
 (plotter, kwargs) = {
-    'bar': (sns.barplot, { 'errwidth': 0.1 })
-    'point': (sns.pointplot, { 'ci': None })
+    'bar': (sns.barplot, { 'errwidth': 0.1 }),
+    'point': (sns.pointplot, { 'ci': None }),
 }[args.kind]
 
 #
