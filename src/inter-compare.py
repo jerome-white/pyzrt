@@ -76,13 +76,20 @@ metric = {
 # Aquire the data
 #
 df = pd.DataFrame(aquire(args))
+hues = df.model.unique()
 
 #
 # Plot
 #
-plt.figure(figsize=(24, 6))
-# sns.set_context('paper')
-ax = plotter(x='n-grams', y=metric, hue='model', data=df, **kwargs)
+# plt.figure(figsize=(24, 6))
+sns.set_context('paper')
+ax = plotter(x='n-grams',
+             y=metric,
+             hue='model',
+             hue_order=sorted(hues),
+             data=df,
+             **kwargs)
+ax.legend(ncol=round(len(hues) / 2), loc='upper center')
 ax.set(ylim=(0, None))
 
 fname = 'inter-{1}-{0}.png'.format(args.kind, args.metric)
