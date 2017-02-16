@@ -1,7 +1,8 @@
+import multiprocessing as mp
 from pathlib import Path
 from argparse import ArgumentParser
-from multiprocessing import Pool
 
+import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -10,31 +11,40 @@ from zrtlib import logger
 from zrtlib import zutils
 from zrtlib.indri import QueryDoc
 
-def walk(path):
-    for ngram in path.iterdir():
-        for model in ngram.iterdir():
-            yield (ngram, model)
+def func(keys, incoming, outgoing):
+    while True:
+        (ngram, model, metric, aggregate) = incoming.get()
 
-def func(args):
-    (ngram, model, metric, aggregate) = args
+        for (topic, value) in zutils.get_stats(model, metric, aggregate):
+            qid = QueryDoc.components(Path(topic))
+            entry = [ int(ngram.stem), model.stem, qid.topic, value ]
+            log.info(' '.join(map(str, entry[:-1])))
 
-    stats = []
-    for (topic, value) in zutils.get_stats(model, metric, aggregate):
-        qid = QueryDoc.components(Path(topic))
-        entry = [ ngram.stem, model.stem, qid.topic, value ]
-        log.info(' '.join(map(str, entry[:-1])))
+            outgoing.put(dict(zip(keys, entry)))
 
-        stats.append(entry)
-
-    return stats
+        outgoing.put(None)
 
 def aquire(args):
-    with Pool() as pool:
-        keys = [ 'n-grams', 'model', 'topic', metric ]
-        iterable = map(lambda x: (*x, args.metric, args.all), walk(args.zrt))
-        for models in pool.imap_unordered(func, iterable):
-            for i in models:
-                yield dict(zip(keys, i))
+    keys = [ 'n-grams', 'model', 'topic', metric ]
+    incoming = mp.Queue()
+    outgoing = mp.Queue()
+
+    with mp.Pool(initializer=func, initargs=(keys, outgoing, incoming)):
+        jobs = 0
+
+        for ngram in args.zrt.iterdir():
+            n = int(ngram.stem)
+            if args.min_ngrams <= n <= args.max_ngrams:
+                for model in ngram.iterdir():
+                    outgoing.put((ngram, model, args.metric, args.all))
+                    jobs += 1
+
+        while jobs > 0:
+            stats = incoming.get()
+            if stats is None:
+                jobs -= 1
+            else:
+                yield stats
 
 arguments = ArgumentParser()
 arguments.add_argument('--metric')
@@ -42,6 +52,8 @@ arguments.add_argument('--kind')
 arguments.add_argument('--all', action='store_true') # "all" or runs only?
 arguments.add_argument('--zrt', type=Path)
 arguments.add_argument('--baseline', type=Path)
+arguments.add_argument('--min-ngrams', type=int, default=0)
+arguments.add_argument('--max-ngrams', type=float, default=np.inf)
 args = arguments.parse_args()
 
 log = logger.getlogger()
@@ -70,7 +82,8 @@ df = pd.DataFrame(aquire(args))
 #
 plt.figure(figsize=(24, 6))
 # sns.set_context('paper')
-plotter(x='n-grams', y=metric, hue='model', data=df, **kwargs)
+ax = plotter(x='n-grams', y=metric, hue='model', data=df, **kwargs)
+ax.set(ylim=(0, None))
 
 fname = 'inter-{1}-{0}.png'.format(args.kind, args.metric)
-plt.savefig(fname, bbox_inches='tight')
+ax.figure.savefig(fname, bbox_inches='tight')
