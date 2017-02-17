@@ -39,6 +39,7 @@ arguments.add_argument('--prune', type=int, default=0)
 arguments.add_argument('--workers', type=int, default=mp.cpu_count())
 arguments.add_argument('--min-gram', type=int, default=1)
 arguments.add_argument('--max-gram', type=int)
+arguments.add_argument('--no-compress', action='store_true')
 arguments.add_argument('--incremental', action='store_true')
 arguments.add_argument('--document-boundaries', action='store_true')
 args = arguments.parse_args()
@@ -110,7 +111,8 @@ with mp.Pool(processes=workers, initializer=func, initargs=initargs):
         if args.prune > 0:
             remaining = suffix.prune(args.prune)
             log.info('- pruned {0}'.format(remaining))
-        suffix.compress(i)
+        if not args.no_compress:
+            suffix.compress(i)
 
         #
         # Save
