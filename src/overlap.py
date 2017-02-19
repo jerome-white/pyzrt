@@ -7,6 +7,7 @@ from multiprocessing import Pool
 import numpy as np
 import pandas as pd
 import seaborn as sns
+import matplotlib.pyplot as plt
 
 from zrtlib import logger
 from zrtlib import zutils
@@ -53,12 +54,26 @@ df = df[(df.location >= args.start) & (df.location <= args.end)]
 
 log.info('Plotting')
 
-sns.set_context('paper')
-markers = [ None ] * len(args.term_file)
-ax = sns.tsplot(data=df, err_style=None, unit=columns['condition'], **columns)
-ax.set(ylim=(0, None))
+col_wrap = 3
+marker = [ None ] * len(args.term_file)
+ylim = (0, np.ceil(df['active'].max()) + 1)
 
 potentials = set(map(op.attrgetter('stem'), args.term_file))
 fname = potentials.pop()
 assert(len(potentials) == 0)
-ax.figure.savefig(fname + '.png', bbox_inches='tight')
+
+sns.set_context('paper')
+sns.set(font_scale=1.7)
+
+grid = sns.FacetGrid(df,
+                     col_wrap=col_wrap,
+                     col='n-grams',
+                     hue='n-grams',
+                     ylim=ylim)
+grid.map(plt.plot, "location", "active", marker=None)
+grid.set(xticks=np.linspace(args.start, args.end, 4),
+         yticks=list(map(round, np.linspace(*ylim, 4))))
+# grid.set_axis_labels('', '')
+
+grid.fig.tight_layout(w_pad=1)
+grid.savefig(fname + '.png', bbox_inches='tight')
