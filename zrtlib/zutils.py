@@ -59,7 +59,7 @@ def count(start=0, stop=None, inclusive=True):
     rel = op.gt if inclusive else op.ge
 
     for i in itertools.count(start):
-        if stop and rel(i, stop):
+        if stop is not None and rel(i, stop):
             break
         yield i
 
