@@ -83,6 +83,7 @@ hues = df.model.unique()
 #
 # plt.figure(figsize=(24, 6))
 sns.set_context('paper')
+sns.set(font_scale=1.7)
 ax = plotter(x='n-grams',
              y=metric,
              hue='model',
