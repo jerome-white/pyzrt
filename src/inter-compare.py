@@ -63,8 +63,8 @@ log = logger.getlogger()
 # haven't wasted any time mucking with data.
 #
 metric = {
-    'map': 'MAP',
-    'recip_rank': 'Reciprocal Rank',
+    'map': 'Mean Average Precision',
+    'recip_rank': 'Mean Reciprocal Rank',
 }[args.metric]
 
 (plotter, kwargs) = {
