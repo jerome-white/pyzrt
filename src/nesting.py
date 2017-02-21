@@ -64,16 +64,18 @@ assert(len(potentials) == 0)
 
 sns.set_context('paper')
 sns.set(font_scale=1.7)
+sns.set_palette(sns.color_palette(n_colors=1))
 
 grid = sns.FacetGrid(df,
                      col_wrap=col_wrap,
                      col='n-grams',
                      hue='n-grams',
-                     ylim=ylim)
+                     ylim=ylim,
+                     palette=sns.color_palette(n_colors=1))
 grid.map(plt.plot, "location", "active", marker=None)
 grid.set(xticks=np.linspace(args.start, args.end, 4),
          yticks=list(map(round, np.linspace(*ylim, 4))))
 # grid.set_axis_labels('', '')
 
 grid.fig.tight_layout(w_pad=1)
-grid.savefig(fname + '.png', bbox_inches='tight')
+grid.savefig(fname + '-nesting.png', bbox_inches='tight')

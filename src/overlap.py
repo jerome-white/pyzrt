@@ -13,6 +13,17 @@ from zrtlib import logger
 from zrtlib import zutils
 from zrtlib.document import TermDocument
 
+def aquire(args):
+    keys = ('x', 'y')
+    df = TermDocument(args.term_file).df
+    df = df[(df.start >= args.start) & (df.start <= args.end)]
+
+    for (i, row) in enumerate(df.itertuples(), 1):
+        for j in ('start', 'end'):
+            f = op.attrgetter(j)
+            values = (f(row), i)
+            yield dict(zip(keys, values))
+
 arguments = ArgumentParser()
 arguments.add_argument('--term-file', type=Path)
 arguments.add_argument('--start', type=int, default=0)
@@ -21,28 +32,27 @@ args = arguments.parse_args()
 
 log = logger.getlogger()
 
-document = TermDocument(args.term_file)
-df = document.df[['start', 'end']].reset_index().drop('index', axis=1)
-df = df[(df.start >= args.start) & (df.start <= args.end)]
-df /= df.max()
-df.index += 1
+df = pd.DataFrame(aquire(args))
+
+
+log.info('Plotting')
 
 sns.set_context('paper')
 sns.set(font_scale=1.7)
-sns.set_palette(sns.color_palette('Blues'))
+sns.set_palette(sns.color_palette(n_colors=1))
 
-for row in df.itertuples():
-    plt.axhline(y=row.Index, xmin=row.start, xmax=row.end)
+ax = None
+groups = df.groupby('y')
+for (_, grp) in groups:
+    ax = grp.plot(x='x', y='y', ax=ax)
 
-plt.xlim(df.start.min(), df.end.max())
-plt.ylim(df.index[0] - 1, df.index[-1] + 1)
-# plt.yticks([ 'T' + str(x) for x in plt.yticks()[1:-1] ])
+plt.ylim(0, len(groups) + 1)
+plt.yticks(np.arange(*plt.ylim()),
+           [ '' ] + list(range(1, len(groups) + 1)) + [ '' ])
+plt.legend().remove()
+plt.ylabel('Term')
+plt.xlabel('Location')
 
-# ax = sns.pointplot(data=df, ci=None, hue=columns['y'], **columns)
-# ax.set(xticks=np.linspace(df.location.min(), df.location.max(), 5),
-#        ylim=(0, None))
-# ax.legend().remove()
-
-fname = 'overlap-{0}.png'.format(args.term_file.stem)
+fname = '{0}-overlap.png'.format(args.term_file.stem)
 log.info(fname)
 plt.savefig(fname, bbox_inches='tight')
