@@ -30,4 +30,4 @@ with mp.Pool() as pool:
     f = lambda x: (x, args.model.lower(), args.output)
     for i in pool.imap(func, map(f, zutils.walk(args.input))):
         qid = QueryDoc(i)
-        log.info(qid.topic)
+        log.info(terms.stem)
