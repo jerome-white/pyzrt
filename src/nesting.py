@@ -25,7 +25,7 @@ def func(args):
     log.info('{0} {1}'.format(*document.parts[-2:]))
 
     for row in terms.df.itertuples():
-        counter.update(zutils.count(row.start, row.end))
+        counter.update(range(row.start, row.end))
 
     return [ dict(zip(keys, (*x, ngrams))) for x in counter.items() ]
 
