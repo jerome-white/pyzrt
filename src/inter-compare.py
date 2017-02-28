@@ -76,6 +76,8 @@ metric = {
 # Aquire the data
 #
 df = pd.DataFrame(aquire(args))
+# http://stackoverflow.com/a/42014251 ???
+
 hues = df.model.unique()
 
 #
