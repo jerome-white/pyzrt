@@ -96,5 +96,5 @@ ax.legend(ncol=round(len(hues) / 2), loc='upper center')
 ax.set(ylim=(0, None),
        ylabel=metric)
 
-fname = 'inter-{1}-{0}.png'.format(args.kind, args.metric)
+fname = 'evals-{1}-{0}.png'.format(args.kind, args.metric)
 ax.figure.savefig(fname, bbox_inches='tight')

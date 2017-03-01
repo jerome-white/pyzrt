@@ -78,4 +78,4 @@ grid.set(xticks=np.linspace(args.start, args.end, 4),
 # grid.set_axis_labels('', '')
 
 grid.fig.tight_layout(w_pad=1)
-grid.savefig(fname + '-nesting.png', bbox_inches='tight')
+grid.savefig(fname + '-active.png', bbox_inches='tight')
