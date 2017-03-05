@@ -55,7 +55,9 @@ with Pool() as pool:
     iterable = itertools.filterfalse(QueryDoc.isquery, zutils.walk(args.input))
     for i in pool.imap_unordered(TermDocument, iterable):
         terms.add(i)
+
 try:
+    # Divulge relevance information to oracles
     terms.divulge(args.qrels, query)
 except NotImplementedError:
     pass
@@ -65,7 +67,6 @@ except NotImplementedError:
 #
 with CSVWriter(args.output) as writer, QueryExecutor(args.index) as engine:
     results = {}
-
 
     predicate = lambda x: x < args.guesses and query
     for i in itertools.takewhile(predicate, itertools.count()):
@@ -102,9 +103,11 @@ with CSVWriter(args.output) as writer, QueryExecutor(args.index) as engine:
         # Collect the results
         #
         collect = defaultdict(list)
+
         for entry in engine.evaluate(args.qrels):
             for (metric, value) in entry:
                 collect[metric].append(value)
+
         if collect:
             f = np.mean
         else:

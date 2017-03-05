@@ -34,6 +34,10 @@ class TermSelector:
     def add(self, document):
         raise NotImplementedError()
 
+    #
+    # Make the selector aware of relevant documents. Should only be
+    # implemented in cases where the selector is also an oracle.
+    #
     def divulge(self, qrels, query):
         raise NotImplementedError()
 
