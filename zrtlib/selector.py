@@ -8,6 +8,8 @@ import scipy.stats as st
 from zrtlib import logger
 from zrtlib.indri import QueryRelevance
 
+Entry = namedtuple('Entry', 'doc, relevant')
+
 def Selector(x, **kwargs):
     return {
         'random': RandomSelector,
@@ -17,28 +19,58 @@ def Selector(x, **kwargs):
         'relevance': Relevance,
     }[x](**kwargs)
 
-class TermSelector:
-    def __init__(self):
-        self.prior = None
-        self.iterator = iter(self)
+class SelectionManager:
+    def __init__(self, strategy):
+        self.strategy_manager = strategy
 
-    def pick(self, prior=None):
-        self.prior = prior
+        self.df = None
+        self.feedback = None
+        self.documents = {}
+        self.columns = { 'hidden': 'term', 'unhidden': 'original' }
 
+    def __iter__(self):
+        self.df = pd.concat(self.documents.values(), copy=False)
+        # conceal the documents
+        key = self.columns['hidden']
+        self.df[key] = self.df.apply(lambda x: x[key][::-1], axis=1)
+
+        return self
+
+    def __next__(self):
+        selector = self.strategy_manager.get_selector(self.feedback)
         try:
-            return next(self.iterator)
-        except StopIteration:
-            self.iterator = iter(self)
-            raise EOFError()
+            term = selector.pick(self.df)
+        except LookupError:
+            raise StopIteration()
+
+        # flip the term
+        matches = self.df[self.columns['unhidden']] == term
+        self.df.loc[matches, self.columns['hidden']] = term
+
+        return term
 
     def add(self, document):
-        raise NotImplementedError()
+        assert(document.name not in self.documents)
+
+        new_columns = {
+            'name': document.name,
+            'relevant': None,
+            'actual': lambda x: x.term,
+        }
+        self.documents[document.name] = document.df.assign(**new_columns)
 
     #
     # Make the selector aware of relevant documents. Should only be
     # implemented in cases where the selector is also an oracle.
     #
-    def divulge(self, qrels, query):
+    def divulge(self, qrels):
+        relevant = QueryRelevance(qrels)
+        for (name, df) in self.documents.items():
+            if name in relevants:
+                df.relevant = True
+
+class TermSelector:
+    def __iter__(self):
         raise NotImplementedError()
 
 class RandomSelector(TermSelector):
@@ -47,7 +79,7 @@ class RandomSelector(TermSelector):
 
         self.terms = set()
         random.seed(seed)
-        
+
     def __iter__(self):
         terms = list(self.terms)
         random.shuffle(terms)
