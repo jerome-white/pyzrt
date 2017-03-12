@@ -18,6 +18,17 @@ def element(name, parent=None, text='\n', tail='\n'):
 
     return e
 
+def relevants(qrels, topic):
+    for i in qrels.iterdir():
+        with i.open() as fp:
+            for line in fp:
+                # http://trec.nist.gov/data/qrels_eng/
+                (topic_, iteration, document, relevant) = line.strip().split()
+                if topic_ != topic:
+                    break
+                if int(relevant):
+                    yield document
+
 class IndriQuery:
     def __init__(self):
         self.i = 0
@@ -140,17 +151,3 @@ class QueryDoc:
             element(i, doc, text=j)
 
         self.docs.append(doc)
-
-class QueryRelevance:
-    def __init__(self, qrels):
-        self.topics = collections.defaultdict(set)
-        self.documents = collections.defaultdict(set)
-
-        for i in qrels.iterdir():
-            topic = i.stem
-            with i.open() as fp:
-                for line in fp:
-                    (*_, document, relevant) = line.strip().split()
-                    if int(relevant):
-                        self.documents[document].add(topic)
-                        self.topics[topic].add(document)
