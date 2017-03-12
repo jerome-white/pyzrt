@@ -20,26 +20,30 @@ def Selector(x, **kwargs):
     }[x](**kwargs)
 
 class SelectionManager:
-    def __init__(self, strategy):
-        self.strategy_manager = strategy
-
+    def __init__(self):
         self.df = None
         self.feedback = None
         self.documents = {}
         self.columns = { 'hidden': 'term', 'unhidden': 'original' }
 
+    #
+    # Set up the DataFrame used by the selectors
+    #
     def __iter__(self):
         self.df = pd.concat(self.documents.values(), copy=False)
+
         # conceal the documents
         key = self.columns['hidden']
         self.df[key] = self.df.apply(lambda x: x[key][::-1], axis=1)
 
         return self
 
+    #
+    # Each iteration presents the dataframe to the strategy manager
+    #
     def __next__(self):
-        selector = self.strategy_manager.get_selector(self.feedback)
         try:
-            term = selector.pick(self.df)
+            term = self.pick()
         except LookupError:
             raise StopIteration()
 
@@ -49,6 +53,9 @@ class SelectionManager:
 
         return term
 
+    #
+    # Make the selector aware of relevant documents.
+    #
     def add(self, document):
         assert(document.name not in self.documents)
 
@@ -60,34 +67,54 @@ class SelectionManager:
         self.documents[document.name] = document.df.assign(**new_columns)
 
     #
-    # Make the selector aware of relevant documents. Should only be
-    # implemented in cases where the selector is also an oracle.
+    # Make the selector aware of relevant documents.
     #
-    def divulge(self, qrels):
-        relevant = QueryRelevance(qrels)
-        for (name, df) in self.documents.items():
-            if name in relevants:
-                df.relevant = True
+    def divulge(self, qrels, topic):
+        for i in relevants(qrels, topic):
+            if i in self.documents:
+                self.document[i]['relevant'] = True
 
+    #
+    # Remove irrelevant documents
+    #
+    def purge(self):
+        irrelevant = set()
+        for (i, j) in self.documents:
+            if not j.relevant.all():
+                irrelevant.add(i)
+
+        for i in irrelevant:
+            del self.documents[i]
+        
+    def pick(self):
+        raise NotImplementedError()
+
+class HomogeneousSelectionManager
+    def __init__(self, selector):
+        super().__init__()
+        self.selector = selector
+
+    def pick(self):
+        return next(self.selector(self.df))
+    
 class TermSelector:
-    def __iter__(self):
+    def __next__(self):
         raise NotImplementedError()
 
 class RandomSelector(TermSelector):
-    def __init__(self, seed=None):
+    def __init__(self, documents, weighted=False, seed=None):
         super().__init__()
 
-        self.terms = set()
-        random.seed(seed)
+        index = self.columns['hidden']
+        self.terms = documents[index].value_counts().reset_index()
 
-    def __iter__(self):
-        terms = list(self.terms)
-        random.shuffle(terms)
+        self.weights = None if not weighted else index
+        self.seed = seed
 
-        yield from terms
-
-    def add(self, document):
-        self.terms.update(document.df.term.values)
+    def __next__(self):
+        selection = self.terms.sample(n=1, weights=self.weights,
+                                      random_state=self.seed)
+        return selection['index'].iloc[0]
 
 class Frequency(TermSelector):
     def __init__(self):
