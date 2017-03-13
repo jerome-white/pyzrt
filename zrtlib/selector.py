@@ -20,11 +20,13 @@ def Selector(x, **kwargs):
     }[x](**kwargs)
 
 class SelectionManager:
-    def __init__(self):
+    columns = { 'hidden': 'term', 'unhidden': 'original' }
+    
+    def __init__(self, strategy):
+        self.strategy = strategy
         self.df = None
         self.feedback = None
         self.documents = {}
-        self.columns = { 'hidden': 'term', 'unhidden': 'original' }
 
     #
     # Set up the DataFrame used by the selectors
@@ -42,9 +44,9 @@ class SelectionManager:
     # Each iteration presents the dataframe to the strategy manager
     #
     def __next__(self):
-        try:
-            term = self.pick()
-        except LookupError:
+        df = self.df[self.columns['unhidden'] != self.columns['hidden']]
+        term = self.strategy.pick(df, self.feedback)
+        if term is None:
             raise StopIteration()
 
         # flip the term
@@ -60,7 +62,7 @@ class SelectionManager:
         assert(document.name not in self.documents)
 
         new_columns = {
-            'name': document.name,
+            'document': document.name,
             'relevant': None,
             'actual': lambda x: x.term,
         }
@@ -85,66 +87,55 @@ class SelectionManager:
 
         for i in irrelevant:
             del self.documents[i]
-        
-    def pick(self):
+
+class SelectionStrategy:
+    def pick(self, documents, feedback=None):
         raise NotImplementedError()
 
-class HomogeneousSelectionManager
-    def __init__(self, selector):
-        super().__init__()
-        self.selector = selector
-
-    def pick(self):
-        return next(self.selector(self.df))
-    
-class TermSelector:
-    def __next__(self):
-        raise NotImplementedError()
-
-class RandomSelector(TermSelector):
-    def __init__(self, documents, weighted=False, seed=None):
+class RandomSelector(SelectionStrategy):
+    def __init__(self, weighted=False, seed=None):
         super().__init__()
 
-        index = self.columns['hidden']
-        self.terms = documents[index].value_counts().reset_index()
-
-        self.weights = None if not weighted else index
+        self.weighted = weighted
         self.seed = seed
 
-    def __next__(self):
-        selection = self.terms.sample(n=1, weights=self.weights,
-                                      random_state=self.seed)
-        return selection['index'].iloc[0]
+    def pick(self, documents, feedback=None):
+        index = TermSelector.columns['hidden']
+        terms = documents[index].value_counts().reset_index()
 
-class Frequency(TermSelector):
-    def __init__(self):
-        super().__init__()
+        weights = index if self.weighted else None
+        selection = documents.sample(n=1, weights=weights,
+                                     random_state=self.seed)
 
-        self.tf = Counter()
-        self.df = Counter()
-        self.counter = None
+        if not selection.empty:
+            return selection['index'].iloc[0]
 
-    def __iter__(self):
-        if self.counter is None:
-            raise NotImplementedError()
+class Frequency(SelectionStrategy):
+    def __init__(self, descending=True):
+        self.ascending = not descending
 
-        yield from map(op.itemgetter(0), self.counter.most_common())
-
-    def add(self, document):
-        counts = document.df.term.value_counts().to_dict()
-
-        self.tf.update(counts)
-        self.df.update(counts.keys())
-
+    def pick(self, documents, feedback=None):
+        df = self.pick_(documents, feedback)
+        df = value_counts().sort_values(ascending=self.ascending).reset_index()
+        
+        return df['index'].iloc[0]
+    
 class DocumentFrequency(Frequency):
-    def __init__(self):
+    def __init__(self, descending=False):
         super().__init__()
-        self.counter = self.df
+        
+    def pick_(self, documents, feedback=None):
+        groups = documents.groupby('document')
+        return groups['term'].apply(lambda x: pd.Series(x.unique()))
 
 class TermFrequency(Frequency):
     def __init__(self):
         super().__init__()
-        self.counter = self.tf
+
+    def pick_(self, documents, feedback=None):
+        return documents['term']
+
+###
 
 class Relevance(Frequency):
     def __init__(self):
