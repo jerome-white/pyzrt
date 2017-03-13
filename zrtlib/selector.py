@@ -107,8 +107,7 @@ class RandomSelector(SelectionStrategy):
         selection = documents.sample(n=1, weights=weights,
                                      random_state=self.seed)
 
-        if not selection.empty:
-            return selection['index'].iloc[0]
+        return selection['index'].iloc[0]
 
 class Frequency(SelectionStrategy):
     def __init__(self, descending=True):
@@ -129,45 +128,26 @@ class DocumentFrequency(Frequency):
         return groups['term'].apply(lambda x: pd.Series(x.unique()))
 
 class TermFrequency(Frequency):
-    def __init__(self):
+    def __init__(self, relative=False):
         super().__init__()
+        self.relative = relative
 
     def pick_(self, documents, feedback=None):
         return documents['term']
 
-###
-
 class Relevance(Frequency):
-    def __init__(self):
+    def __init__(self, query):
         super().__init__()
-        self.documents = {}
+        self.query = query
 
-    def add(self, document):
-        assert(document.name not in self.documents)
-        self.documents[document.name] = document.df.term.values
+    def pick(self, documents, feedback=None):
+        df = documents[documents['relevant'] == True]
+        assert(not df.empty)
+        similar = np.intersect1d(df['term'], self.query['term'])
 
-    def divulge(self, qrels, query):
-        log = logger.getlogger()
+        return similar[0]
 
-        document_terms = Counter()
-        relevant = QueryRelevance(qrels)
-        for i in relevant.documents:
-            if i not in self.documents:
-                log.warning('{0} not in corpus'.format(i))
-                continue
-            document_terms.update(self.documents[i])
-        log.debug('document terms: {0}'.format(len(document_terms)))
-
-        query_terms = Counter(query.df.pt.values)
-        log.debug('query terms: {0}'.format(len(query_terms)))
-
-        common = set(query_terms.keys())
-        common.intersection_update(document_terms.keys())
-        assert(common)
-
-        self.counter = Counter()
-        for i in (document_terms, query_terms):
-            self.counter.update({ x: i[x] for x in common })
+###
 
 # http://www.cs.bham.ac.uk/~pxt/IDA/term_selection.pdf
 class Entropy(TermSelector):
