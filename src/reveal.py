@@ -68,36 +68,24 @@ except NotImplementedError:
 with CSVWriter(args.output) as writer, QueryExecutor(args.index) as engine:
     results = {}
 
-    predicate = lambda x: x < args.guesses and query
-    for i in itertools.takewhile(predicate, itertools.count()):
-        #
-        # Pick the term
-        #
-        prior = results if i > 0 else None
-        try:
-            guess = terms.pick(prior)
-        except EOFError:
-            log.debug('guesses exhausted')
-            break
-        log.info(guess)
-
+    predicate = lambda x: x[0] < args.guesses
+    for i in itertools.takewhile(predicate, enumerate(terms)):
         #
         # Turn it over
         #
-        flipped = query.flip(guess)
-        log.info('{0}: {1}'.format(guess, flipped))
+        flipped = query.flip(i)
+        log.info('{0}: {1}'.format(i, flipped))
         if not flipped:
             continue
 
         results['guess'] = i
-        results['term'] = guess
+        results['term'] = i
 
         #
         # Run the query
         #
         q = QueryBuilder(args.model, query)
         result = engine.query(q, args.count)
-        result.check_returncode()
 
         #
         # Collect the results
