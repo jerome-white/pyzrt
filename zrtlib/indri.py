@@ -1,4 +1,5 @@
 import sys
+import csv
 import shlex
 import shutil
 import subprocess
@@ -18,13 +19,13 @@ def element(name, parent=None, text='\n', tail='\n'):
 
     return e
 
-def relevants(qrels, topic):
+def relevants(qrels, topic=None):
     for i in qrels.iterdir():
         with i.open() as fp:
             for line in fp:
                 # http://trec.nist.gov/data/qrels_eng/
                 (topic_, iteration, document, relevant) = line.strip().split()
-                if topic_ != topic:
+                if topic is not None and topic_ != topic:
                     break
                 if int(relevant):
                     yield document
@@ -46,11 +47,13 @@ class IndriQuery:
         return et.tostring(self.query, encoding='unicode')
 
 class QueryExecutor:
-    def __init__(self, index, indri='IndriRunQuery', trec='trec_eval'):
+    def __init__(self, index, qrels, indri='IndriRunQuery', trec='trec_eval'):
         self.index = index
         self.indri = shutil.which(indri)
         self.trec = shutil.which(trec)
         self.count = None
+
+        self.relevants = set(relevant(qrels))
 
         self.query = NamedTemporaryFile(mode='w')
         self.results = NamedTemporaryFile(mode='w')
@@ -62,7 +65,7 @@ class QueryExecutor:
         self.query.close()
         self.results.close()
 
-    def query(self, query, count):
+    def query(self, query, count, verify=True):
         self.count = count
         for i in (self.query, self.results):
             zutils.fclear(i)
@@ -76,7 +79,23 @@ class QueryExecutor:
             str(query),
             ]
 
-        return subprocess.run(cmd, stdout=self.results)
+        result = subprocess.run(cmd, stdout=self.results)
+        if verify:
+            result.check_returncode()
+
+        return result
+
+    def relevant(self, count=None):
+        rels = set()
+        with open(self.results.name) as fp:
+            reader = csv.reader(fp, delimiter=' ')
+            for line in reader:
+                (document, order) = line[2:4]
+                if count is not None and int(order) > count:
+                    break
+                rels.add(document)
+
+        return self.relevants.intersection(rels)
 
     def evaluate(self, qrels):
         cmd = [
