@@ -1,14 +1,7 @@
-import random
-import operator as op
-from collections import Counter, defaultdict
-
 import pandas as pd
 import scipy.stats as st
 
 from zrtlib import logger
-from zrtlib.indri import QueryRelevance
-
-Entry = namedtuple('Entry', 'doc, relevant')
 
 def Selector(x, **kwargs):
     return {
@@ -19,9 +12,12 @@ def Selector(x, **kwargs):
         'relevance': Relevance,
     }[x](**kwargs)
 
-class SelectionManager:
-    columns = { 'hidden': 'term', 'unhidden': 'original' }
-    
+class TermSelector:
+    columns = {
+        'hidden': 'term',
+        'unhidden': 'original'
+    }
+
     def __init__(self, strategy):
         self.strategy = strategy
         self.df = None
@@ -44,8 +40,12 @@ class SelectionManager:
     # Each iteration presents the dataframe to the strategy manager
     #
     def __next__(self):
-        df = self.df[self.columns['unhidden'] != self.columns['hidden']]
-        term = self.strategy.pick(df, self.feedback)
+        # obtain the hidden terms
+        (x, y) = self.columns.values()
+        hidden = self.df[self.df[x] != self.df[y]]
+
+        # pass on to strategy
+        term = self.strategy.pick(hidden, self.feedback)
         if term is None:
             raise StopIteration()
 
@@ -56,7 +56,7 @@ class SelectionManager:
         return term
 
     #
-    # Make the selector aware of relevant documents.
+    # Add documents to the corpus
     #
     def add(self, document):
         assert(document.name not in self.documents)
@@ -64,17 +64,17 @@ class SelectionManager:
         new_columns = {
             'document': document.name,
             'relevant': None,
-            'actual': lambda x: x.term,
+            self.columns['unhidden']: lambda x: x[self.columns['hidden']]
         }
         self.documents[document.name] = document.df.assign(**new_columns)
 
     #
     # Make the selector aware of relevant documents.
     #
-    def divulge(self, qrels, topic):
-        for i in relevants(qrels, topic):
+    def divulge(self, relevants):
+        for i in relevants:
             if i in self.documents:
-                self.document[i]['relevant'] = True
+                self.documents[i]['relevant'] = True
 
     #
     # Remove irrelevant documents
@@ -89,10 +89,13 @@ class SelectionManager:
             del self.documents[i]
 
 class SelectionStrategy:
+    def __init__(self):
+        self.tcol = TermSelector.columns['hidden']
+
     def pick(self, documents, feedback=None):
         raise NotImplementedError()
 
-class RandomSelector(SelectionStrategy):
+class Random(SelectionStrategy):
     def __init__(self, weighted=False, seed=None):
         super().__init__()
 
@@ -100,40 +103,31 @@ class RandomSelector(SelectionStrategy):
         self.seed = seed
 
     def pick(self, documents, feedback=None):
-        index = TermSelector.columns['hidden']
-        terms = documents[index].value_counts().reset_index()
+        weights = 'term' if self.weighted else None
+        df = (documents[self.tcol].
+              value_counts().
+              reset_index().
+              sample(weights=weights, random_state=self.seed))
 
-        weights = index if self.weighted else None
-        selection = documents.sample(n=1, weights=weights,
-                                     random_state=self.seed)
-
-        return selection['index'].iloc[0]
+        return df['index'].iloc[0]
 
 class Frequency(SelectionStrategy):
-    def __init__(self, descending=True):
-        self.ascending = not descending
-
     def pick(self, documents, feedback=None):
         df = self.pick_(documents, feedback)
-        df = value_counts().sort_values(ascending=self.ascending).reset_index()
-        
-        return df['index'].iloc[0]
-    
+
+        return df.value_counts().argmax()
+
+    def pick_(self, documents, feedback=None):
+        raise NotImplementedError()
+
 class DocumentFrequency(Frequency):
-    def __init__(self, descending=False):
-        super().__init__()
-        
     def pick_(self, documents, feedback=None):
         groups = documents.groupby('document')
-        return groups['term'].apply(lambda x: pd.Series(x.unique()))
+        return groups[self.tcol].apply(lambda x: pd.Series(x.unique()))
 
 class TermFrequency(Frequency):
-    def __init__(self, relative=False):
-        super().__init__()
-        self.relative = relative
-
     def pick_(self, documents, feedback=None):
-        return documents['term']
+        return documents[self.tcol]
 
 class Relevance(Frequency):
     def __init__(self, query):
@@ -143,30 +137,17 @@ class Relevance(Frequency):
     def pick(self, documents, feedback=None):
         df = documents[documents['relevant'] == True]
         assert(not df.empty)
-        similar = np.intersect1d(df['term'], self.query['term'])
+        similar = np.intersect1d(df[self.tcol], self.query[self.tcol])
 
         return similar[0]
 
-###
-
 # http://www.cs.bham.ac.uk/~pxt/IDA/term_selection.pdf
-class Entropy(TermSelector):
-    def __init__(self):
-        super().__init__()
-        self.relative_tf = defaultdict(list)
+class Entropy(SelectionStrategy):
+    def pick(self, documents, feedback=None):
+        groups = documents.groupby('document')
 
-    def __iter__(self):
-        ent = { x: st.entropy(y) for (x, y) in self.relative_tf.items() }
+        f = lambda x: pd.Series(x.value_counts(normalize=True))
+        df = groups[self.tcol].apply(f).reset_index(level=0, drop=True)
+        df = df.groupby(df.index).aggregate(st.entropy)
 
-        df = pd.Series(ent)
-        df.sort_values(ascending=False, inplace=True)
-
-        yield from df.index
-
-    def add(self, document):
-        counts = document.df.term.value_counts()
-        terms = counts.sum()
-
-        for (term, appearances) in counts.iteritems():
-            prob = appearances / terms
-            self.relative_tf[term].append(prob)
+        return df.argmax()
