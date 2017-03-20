@@ -1,16 +1,10 @@
 import pandas as pd
 import scipy.stats as st
 
-from zrtlib import logger
+import numpy as np
+import pandas as pd
 
-def Selector(x, **kwargs):
-    return {
-        'random': RandomSelector,
-        'df': DocumentFrequency,
-        'tf': TermFrequency,
-        'entropy': Entropy,
-        'relevance': Relevance,
-    }[x](**kwargs)
+from zrtlib import logger
 
 class TermSelector:
     def __init__(self, strategy):
@@ -84,6 +78,16 @@ class TermSelector:
             del self.documents[i]
 
 class SelectionStrategy:
+    @classmethod
+    def build(cls, strategy, **kwargs):
+        return {
+            'random': Random,
+            'df': DocumentFrequency,
+            'tf': TermFrequency,
+            'entropy': Entropy,
+            'relevance': Relevance,
+        }[strategy](**kwargs)
+
     def pick(self, documents, feedback=None):
         raise NotImplementedError()
 

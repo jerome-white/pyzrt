@@ -12,8 +12,8 @@ from zrtlib import logger
 from zrtlib import zutils
 from zrtlib.query import QueryBuilder
 from zrtlib.indri import QueryDoc, QueryExecutor
-from zrtlib.selector import Selector
 from zrtlib.document import TermDocument, HiddenDocument
+from zrtlib.selector import TermSelector, SelectionStrategy
 
 class CSVWriter:
     def __init__(self, fname):
@@ -50,7 +50,7 @@ log = logger.getlogger()
 #
 # Initialise the query and the selector
 #
-ts = TermSelector(args.selector)
+ts = TermSelector(SelectionStrategy.build(args.selector))
 with Pool() as pool:
     iterable = itertools.filterfalse(QueryDoc.isquery, zutils.walk(args.input))
     for i in pool.imap_unordered(TermDocument, iterable):
