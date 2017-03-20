@@ -35,7 +35,7 @@ class TermDocument:
                               index=False,
                               line_terminator=' ',
                               sep=' ')
-        
+
     def regions(self):
         groups = self.df.groupby(by=['region'], sort=False)
         n = groups.size().count() - 1
@@ -44,25 +44,37 @@ class TermDocument:
             yield Region(j, i == 0, i == n, df)
 
 class HiddenDocument(TermDocument):
+    columns = {
+        'hidden': 'term',
+        'visible': 'original',
+    }
+
     def __init__(self, document, include_lengths=True):
         super().__init__(document, include_lengths)
 
-        term = 'pt'
-        self.df.rename(columns={ 'term': term }, inplace=True)
-        self.df['term'] = self.df.apply(lambda row: row[term][::-1], axis=1)
+        # rename visible term column
+        columns = { self.columns['hidden']: self.columns['visible'] }
+        self.df.rename(columns=columns, inplace=True)
+
+        # flip original terms
+        flip = lambda row: row[self.columns['visible']][::-1]
+        self.df[self.columns['hidden']] = self.df.apply(flip, axis=1)
 
     def __bool__(self):
         '''
         True if hidden terms remain
         '''
-        return len(self.df[self.df['pt'] != self.df['term']]) > 0
+        (x, y) = self.columns.values()
+        remaining = self.df[self.df[x] != self.df[y]]
+
+        return not remaining.empty
 
     def flip(self, term):
-        matches = self.df['pt'] == term
-        self.df.loc[matches, 'term'] = term
+        matches = self.df[self.columns['visible']] == term
+        self.df.loc[matches, self.columns['hidden']] = term
 
-        return len(self.df[matches])
+        return self.df[matches]
 
     def reveal(self):
-        for i in self.df.pt.unique():
+        for i in self.df[self.columns['hidden']].unique():
             self.flip(i)
