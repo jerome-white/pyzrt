@@ -60,7 +60,7 @@ class CompleteCorpus(collections.OrderedDict):
                 self[i] = fp.read()
 
     def characters(self):
-        return sum(map(len, self.corpus.values()))
+        return sum(map(len, self.values()))
 
 class CorpusStreamer:
     def __init__(self, corpus, block_size=1, skip=0, offset=0):
