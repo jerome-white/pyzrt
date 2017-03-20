@@ -40,6 +40,9 @@ class Query:
 
         return str(query)
 
+    def regionalize(self, region):
+        raise NotImplementedError()
+
 class BagOfWords(Query):
     def regionalize(self, region):
         yield from map(op.attrgetter('term'), region.df.itertuples())
