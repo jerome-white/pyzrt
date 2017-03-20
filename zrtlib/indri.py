@@ -7,6 +7,8 @@ import collections
 import xml.etree.ElementTree as et
 from tempfile import NamedTemporaryFile
 
+from zrtlib import zutils
+
 QueryID = collections.namedtuple('QueryID', 'topic, number')
 
 def element(name, parent=None, text='\n', tail='\n'):
