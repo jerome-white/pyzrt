@@ -13,11 +13,6 @@ def Selector(x, **kwargs):
     }[x](**kwargs)
 
 class TermSelector:
-    columns = {
-        'hidden': 'term',
-        'unhidden': 'original'
-    }
-
     def __init__(self, strategy):
         self.strategy = strategy
         self.df = None
@@ -30,28 +25,23 @@ class TermSelector:
     def __iter__(self):
         self.df = pd.concat(self.documents.values(), copy=False)
 
-        # conceal the documents
-        key = self.columns['hidden']
-        self.df[key] = self.df.apply(lambda x: x[key][::-1], axis=1)
-
         return self
 
     #
     # Each iteration presents the dataframe to the strategy manager
     #
     def __next__(self):
-        # obtain the hidden terms
-        (x, y) = self.columns.values()
-        hidden = self.df[self.df[x] != self.df[y]]
-
-        # pass on to strategy
-        term = self.strategy.pick(hidden, self.feedback)
-        if term is None:
+        # obtain the unselected terms
+        unselected = self.df[self.df['selected'] == False]
+        if unselected.empty:
             raise StopIteration()
 
+        # pass on to strategy
+        term = self.strategy.pick(unselected, self.feedback)
+
         # flip the term
-        matches = self.df[self.columns['unhidden']] == term
-        self.df.loc[matches, self.columns['hidden']] = term
+        matches = self.df['term'] == term
+        self.df.loc[matches, 'selected'] = True
 
         return term
 
@@ -64,12 +54,12 @@ class TermSelector:
         new_columns = {
             'document': document.name,
             'relevant': None,
-            self.columns['unhidden']: lambda x: x[self.columns['hidden']]
+            'selected': False,
         }
         self.documents[document.name] = document.df.assign(**new_columns)
 
     #
-    # Make the selector aware of relevant documents.
+    # Make the selector aware of relevant documents
     #
     def divulge(self, relevants):
         for i in relevants:
