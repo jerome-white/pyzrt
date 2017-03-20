@@ -6,6 +6,7 @@ from collections import defaultdict
 from multiprocessing import Pool
 
 import numpy as np
+import pandas as pd
 
 from zrtlib import logger
 from zrtlib import zutils
@@ -37,10 +38,11 @@ arguments.add_argument('--index')
 arguments.add_argument('--selector')
 arguments.add_argument('--query', type=Path)
 arguments.add_argument('--qrels', type=Path)
-arguments.add_argument('--input', type=Path)
+arguments.add_argument('--corpus', type=Path)
 arguments.add_argument('--output', type=Path)
-arguments.add_argument('--count', type=int, default=1000)
+arguments.add_argument('--depth', type=int, default=1000)
 arguments.add_argument('--guesses', type=int, default=np.inf)
+arguments.add_argument('--oracle', action='store_true')
 args = arguments.parse_args()
 
 log = logger.getlogger()
@@ -48,62 +50,61 @@ log = logger.getlogger()
 #
 # Initialise the query and the selector
 #
-query = HiddenDocument(args.query)
-terms = Selector(args.selector)
-
+ts = TermSelector(args.selector)
 with Pool() as pool:
     iterable = itertools.filterfalse(QueryDoc.isquery, zutils.walk(args.input))
     for i in pool.imap_unordered(TermDocument, iterable):
-        terms.add(i)
+        ts.add(i)
 
-try:
-    # Divulge relevance information to oracles
-    terms.divulge(args.qrels, query)
-except NotImplementedError:
-    pass
+query = HiddenDocument(args.query)
 
 #
 # Begin revealing
 #
-with CSVWriter(args.output) as writer, QueryExecutor(args.index) as engine:
-    results = {}
+with CSVWriter(args.output) as writer:
+    with QueryExecutor(args.index, args.qrels) as engine:
+        initial = 0
+        recalled = pd.Series(initial, engine.relevants)
 
-    predicate = lambda x: x[0] < args.guesses
-    for i in itertools.takewhile(predicate, enumerate(terms)):
-        #
-        # Turn it over
-        #
-        flipped = query.flip(i)
-        log.info('{0}: {1}'.format(i, flipped))
-        if not flipped:
-            continue
+        if args.divulge:
+            ts.divulge(recalled.index)
 
-        results['guess'] = i
-        results['term'] = i
+        for (i, term) in enumerate(ts, initial + 1):
+            if i > args.guesses or recalled[recalled == initial].empty:
+                break
 
-        #
-        # Run the query
-        #
-        q = QueryBuilder(args.model, query)
-        result = engine.query(q, args.count)
+            #
+            # Flip the term
+            #
+            flipped = query.flip(term)
+            log.info('{0}: {1}'.format(term, len(flipped)))
+            if flipped.empty:
+                continue
 
-        #
-        # Collect the results
-        #
-        collect = defaultdict(list)
+            #
+            # Run the query
+            #
+            engine.query(QueryBuilder(args.model, query))
 
-        for entry in engine.evaluate(args.qrels):
-            for (metric, value) in entry:
-                collect[metric].append(value)
+            #
+            # Collect the results
+            #
+            recalled[engine.relevant()] = i
 
-        if collect:
-            f = np.mean
-        else:
-            log.error('No values obtained')
-            f = lambda x: np.nan
-        results.update({ x: f(y) for (x, y) in collect })
+            ratio = recalled[recalled > initial].count() / recalled.count()
+            results = {
+                'guess': i,
+                'term': term,
+                'relevant': ratio,
+            }
+            results.update(dict(engine.evaluate()))
 
-        #
-        # Record
-        #
-        writer.writerow(results)
+            #
+            # Record
+            #
+            writer.writerow(results)
+
+            #
+            # Report back to the term selector
+            #
+            ts.feedback = recalled[recalled == i].index
