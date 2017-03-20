@@ -79,9 +79,6 @@ class TermSelector:
             del self.documents[i]
 
 class SelectionStrategy:
-    def __init__(self):
-        self.tcol = TermSelector.columns['hidden']
-
     def pick(self, documents, feedback=None):
         raise NotImplementedError()
 
@@ -94,7 +91,7 @@ class Random(SelectionStrategy):
 
     def pick(self, documents, feedback=None):
         weights = 'term' if self.weighted else None
-        df = (documents[self.tcol].
+        df = (documents['term'].
               value_counts().
               reset_index().
               sample(weights=weights, random_state=self.seed))
@@ -113,11 +110,11 @@ class Frequency(SelectionStrategy):
 class DocumentFrequency(Frequency):
     def pick_(self, documents, feedback=None):
         groups = documents.groupby('document')
-        return groups[self.tcol].apply(lambda x: pd.Series(x.unique()))
+        return groups['term'].apply(lambda x: pd.Series(x.unique()))
 
 class TermFrequency(Frequency):
     def pick_(self, documents, feedback=None):
-        return documents[self.tcol]
+        return documents['term']
 
 class Relevance(Frequency):
     def __init__(self, query):
@@ -127,7 +124,7 @@ class Relevance(Frequency):
     def pick(self, documents, feedback=None):
         df = documents[documents['relevant'] == True]
         assert(not df.empty)
-        similar = np.intersect1d(df[self.tcol], self.query[self.tcol])
+        similar = np.intersect1d(df['term'], self.query['term'])
 
         return similar[0]
 
@@ -137,7 +134,7 @@ class Entropy(SelectionStrategy):
         groups = documents.groupby('document')
 
         f = lambda x: pd.Series(x.value_counts(normalize=True))
-        df = groups[self.tcol].apply(f).reset_index(level=0, drop=True)
+        df = groups['term'].apply(f).reset_index(level=0, drop=True)
         df = df.groupby(df.index).aggregate(st.entropy)
 
         return df.argmax()
