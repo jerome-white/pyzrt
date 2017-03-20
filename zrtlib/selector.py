@@ -31,6 +31,11 @@ class TermSelector:
     # Each iteration presents the dataframe to the strategy manager
     #
     def __next__(self):
+        # mark relevant documents based on feedback
+        if self.feedback is not None:
+            relevant = self.df['term'].isin(self.feedback)
+            self.df.loc[relevant, 'relevant'] = True
+
         # obtain the unselected terms
         unselected = self.df[self.df['selected'] == False]
         if unselected.empty:
