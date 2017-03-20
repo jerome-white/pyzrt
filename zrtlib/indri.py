@@ -47,13 +47,15 @@ class IndriQuery:
         return et.tostring(self.query, encoding='unicode')
 
 class QueryExecutor:
-    def __init__(self, index, qrels, indri='IndriRunQuery', trec='trec_eval'):
+    def __init__(self, index, qrels, count, indri='IndriRunQuery',
+                 trec='trec_eval'):
         self.index = index
         self.indri = shutil.which(indri)
         self.trec = shutil.which(trec)
-        self.count = None
+        self.count = count
 
-        self.relevants = set(relevant(qrels))
+        self.qrels = qrels
+        self.relevants = set(relevant(self.qrels))
 
         self.query = NamedTemporaryFile(mode='w')
         self.results = NamedTemporaryFile(mode='w')
@@ -65,8 +67,7 @@ class QueryExecutor:
         self.query.close()
         self.results.close()
 
-    def query(self, query, count, verify=True):
-        self.count = count
+    def query(self, query, verify=True):
         for i in (self.query, self.results):
             zutils.fclear(i)
 
@@ -85,25 +86,23 @@ class QueryExecutor:
 
         return result
 
-    def relevant(self, count=None):
-        rels = set()
+    def relevant(self, limit=None):
         with open(self.results.name) as fp:
             reader = csv.reader(fp, delimiter=' ')
             for line in reader:
                 (document, order) = line[2:4]
-                if count is not None and int(order) > count:
+                if limit is not None and int(order) > limit:
                     break
-                rels.add(document)
+                if document in self.relevants:
+                    yield document
 
-        return self.relevants.intersection(rels)
-
-    def evaluate(self, qrels):
+    def evaluate(self):
         cmd = [
             self.trec,
             '-q',
             '-c',
             '-M{0}'.format(self.count),
-            str(qrels),
+            str(self.qrels),
             self.results.name,
             ]
 
