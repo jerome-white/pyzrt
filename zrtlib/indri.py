@@ -55,7 +55,7 @@ class QueryExecutor:
         self.count = count
 
         self.qrels = qrels
-        self.relevants = set(relevant(self.qrels))
+        self.relevant = set(relevants(self.qrels))
 
         self.query = NamedTemporaryFile(mode='w')
         self.results = NamedTemporaryFile(mode='w')
@@ -93,7 +93,7 @@ class QueryExecutor:
                 (document, order) = line[2:4]
                 if limit is not None and int(order) > limit:
                     break
-                if document in self.relevants:
+                if document in self.relevant:
                     yield document
 
     def evaluate(self):
