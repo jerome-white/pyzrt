@@ -1,25 +1,20 @@
 #!/bin/bash
 
-memory=60
-hours=4
-
 install() {
     rm --recursive --force $1
     mkdir --parents $1
 }
 
-while getopts "r:tih" OPTION; do
+while getopts "t:fih" OPTION; do
     case $OPTION in
-	r) root=$OPTARG ;;
-	t) mkterms=1 ;;
+	t) trees=$OPTARG ;;
+	f) mkterms=1 ;;
 	i) mkindex=1 ;;
 	h)
 	    cat<<EOF
-$0 [options]
-     -r top level run directory (usually directory containing the
-        directory of trees)
-     -t Generate term files from a suffix tree
-     -i Generate Indri indexes from term files
+$0 -t trees (\$output in $ZR_HOME/qsub/suffix.sh)
+   -f Generate term files from a suffix tree
+   -i Generate Indri indexes from term files
 EOF
 	    exit
 	    ;;
@@ -32,8 +27,10 @@ if [ ! $mkterms ] && [ ! $mkindex ]; then
     exit 1
 fi
 
+root=`dirname $trees`
+
 rm --force jobs
-for i in $root/trees/*; do
+for i in $trees/*; do
     term=`basename $i .csv`
     echo $term
 
@@ -50,7 +47,7 @@ for i in $root/trees/*; do
     if [ $mkterms ]; then
 	install ${path[0]}
 	cat <<EOF >> $qsub
-python3 $HOME/src/pyzrt/src/suffix2terms.py \
+python3 $ZR_HOME/src/suffix2terms.py \
   --suffix-tree $i \
   --output ${path[0]}
 EOF
@@ -65,8 +62,8 @@ EOF
 	done
 	cat <<EOF >> $qsub
 find ${path[0]} -name 'WSJ*' -not -name 'WSJQ*' | \
-  python3 $HOME/src/pyzrt/src/parse.py \
-    --output-data ${path[1]} \
+  python3 $ZR_HOME/src/parse.py \
+    --output ${path[1]} \
     --parser pt \
     --strainer trec \
     --consolidate
@@ -80,7 +77,7 @@ EOF
 
     qsub \
 	-j oe \
-	-l nodes=1:ppn=20,mem=${memory}GB,walltime=${hours}:00:00 \
+	-l nodes=1:ppn=20,mem=60GB,walltime=4:00:00 \
 	-m abe \
 	-M jsw7@nyu.edu \
 	-N index \

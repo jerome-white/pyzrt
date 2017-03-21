@@ -10,16 +10,16 @@
 #
 # Generate the queries
 #
-o1=$HOME/src/pyzrt/data/queries
+o1=$ZR_HOME/data/queries
 rm --recursive --force $o1
 mkdir --parents $o1
 
-python3 $HOME/src/pyzrt/src/topics.py \
-  --topics $HOME/src/pyzrt/data/topics.251-300.gz \
+python3 $ZR_HOME/src/topics.py \
+  --topics $ZR_HOME/data/topics.251-300.gz \
   --output $o1 \
-  --title \
-  --description \
-  --narrative
+  --with-title \
+  --with-description \
+  --with-narrative
 
 #
 # Format the queries
@@ -28,22 +28,23 @@ o2=$HOME/var/WSJ/0000
 rm --recursive --force $o2
 mkdir --parents $o2
 
-python3 $HOME/src/pyzrt/src/qformatter.py \
+python3 $ZR_HOME/src/qformatter.py \
     --input $o1 \
     --output $o2 \
-    --include-topic
-o2=`dirname $o2`
+    --with-topic
 
 #
 # Build the corpus
 #
+o2=`dirname $o2`
+
 o3=$SCRATCH/zrt/wsj/`date +'%Y_%m%d_%H%M%S'`/corpus
 rm --force --recursive $o3
 mkdir --parents $o3
 
-python3 $HOME/src/pyzrt/src/parse.py \
-    --raw-data $o2 \
-    --output-data $o3 \
+python3 $ZR_HOME/src/parse.py \
+    --input $o2 \
+    --output $o3 \
     --parser wsj \
     --strainer space:lower:alpha
 

@@ -1,7 +1,5 @@
 #!/bin/bash
 
-memory=60
-hours=6
 count=1000
 models=(
     ua
@@ -12,14 +10,14 @@ models=(
     saw
 )
 
-while getopts "r:h" OPTION; do
+while getopts "r:c:h" OPTION; do
     case $OPTION in
-	r) root=$OPTARG ;;
+	i) indri=$OPTARG ;;
+        c) count=$OPTARG ;;
 	h)
 	    cat<<EOF
-$0 [options]
-     -r top level run directory (usually directory containing the
-        directory of trees)
+$0 -i indri term indexes (subdirectory of \$root in \$ZR_HOME/qsub/index.sh)
+   -c count (default $count)
 EOF
 	    exit
 	    ;;
@@ -28,7 +26,7 @@ EOF
 done
 
 rm --force jobs
-for i in $root/indri/*; do
+for i in $indri/*; do
     qsub=`mktemp`
     echo $i $qsub
 
@@ -36,7 +34,7 @@ for i in $root/indri/*; do
     # Establish the variables within the script...
     #
     cat <<EOF > $qsub
-root=$root
+root=`dirname $indri`
 terms=`basename $i`
 for j in ${models[@]}; do
 EOF
@@ -51,13 +49,13 @@ EOF
     mkdir --parents $queries
 
     find $root/pseudoterms/$terms -name 'WSJQ*' | \
-	python $HOME/src/pyzrt/src/term2query.py --output $queries --model $j
+	python $ZR_HOME/src/term2query.py --output $queries --model $j
 done
 echo $terms DONE
 EOF
     qsub \
 	-j oe \
-	-l nodes=1:ppn=20,mem=${memory}GB,walltime=${hours}:00:00 \
+	-l nodes=1:ppn=20,mem=60GB,walltime=6:00:00 \
 	-m abe \
 	-M jsw7@nyu.edu \
 	-N query \
