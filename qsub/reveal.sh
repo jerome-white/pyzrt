@@ -1,16 +1,17 @@
 #!/bin/bash
 
-nodes=20
-data=$WORK/wsj/2016_1128_014701
-model=ua
-
-while getopts "g:d:m:n:s:h" OPTION; do
+model=sa
+while getopts "q:r:s:d:t:n:p:m:h" OPTION; do
     case $OPTION in
-        g) ngrams=`printf "%02d" $OPTARG` ;;
-        d) data=$OPTARG ;;
+        q) query=$OPTARG ;;
+        r) qrels=$OPTARG ;;
+        s) strategy=$OPTARG ;;
+        d) depth=$OPTARG ;;
+        # optional
+        t) topic=$OPTARG ;;
+        n) ngrams=$OPTARG ;;
+        p) root=$OPTARG ;;
         m) model=$OPTARG ;;
-        n) nodes=$OPTARG ;;
-        s) selector=$OPTARG ;;
         h)
             exit
             ;;
@@ -18,43 +19,54 @@ while getopts "g:d:m:n:s:h" OPTION; do
     esac
 done
 
-output=$data/selector/$ngrams/$selector
-mkdir --parents $output
-rm --force jobs
+if [ ! $root ] || [ ! $ngrams ]; then
+    components=( `sed -e's/\// /g' <<< $query` )
+    n=${#components[@]}
+
+    if [ ! $root ]; then
+        root=`sed -e's/ /\//g' <<< ${components[@]::$n-3}`
+    fi
+    if [ ! $ngrams ]; then
+        ngrams=${components[@]:$n-2:1}
+    fi
+fi
+
+if [ ! $topic ]; then
+    topic=`python3 $ZR_HOME/src/query2topic.py --query $query`
+fi
+
+output=$root/selector/$ngrams/$strategy/$topic
+mkdir --parents `dirname $output`
 
 qsub=`mktemp`
-queries=( `find $data/pseudoterms -name 'WSJQ*'` )
-last=`${queries[${#queries[@]}-1]}`
+judgements=`mktemp --directory`
 
-for i in ${queries[@]}; do
-    if [ `wc --lines $qsub` -lt $nodes ] || [ $i != $last  ]; then
-        q=`basename $i`
-        topic=${q:6:3}
-        
-        cat <<EOF >> $qsub
-python3 $HOME/src/pyzrt/src/reveal.py \
-    --model ua \
-    --qrels $WORK/qrels/$topic \
-    --index $data/indri/$ngrams \
-    --input $data/pseudoterms/$ngrams \
-    --output $output/$topic \
-    --selector $selector \
-    --query $i
+cat <<EOF >> $qsub
+python3 -u $ZR_HOME/src/qrels.py \
+    --input $qrels \
+    --output $judgements \
+    --topic $topic \
+    --document-class WSJ \
+    --count $depth
+
+python3 -u $ZR_HOME/src/reveal.py \
+    --index $root/indri/$ngrams \
+    --input $root/pseudoterms/$ngrams \
+    --output $output \
+    --qrels $judgements/$topic \
+    --selection-strategy $strategy \
+    --query $query \
+    --retrieval-model $model \
+    --depth $depth
+
+rm --recursive --force $judgements
 EOF
-    else
-        echo "[ `date` ] $qsub"        
-        qsub \
-	    -j oe \
-	    -l nodes=1:ppn=$nodes,mem=60GB,walltime=6:00:00 \
-	    -m abe \
-	    -M jsw7@nyu.edu \
-	    -N reveal-$qsub \
-	    -V \
- 	    parallel $qsub >> jobs
-        if [ $i != $last ]; then
-            qsub=`mktemp`
-        fi
-    fi
-done
 
-# leave a blank line at the end
+qsub \
+    -j oe \
+    -l nodes=1:ppn=$nodes,mem=60GB,walltime=6:00:00 \
+    -m abe \
+    -M jsw7@nyu.edu \
+    -N reveal-$topic \
+    -V \
+    $qsub
