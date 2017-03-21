@@ -21,16 +21,13 @@ def element(name, parent=None, text='\n', tail='\n'):
 
     return e
 
-def relevants(qrels, topic=None):
-    for i in qrels.iterdir():
-        with i.open() as fp:
-            for line in fp:
-                # http://trec.nist.gov/data/qrels_eng/
-                (topic_, iteration, document, relevant) = line.strip().split()
-                if topic is not None and topic_ != topic:
-                    break
-                if int(relevant):
-                    yield document
+def relevant_documents(qrels):
+    with qrels.open() as fp:
+        # http://trec.nist.gov/data/qrels_eng/
+        reader = csv.reader(fp, delimiter=' ')
+        for (topic, iteration, document, relevant) in reader:
+            if int(topic) == 0 and int(relevant) > 0:
+                yield document
 
 class IndriQuery:
     def __init__(self):
@@ -57,7 +54,7 @@ class QueryExecutor:
         self.count = count
 
         self.qrels = qrels
-        self.relevant = set(relevants(self.qrels))
+        self.relevant_ = set(relevant_documents(self.qrels))
 
         self.query = NamedTemporaryFile(mode='w')
         self.results = NamedTemporaryFile(mode='w')
@@ -95,7 +92,7 @@ class QueryExecutor:
                 (document, order) = line[2:4]
                 if limit is not None and int(order) > limit:
                     break
-                if document in self.relevant:
+                if document in self.relevant_:
                     yield document
 
     def evaluate(self):
