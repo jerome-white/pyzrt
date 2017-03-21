@@ -27,15 +27,21 @@ class Entry:
         for (i, j) in enumerate(itertools.repeat(e, count)):
             yield [ i ] + j
 
-def extract(fname, focus=None):
+def extract(fname, dclass=None, topic=None):
+    f = lambda x, y: x is not None and y
+
     with tarfile.open(str(fname), 'r:gz') as tar:
         for gz in tar.getmembers():
             with tar.extractfile(gz) as fp:
                 lines = gzip.decompress(fp.read()).decode('utf-8').split('\n')
                 for i in filter(None, lines):
                     entry = Entry(*i.split())
-                    if focus and not any(map(entry.istype, focus)):
+
+                    wrong_class = f(dclass, not any(map(entry.istype, dclass)))
+                    wrong_topic = f(topic, entry.topic != topic)
+                    if wrong_class or wrong_topic:
                         continue
+
                     yield entry
 
 def write(output, jobs):
@@ -54,16 +60,17 @@ def write(output, jobs):
         jobs.task_done()
 
 arguments = ArgumentParser()
-arguments.add_argument('--qrels', type=Path)
+arguments.add_argument('--topic')
+arguments.add_argument('--input', type=Path)
 arguments.add_argument('--output', type=Path)
-arguments.add_argument('--include', action='append')
+arguments.add_argument('--document-class', action='append')
 arguments.add_argument('--count', type=int, default=1)
 args = arguments.parse_args()
 
 jobs = mp.JoinableQueue()
 with mp.Pool(initializer=write, initargs=(args.output, jobs)):
     rels = defaultdict(list)
-    for entry in extract(args.qrels, args.include):
+    for entry in extract(args.input, args.document_class, args.topic):
         rels[entry.topic].append(entry)
 
     for i in rels.items():
