@@ -25,6 +25,9 @@ if [ ! $root ] || [ ! $ngrams ]; then
 
     if [ ! $root ]; then
         root=`sed -e's/ /\//g' <<< ${components[@]::$n-3}`
+        if [ ${query:0:1} = '/' ]; then
+            root=/$root
+        fi
     fi
     if [ ! $ngrams ]; then
         ngrams=${components[@]:$n-2:1}
