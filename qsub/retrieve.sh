@@ -10,10 +10,25 @@
 module purge
 module load parallel/20140722
 
-root=$WORK/wsj/2016_1128_014701
-count=1000
+#
+# Must define variables at time of submission (qsub -v ...)
+#  queries Location of query files (see $queries in
+#          $ZR_HOME/qsub/query.sh)
+#  qrels   Location of QRELS tarball
+#  count   Depth of retrieval results (see Indri/trec_eval
+#          documentation)
+#
 
-for term in $root/queries/*; do
+root=`dirname ${queries}`
+
+judgements=`mktemp --directory`
+python3 -u $ZR_HOME/src/qrels.py \
+    --input ${qrels} \
+    --output $judgements \
+    --document-class WSJ \
+    --count ${count}
+
+for term in ${queries}/*; do
     terms=`basename $term`
 
     for model in $term/*; do
@@ -23,11 +38,11 @@ for term in $root/queries/*; do
 
 	for query in $model/*; do
 	    cat <<EOF
-$HOME/src/pyzrt/indri/qe.sh \
-  -c $count \
+$ZR_HOME/indri/qe.sh \
+  -c ${count} \
   -i $root/indri/$terms \
   -q $query \
-  -r $WORK/qrels \
+  -r $judgements \
   -o $trec \
   -b tfidf
 EOF
