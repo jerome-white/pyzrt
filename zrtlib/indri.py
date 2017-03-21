@@ -4,6 +4,7 @@ import shlex
 import shutil
 import subprocess
 import collections
+import operator as op
 import xml.etree.ElementTree as et
 from tempfile import NamedTemporaryFile
 
@@ -46,12 +47,16 @@ class IndriQuery:
         return et.tostring(self.query, encoding='unicode')
 
 class QueryExecutor:
-    def __init__(self, index, qrels, count, indri='IndriRunQuery',
+    def __init__(self, index, qrels, indri='IndriRunQuery',
                  trec='trec_eval'):
         self.index = index
         self.indri = shutil.which(indri)
         self.trec = shutil.which(trec)
-        self.count = count
+
+        with qrels.open() as fp:
+            reader = csv.reader(delimiter=' ')
+            counts = set(map(op.itemgetter(0), reader))
+            self.count = len(counts)
 
         self.qrels = qrels
         self.relevant_ = set(relevant_documents(self.qrels))

@@ -1,12 +1,12 @@
 #!/bin/bash
 
 model=sa
-while getopts "q:r:s:d:t:n:p:m:h" OPTION; do
+while getopts "q:r:s:c:t:n:p:m:h" OPTION; do
     case $OPTION in
         q) query=$OPTARG ;;
         r) qrels=$OPTARG ;;
         s) strategy=$OPTARG ;;
-        d) depth=$OPTARG ;;
+        c) count=$OPTARG ;;
         # optional
         t) topic=$OPTARG ;;
         n) ngrams=$OPTARG ;;
@@ -50,7 +50,7 @@ python3 -u $ZR_HOME/src/qrels.py \
     --output $judgements \
     --topic $topic \
     --document-class WSJ \
-    --count $depth
+    --count $count
 
 python3 -u $ZR_HOME/src/reveal.py \
     --index $root/indri/$ngrams \
@@ -59,8 +59,7 @@ python3 -u $ZR_HOME/src/reveal.py \
     --qrels $judgements/$topic \
     --selection-strategy $strategy \
     --query $query \
-    --retrieval-model $model \
-    --depth $depth
+    --retrieval-model $model
 
 rm --recursive --force $judgements
 EOF
