@@ -38,7 +38,7 @@ arguments.add_argument('--retrieval-model')
 arguments.add_argument('--selection-strategy')
 arguments.add_argument('--query', type=Path)
 arguments.add_argument('--qrels', type=Path)
-arguments.add_argument('--corpus', type=Path)
+arguments.add_argument('--input', type=Path)
 arguments.add_argument('--output', type=Path)
 arguments.add_argument('--depth', type=int, default=1000)
 arguments.add_argument('--guesses', type=int, default=np.inf)
@@ -62,9 +62,9 @@ query = HiddenDocument(args.query)
 # Begin revealing
 #
 with CSVWriter(args.output) as writer:
-    with QueryExecutor(args.index, args.qrels) as engine:
+    with QueryExecutor(args.index, args.qrels, args.depth) as engine:
         initial = 0
-        recalled = pd.Series(initial, engine.relevants)
+        recalled = pd.Series(initial, engine.relevant_)
 
         if args.divulge:
             ts.divulge(recalled.index)
