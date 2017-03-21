@@ -54,7 +54,7 @@ class QueryExecutor:
         self.trec = shutil.which(trec)
 
         with qrels.open() as fp:
-            reader = csv.reader(delimiter=' ')
+            reader = csv.reader(fp, delimiter=' ')
             counts = set(map(op.itemgetter(0), reader))
             self.count = len(counts)
 
