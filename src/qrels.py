@@ -27,6 +27,21 @@ class Entry:
         for (i, j) in enumerate(itertools.repeat(e, count)):
             yield [ i ] + j
 
+def write(output, jobs):
+    log = logger.getlogger()
+
+    while True:
+        (topic, relevance) = jobs.get()
+        log.info(topic)
+
+        path = output.joinpath(topic)
+        with path.open('w') as fp:
+            writer = csv.writer(fp, delimiter=' ')
+            for entry in relevance:
+                writer.writerows(entry.repeat(args.count))
+
+        jobs.task_done()
+
 def extract(fname, dclass=None, topic=None):
     f = lambda x, y: x is not None and y
 
@@ -43,21 +58,6 @@ def extract(fname, dclass=None, topic=None):
                         continue
 
                     yield entry
-
-def write(output, jobs):
-    log = logger.getlogger()
-
-    while True:
-        (topic, relevance) = jobs.get()
-        log.info(topic)
-
-        path = output.joinpath(topic)
-        with path.open('w') as fp:
-            writer = csv.writer(fp, delimiter=' ')
-            for entry in relevance:
-                writer.writerows(entry.repeat(args.count))
-
-        jobs.task_done()
 
 arguments = ArgumentParser()
 arguments.add_argument('--topic')
