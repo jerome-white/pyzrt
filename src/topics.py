@@ -19,9 +19,9 @@ class Tracker:
 arguments = ArgumentParser()
 arguments.add_argument('--topics')
 arguments.add_argument('--output', type=Path)
-arguments.add_argument('--title', action='store_true')
-arguments.add_argument('--description', action='store_true')
-arguments.add_argument('--narrative', action='store_true')
+arguments.add_argument('--with-title', action='store_true')
+arguments.add_argument('--with-description', action='store_true')
+arguments.add_argument('--with-narrative', action='store_true')
 args = arguments.parse_args()
 
 log = logger.getlogger()
@@ -37,13 +37,13 @@ with gzip.open(args.topics) as fp:
         line_type = parts[0]
         if line_type == '<num>':
             tracker.topic = parts[-1]
-        elif line_type == '<title>' and args.title:
+        elif line_type == '<title>' and args.with_title:
             start = 2 if parts[1] == 'Topic:' else 1
             tracker.text.extend(parts[start:])
         elif line_type == '<desc>':
-            tracker.recording = args.description
+            tracker.recording = args.with_description
         elif line_type == '<narr>':
-            tracker.recording = args.narrative
+            tracker.recording = args.with_narrative
         elif line_type == '</top>':
             assert(tracker)
             log.info(tracker.topic)

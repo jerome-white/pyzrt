@@ -12,7 +12,7 @@ from zrtlib.indri import QueryDoc
 arguments = ArgumentParser()
 arguments.add_argument('--input', type=Path)
 arguments.add_argument('--output', type=Path)
-arguments.add_argument('--include-topic', action='store_true')
+arguments.add_argument('--with-topic', action='store_true')
 args = arguments.parse_args()
 
 for i in args.input.iterdir():
@@ -22,7 +22,7 @@ for i in args.input.iterdir():
     qdocs = QueryDoc(i)
     with i.open() as fp:
         q = []
-        topic = args.include_topic
+        topic = args.with_topic
         for j in fp:
             line = j.strip()
             if line:

@@ -43,7 +43,7 @@ def func(args, document_queue):
     s = args.strainer.split(':') if args.strainer else []
     parser = Parser(Strainer.builder(s))
 
-    recorder = Recorder(args.output_data, args.consolidate)
+    recorder = Recorder(args.output, args.consolidate)
 
     while True:
         document = document_queue.get()
@@ -57,8 +57,8 @@ def func(args, document_queue):
 arguments = ArgumentParser()
 arguments.add_argument('--parser')
 arguments.add_argument('--strainer')
-arguments.add_argument('--output-data', type=Path)
-arguments.add_argument('--raw-data', type=Path)
+arguments.add_argument('--input', type=Path)
+arguments.add_argument('--output', type=Path)
 arguments.add_argument('--consolidate', action='store_true')
 args = arguments.parse_args()
 
@@ -67,9 +67,8 @@ log.info('>| begin')
 
 document_queue = mp.JoinableQueue()
 with mp.Pool(initializer=func, initargs=(args, document_queue)):
-    args.output_data.mkdir(parents=True, exist_ok=True)
-
-    for i in zutils.walk(args.raw_data):
+    args.output.mkdir(parents=True, exist_ok=True)
+    for i in zutils.walk(args.input):
         document_queue.put(i)
     document_queue.join()
 

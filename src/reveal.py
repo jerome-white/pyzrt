@@ -33,9 +33,9 @@ class CSVWriter:
         self.writer.writerow(row)
 
 arguments = ArgumentParser()
-arguments.add_argument('--model')
 arguments.add_argument('--index')
-arguments.add_argument('--selector')
+arguments.add_argument('--retrieval-model')
+arguments.add_argument('--selection-strategy')
 arguments.add_argument('--query', type=Path)
 arguments.add_argument('--qrels', type=Path)
 arguments.add_argument('--corpus', type=Path)
@@ -50,7 +50,7 @@ log = logger.getlogger()
 #
 # Initialise the query and the selector
 #
-ts = TermSelector(SelectionStrategy.build(args.selector))
+ts = TermSelector(SelectionStrategy.build(args.selection_strategy))
 with Pool() as pool:
     iterable = itertools.filterfalse(QueryDoc.isquery, zutils.walk(args.input))
     for i in pool.imap_unordered(TermDocument, iterable):
@@ -84,7 +84,7 @@ with CSVWriter(args.output) as writer:
             #
             # Run the query
             #
-            engine.query(QueryBuilder(args.model, query))
+            engine.query(QueryBuilder(args.retrieval_model, query))
 
             #
             # Collect the results

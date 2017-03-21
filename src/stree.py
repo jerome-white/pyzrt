@@ -32,7 +32,7 @@ def func(incoming, outgoing, corpus_directory, Tokenizer, Streamer):
 log = logger.getlogger(True)
 
 arguments = ArgumentParser()
-arguments.add_argument('--corpus', type=Path)
+arguments.add_argument('--input', type=Path)
 arguments.add_argument('--output', type=Path)
 arguments.add_argument('--existing', type=Path)
 arguments.add_argument('--prune', type=int, default=0)
@@ -62,7 +62,7 @@ else:
     tokenizer = tkn.Tokenizer
 streamer = WindowStreamer
 
-initargs = (outgoing, incoming, args.corpus, tokenizer, streamer)
+initargs = (outgoing, incoming, args.input, tokenizer, streamer)
 
 with mp.Pool(processes=workers, initializer=func, initargs=initargs):
     if args.existing:
