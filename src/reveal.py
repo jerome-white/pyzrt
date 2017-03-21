@@ -65,7 +65,7 @@ with CSVWriter(args.output) as writer:
         initial = 0
         recalled = pd.Series(initial, engine.relevant_)
 
-        if args.divulge:
+        if args.oracle:
             ts.divulge(recalled.index)
 
         for (i, term) in enumerate(ts, initial + 1):
