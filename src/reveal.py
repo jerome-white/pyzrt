@@ -11,7 +11,7 @@ import pandas as pd
 from zrtlib import logger
 from zrtlib import zutils
 from zrtlib.query import QueryBuilder
-from zrtlib.indri import QueryDoc, QueryExecutor
+from zrtlib.indri import QueryDoc, QueryExecutor, relevant_documents
 from zrtlib.document import TermDocument, HiddenDocument
 from zrtlib.selector import TermSelector, SelectionStrategy
 
@@ -36,6 +36,7 @@ arguments = ArgumentParser()
 arguments.add_argument('--index')
 arguments.add_argument('--retrieval-model')
 arguments.add_argument('--selection-strategy')
+arguments.add_argument('--feedback-metric')
 arguments.add_argument('--query', type=Path)
 arguments.add_argument('--qrels', type=Path)
 arguments.add_argument('--input', type=Path)
@@ -62,14 +63,11 @@ query = HiddenDocument(args.query)
 #
 with CSVWriter(args.output) as writer:
     with QueryExecutor(args.index, args.qrels) as engine:
-        initial = 0
-        recalled = pd.Series(initial, engine.relevant_)
-
         if args.oracle:
-            ts.divulge(recalled.index)
+            ts.divulge(relevant_documents(args.qrels))
 
-        for (i, term) in enumerate(ts, initial + 1):
-            if i > args.guesses or recalled[recalled == initial].empty:
+        for (i, term) in enumerate(ts, 1):
+            if i > args.guesses:
                 break
 
             #
@@ -88,15 +86,11 @@ with CSVWriter(args.output) as writer:
             #
             # Collect the results
             #
-            recalled[engine.relevant()] = i
-
-            ratio = recalled[recalled > initial].count() / recalled.count()
             results = {
                 'guess': i,
                 'term': term,
-                'relevant': ratio,
             }
-            results.update(dict(engine.evaluate()))
+            results.update(next(engine.evaluate()))
 
             #
             # Record
@@ -106,4 +100,4 @@ with CSVWriter(args.output) as writer:
             #
             # Report back to the term selector
             #
-            ts.feedback = recalled[recalled == i].index
+            ts.feedback = results[args.feedback_metric]
