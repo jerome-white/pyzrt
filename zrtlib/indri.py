@@ -1,5 +1,4 @@
 import sys
-import csv
 import shlex
 import shutil
 import subprocess
@@ -25,8 +24,8 @@ def element(name, parent=None, text='\n', tail='\n'):
 def relevant_documents(qrels):
     with qrels.open() as fp:
         # http://trec.nist.gov/data/qrels_eng/
-        reader = csv.reader(fp, delimiter=' ')
-        for (topic, iteration, document, relevant) in reader:
+        for line in fp:
+            (topic, iteration, document, relevant) = line.strip().split()
             if int(topic) == 0 and int(relevant) > 0:
                 yield document
 
@@ -42,7 +41,7 @@ class IndriQuery:
             element(i, q, j)
 
         self.i += 1
-        
+
     def __str__(self):
         return et.tostring(self.query, encoding='unicode')
 
@@ -54,12 +53,13 @@ class QueryExecutor:
         self.trec = shutil.which(trec)
 
         with qrels.open() as fp:
-            reader = csv.reader(fp, delimiter=' ')
-            counts = set(map(op.itemgetter(0), reader))
+            counts = set()
+            for line in fp:
+                (iteration, *_) = line.strip().split()
+                counts.add(iteration)
             self.count = len(counts)
 
         self.qrels = qrels
-        self.relevant_ = set(relevant_documents(self.qrels))
 
         self.query = NamedTemporaryFile(mode='w')
         self.results = NamedTemporaryFile(mode='w')
@@ -72,32 +72,37 @@ class QueryExecutor:
         self.results.close()
 
     def query(self, query, verify=True):
+        # erase the query and results files
         for i in (self.query, self.results):
             zutils.fclear(i)
 
+        # print the query to disk
         print(query, file=self.query, flush=True)
+
+        # build/execute the Indri command
         cmd = [
             self.indri,
             '-trecFormat=true',
             '-count={0}'.format(self.count),
             '-index={0}'.format(self.index),
             str(query),
-            ]
-
+        ]
         result = subprocess.run(cmd, stdout=self.results)
         if verify:
             result.check_returncode()
 
         return result
 
-    def relevant(self, limit=None):
+    def relevant(self, judgements=None, limit=None):
+        if judgements is None:
+            judgements = relevant_documents(self.qrels)
+
         with open(self.results.name) as fp:
-            reader = csv.reader(fp, delimiter=' ')
-            for line in reader:
-                (document, order) = line[2:4]
+            for line in fp:
+                (_, document, order, *_) = line.strip().split()
                 if limit is not None and int(order) > limit:
                     break
-                if document in self.relevant_:
+                if document in judgements:
                     yield document
 
     def evaluate(self):
@@ -105,32 +110,17 @@ class QueryExecutor:
             self.trec,
             '-q',
             '-c',
+            '-m all_trec',
             '-M{0}'.format(self.count),
             str(self.qrels),
             self.results.name,
-            ]
+        ]
 
         with subprocess.Popen(cmd,
                               bufsize=1,
                               stdout=subprocess.PIPE,
                               universal_newlines=True) as fp:
-            previous = None
-            results = {}
-
-            for line in fp.stdout:
-                (metric, run, value) = line.strip().split()
-                if not run.isdigit():
-                    continue
-
-                if previous is not None and previous != run:
-                    yield results
-                    results = {} # probably not necessary, but safe
-
-                results[metric] = float(value)
-                previous = run
-
-            if results and previous.isdigit():
-                yield results
+            yield from ztuils.read_trec(fp.stdout)
 
 class QueryDoc:
     separator = '-'
