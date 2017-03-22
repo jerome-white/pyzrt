@@ -25,11 +25,6 @@ class TermSelector:
     # Each iteration presents the dataframe to the strategy manager
     #
     def __next__(self):
-        # mark relevant documents based on feedback
-        if self.feedback is not None:
-            relevant = self.df['term'].isin(self.feedback)
-            self.df.loc[relevant, 'relevant'] = True
-
         # obtain the unselected terms
         unselected = self.df[self.df['selected'] == False]
         if unselected.empty:
@@ -58,7 +53,7 @@ class TermSelector:
         self.documents[document.name] = document.df.assign(**new_columns)
 
     #
-    # Make the selector aware of relevant documents
+    # Mark documents that are relevant
     #
     def divulge(self, relevants):
         for i in relevants:
@@ -70,7 +65,7 @@ class TermSelector:
     #
     def purge(self):
         irrelevant = set()
-        for (i, j) in self.documents:
+        for (i, j) in self.documents.items():
             if not j.relevant.all():
                 irrelevant.add(i)
 
