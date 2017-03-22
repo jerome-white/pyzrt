@@ -1,12 +1,13 @@
 #!/bin/bash
 
 model=sa
-while getopts "q:r:s:c:t:n:p:m:h" OPTION; do
+while getopts "q:r:s:c:t:n:p:m:x:h" OPTION; do
     case $OPTION in
         q) query=$OPTARG ;;
         r) qrels=$OPTARG ;;
         s) strategy=$OPTARG ;;
         c) count=$OPTARG ;;
+        x) metric=$OPTARG ;;
         # optional
         t) topic=$OPTARG ;;
         n) ngrams=$OPTARG ;;
@@ -59,7 +60,8 @@ python3 -u $ZR_HOME/src/reveal.py \
     --qrels $judgements/$topic \
     --selection-strategy $strategy \
     --query $query \
-    --retrieval-model $model
+    --retrieval-model $model \
+    --feedback-metric $metric
 
 rm --recursive --force $judgements
 EOF
