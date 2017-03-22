@@ -21,6 +21,25 @@ def get_stats(directory, metric, summary):
                 if not (summary ^ aggregate) and metric == metric_:
                     yield (i.stem, float(value))
 
+def read_trec(fp, summary=False):
+    previous = None
+    results = {}
+
+    for line in fp:
+        (metric, run, value) = line.strip().split()
+        if not summary and not run.isdigit():
+            continue
+
+        if previous is not None and previous != run:
+            yield results
+            results = {} # probably not necessary, but safe
+
+        results[metric] = float(value)
+        previous = run
+
+    if results and previous.isdigit():
+        yield results
+
 #
 # Return on the metric value from Indri stat output
 #
