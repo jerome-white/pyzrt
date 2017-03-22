@@ -1,6 +1,6 @@
 #!/bin/bash
 
-model=sa
+model=ua
 while getopts "q:r:s:c:t:n:p:m:x:h" OPTION; do
     case $OPTION in
         q) query=$OPTARG ;;
