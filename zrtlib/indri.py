@@ -7,8 +7,6 @@ import operator as op
 import xml.etree.ElementTree as et
 from tempfile import NamedTemporaryFile
 
-from zrtlib import zutils
-
 QueryID = collections.namedtuple('QueryID', 'topic, number')
 
 def element(name, parent=None, text='\n', tail='\n'):
@@ -73,7 +71,9 @@ class QueryExecutor:
     def query(self, query, verify=True):
         # erase the query and results files
         for i in (self.query_fp, self.results_fp):
-            zutils.fclear(i)
+            if i.tell() > 0:
+                i.seek(0)
+                i.truncate()
 
         # print the query to disk
         print(query, file=self.query_fp, flush=True)
@@ -84,7 +84,7 @@ class QueryExecutor:
             '-trecFormat=true',
             '-count={0}'.format(self.count),
             '-index={0}'.format(self.index),
-            str(query),
+            self.query_fp.name,
         ]
         result = subprocess.run(cmd, stdout=self.results_fp)
         if verify:
