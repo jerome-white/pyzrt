@@ -30,7 +30,7 @@ class TermSelector:
             term = self.strategy.pick(self.df, self.feedback)
         except LookupError:
             raise StopIteration()
-        
+
         # mark the term as being selected
         matches = self.df['term'] == term
         self.df.loc[matches, 'selected'] = self.df['selected'].max() + 1
@@ -53,48 +53,60 @@ class TermSelector:
 
 class SelectionStrategy:
     @classmethod
-    def build(cls, strategy, **kwargs):
-        return {
-            'random': Random,
-            'df': DocumentFrequency,
+    def build(cls, request, **kwargs):
+        constructor = {
             'tf': TermFrequency,
+            'df': DocumentFrequency,
+            'random': Random,
             'entropy': Entropy,
             'relevance': Relevance,
-        }[strategy](**kwargs)
+        }
+        if request in constructor:
+            return BlindHomogenous(constructor[request], **kwargs)
+
+        raise LookupError()
 
     def unselected(self, documents):
         return documents[documents['selected'] == 0]
-    
+
     def pick(self, documents, feedback=None):
         remaining = self.unselected(documents)
         if remaining.empty:
             raise LookupError()
-        
-        return self.pick_(documents, feedback)
 
-class BlindHomogenousStrategy(SelectionStrategy):
-    def __init__(self, technique):
+        return next(self.choose(documents, feedback))
+
+    def choose(self, documents, feedback=None):
+        raise NotImplementedError()
+
+class BlindHomogenous(SelectionStrategy):
+    def __init__(self, technique, **kwargs):
         super().__init__()
-        self.technique = technique
 
-    def pick_(self, documents, feedback=None):
-        return self.technique.pick(self.unselected(documents))
+        self.technique = technique
+        self.kwargs = kwargs
+
+    def choose(self, documents, feedback=None):
+        return self.technique(self.unselected(documents), **self.kwargs)
 
 ########################################################################
 
 class SelectionTechnique:
-    def pick(self, documents):
-        raise NotImplementedError()
-    
-class Random(SelectionTechnique):
-    def __init__(self, weighted=False, seed=None):
-        super().__init__()
+    def __init__(self, documents):
+        self.documents = documents
 
-        self.weights = 'term' if weighted else None        
+    def __next__(self, documents):
+        raise NotImplementedError()
+
+class Random(SelectionTechnique):
+    def __init__(self, documents, weighted=False, seed=None):
+        super().__init__(documents)
+
+        self.weights = 'term' if weighted else None
         self.seed = seed
 
-    def pick(self, documents):
-        df = (documents['term'].
+    def __next__(self):
+        df = (self.documents['term'].
               value_counts().
               reset_index().
               sample(weights=self.weights, random_state=self.seed))
@@ -102,42 +114,43 @@ class Random(SelectionTechnique):
         return df['index'].iloc[0]
 
 class Frequency(SelectionTechnique):
-    def pick(self, documents):
-        df = self.pick_(documents, feedback)
+    def __next__(self):
+        df = self.then(self.documents, feedback)
 
         return df.value_counts().argmax()
 
-    def pick_(self, documents):
+    def then(self):
         raise NotImplementedError()
 
 class DocumentFrequency(Frequency):
-    def pick_(self, documents):
-        groups = documents.groupby('document')
+    def then(self):
+        groups = self.documents.groupby('document')
         return groups['term'].apply(lambda x: pd.Series(x.unique()))
 
 class TermFrequency(Frequency):
-    def pick_(self, documents):
-        return documents['term']
+    def then(self):
+        return self.documents['term']
 
 class Relevance(SelectionTechnique):
-    def __init__(self, query, relevant):
-        super().__init__()
+    def __init__(self, documents, query, relevant):
+        super().__init__(documents)
+
         self.query = query
         self.relevant = relevant
 
-    def pick(self, documents):
-        rels = documents[documents['document'].isin(self.relevant)]
+    def __next__(self):
+        rels = self.documents[self.documents['document'].isin(self.relevant)]
         elegible = rels.merge(self.query,
                               left_on='term',
                               right_on=HiddenDocument.columns['visible'],
                               copy=False)
 
-        return Random().pick(elegible)
+        return next(DocumentFrequency(elegible))
 
 # http://www.cs.bham.ac.uk/~pxt/IDA/term_selection.pdf
 class Entropy(SelectionTechnique):
-    def pick(self, documents):
-        groups = documents.groupby('document')
+    def __next__(self):
+        groups = self.documents.groupby('document')
 
         f = lambda x: pd.Series(x.value_counts(normalize=True))
         df = groups['term'].apply(f).reset_index(level=0, drop=True)
