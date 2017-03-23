@@ -64,7 +64,7 @@ query = HiddenDocument(args.query)
 with CSVWriter(args.output) as writer:
     with QueryExecutor(args.index, args.qrels) as engine:
         if args.oracle:
-            ts.divulge(relevant_documents(args.qrels))
+            ts.keep_only(relevant_documents(args.qrels))
 
         for (i, term) in enumerate(ts, 1):
             if i > args.guesses:
@@ -74,7 +74,7 @@ with CSVWriter(args.output) as writer:
             # Flip the term
             #
             flipped = query.flip(term)
-            log.info('{0}: {1}'.format(term, len(flipped)))
+            log.info('{0} {1} {2}'.format(i, term, len(flipped)))
             if flipped.empty:
                 continue
 

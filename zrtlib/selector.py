@@ -33,7 +33,7 @@ class TermSelector:
         # pass on to strategy
         term = self.strategy.pick(unselected, self.feedback)
 
-        # flip the term
+        # mark the term as being selected
         matches = self.df['term'] == term
         self.df.loc[matches, 'selected'] = True
 
@@ -47,30 +47,23 @@ class TermSelector:
 
         new_columns = {
             'document': document.name,
-            'relevant': None,
             'selected': False,
         }
         self.documents[document.name] = document.df.assign(**new_columns)
 
     #
-    # Mark documents that are relevant
+    # Remove certain documents from the database
     #
-    def divulge(self, relevants):
-        for i in relevants:
+    def purge(self, documents):
+        for i in documents:
             if i in self.documents:
-                self.documents[i]['relevant'] = True
+                del self.documents[i]
 
-    #
-    # Remove irrelevant documents
-    #
-    def purge(self):
-        irrelevant = set()
-        for (i, j) in self.documents.items():
-            if not j.relevant.all():
-                irrelevant.add(i)
+    def keep_only(self, documents):
+        rels = set(documents)
+        docs = set(self.documents.keys())
 
-        for i in irrelevant:
-            del self.documents[i]
+        self.purge(docs.difference(rels))
 
 class SelectionStrategy:
     @classmethod
@@ -126,9 +119,8 @@ class Relevance(Frequency):
         self.query = query
 
     def pick(self, documents, feedback=None):
-        df = documents[documents['relevant'] == True]
-        assert(not df.empty)
-        similar = np.intersect1d(df['term'], self.query['term'])
+        qterms = HiddenDocument.columns['visible']
+        similar = np.intersect1d(documents['term'], self.query[qterms])
 
         return similar[0]
 
