@@ -115,9 +115,7 @@ class Random(SelectionTechnique):
 
 class Frequency(SelectionTechnique):
     def __next__(self):
-        df = self.then(self.documents, feedback)
-
-        return df.value_counts().argmax()
+        return self.then(self.documents).value_counts().argmax()
 
     def then(self):
         raise NotImplementedError()
