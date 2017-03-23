@@ -42,7 +42,6 @@ arguments.add_argument('--qrels', type=Path)
 arguments.add_argument('--input', type=Path)
 arguments.add_argument('--output', type=Path)
 arguments.add_argument('--guesses', type=int, default=np.inf)
-arguments.add_argument('--oracle', action='store_true')
 args = arguments.parse_args()
 
 log = logger.getlogger()
@@ -63,9 +62,6 @@ query = HiddenDocument(args.query)
 #
 with CSVWriter(args.output) as writer:
     with QueryExecutor(args.index, args.qrels) as engine:
-        if args.oracle:
-            ts.keep_only(relevant_documents(args.qrels))
-
         for (i, term) in enumerate(ts, 1):
             if i > args.guesses:
                 break

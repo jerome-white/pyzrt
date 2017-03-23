@@ -49,20 +49,6 @@ class TermSelector:
         }
         self.documents[document.name] = document.df.assign(**new_columns)
 
-    #
-    # Remove certain documents from the database
-    #
-    def purge(self, documents):
-        for i in documents:
-            if i in self.documents:
-                del self.documents[i]
-
-    def keep_only(self, documents):
-        rels = set(documents)
-        docs = set(self.documents.keys())
-
-        self.purge(docs.difference(rels))
-
 ########################################################################
 
 class SelectionStrategy:
