@@ -7,6 +7,8 @@ import operator as op
 import xml.etree.ElementTree as et
 from tempfile import NamedTemporaryFile
 
+from zrtlib import zutils
+
 QueryID = collections.namedtuple('QueryID', 'topic, number')
 
 def element(name, parent=None, text='\n', tail='\n'):
@@ -119,7 +121,7 @@ class QueryExecutor:
                               bufsize=1,
                               stdout=subprocess.PIPE,
                               universal_newlines=True) as fp:
-            yield from ztuils.read_trec(fp.stdout)
+            yield from zutils.read_trec(fp.stdout)
 
 class QueryDoc:
     separator = '-'
