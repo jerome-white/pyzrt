@@ -26,7 +26,7 @@ class TermSelector:
     #
     def __next__(self):
         # obtain the unselected terms
-        unselected = self.df[self.df['selected'] == False]
+        unselected = self.df[self.df['selected'] == 0]
         if unselected.empty:
             raise StopIteration()
 
@@ -35,7 +35,7 @@ class TermSelector:
 
         # mark the term as being selected
         matches = self.df['term'] == term
-        self.df.loc[matches, 'selected'] = True
+        self.df.loc[matches, 'selected'] = self.df['selected'].max() + 1
 
         return term
 
@@ -47,7 +47,7 @@ class TermSelector:
 
         new_columns = {
             'document': document.name,
-            'selected': False,
+            'selected': 0,
         }
         self.documents[document.name] = document.df.assign(**new_columns)
 
