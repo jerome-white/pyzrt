@@ -109,7 +109,7 @@ class QueryExecutor:
             self.trec,
             '-q',
             '-c',
-            '-m all_trec',
+            '-mall_trec',
             '-M{0}'.format(self.count),
             str(self.qrels),
             self.results_fp.name,
