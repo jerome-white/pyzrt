@@ -7,7 +7,7 @@ import operator as op
 import xml.etree.ElementTree as et
 from tempfile import NamedTemporaryFile
 
-import zutils
+from zrtlib import zutils
 
 QueryID = collections.namedtuple('QueryID', 'topic, number')
 
