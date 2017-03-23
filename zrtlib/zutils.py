@@ -4,11 +4,6 @@ import operator as op
 from pathlib import Path
 from functools import singledispatch
 
-def fclear(fp):
-    if fp.tell() > 0:
-        fp.seek(0)
-        fp.truncate()
-
 #
 # Read Indri stat output
 #
