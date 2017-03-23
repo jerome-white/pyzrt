@@ -46,11 +46,10 @@ class IndriQuery:
         return et.tostring(self.query, encoding='unicode')
 
 class QueryExecutor:
-    def __init__(self, index, qrels, indri='IndriRunQuery',
-                 trec='trec_eval'):
+    def __init__(self, index, qrels):
         self.index = index
-        self.indri = shutil.which(indri)
-        self.trec = shutil.which(trec)
+        self.indri = shutil.which('IndriRunQuery')
+        self.trec = shutil.which('trec_eval')
 
         with qrels.open() as fp:
             counts = set()
@@ -61,23 +60,23 @@ class QueryExecutor:
 
         self.qrels = qrels
 
-        self.query = NamedTemporaryFile(mode='w')
-        self.results = NamedTemporaryFile(mode='w')
+        self.query_fp = NamedTemporaryFile(mode='w')
+        self.results_fp = NamedTemporaryFile(mode='w')
 
     def __enter__(self):
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        self.query.close()
-        self.results.close()
+        self.query_fp.close()
+        self.results_fp.close()
 
     def query(self, query, verify=True):
         # erase the query and results files
-        for i in (self.query, self.results):
+        for i in (self.query_fp, self.results_fp):
             zutils.fclear(i)
 
         # print the query to disk
-        print(query, file=self.query, flush=True)
+        print(query, file=self.query_fp, flush=True)
 
         # build/execute the Indri command
         cmd = [
@@ -87,7 +86,7 @@ class QueryExecutor:
             '-index={0}'.format(self.index),
             str(query),
         ]
-        result = subprocess.run(cmd, stdout=self.results)
+        result = subprocess.run(cmd, stdout=self.results_fp)
         if verify:
             result.check_returncode()
 
@@ -97,7 +96,7 @@ class QueryExecutor:
         if judgements is None:
             judgements = relevant_documents(self.qrels)
 
-        with open(self.results.name) as fp:
+        with open(self.results_fp.name) as fp:
             for line in fp:
                 (_, document, order, *_) = line.strip().split()
                 if limit is not None and int(order) > limit:
@@ -113,7 +112,7 @@ class QueryExecutor:
             '-m all_trec',
             '-M{0}'.format(self.count),
             str(self.qrels),
-            self.results.name,
+            self.results_fp.name,
         ]
 
         with subprocess.Popen(cmd,
