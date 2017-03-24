@@ -49,13 +49,21 @@ log = logger.getlogger()
 #
 # Initialise the query and the selector
 #
-ts = TermSelector(SelectionStrategy.build(args.selection_strategy))
+query = HiddenDocument(args.query)
+
+if args.selection_strategy == 'relevance':
+    kwargs = {
+        'query': query,
+        'relevant': set(relevant_documents(args.qrels)),
+    }
+else:
+    kwargs = {}
+
+ts = TermSelector(SelectionStrategy.build(args.selection_strategy, **kwargs))
 with Pool() as pool:
     iterable = itertools.filterfalse(QueryDoc.isquery, zutils.walk(args.input))
     for i in pool.imap_unordered(TermDocument, iterable):
         ts.add(i)
-
-query = HiddenDocument(args.query)
 
 #
 # Begin revealing
