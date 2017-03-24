@@ -71,7 +71,7 @@ with Pool() as pool:
 with CSVWriter(args.output) as writer:
     with QueryExecutor(args.index, args.qrels) as engine:
         for (i, term) in enumerate(ts, 1):
-            if i > args.guesses:
+            if i > args.guesses or not query:
                 break
 
             #
