@@ -31,12 +31,21 @@ class TermSelector:
             term = self.strategy.pick(self.df, self.feedback)
         except LookupError:
             raise StopIteration()
-
-        # mark the term as being selected
-        matches = self.df['term'] == term
-        self.df.loc[matches, 'selected'] = self.df['selected'].max() + 1
+        self.mark_selected(term)
 
         return term
+
+    #
+    # mark the term as being selected
+    #
+    def mark_selected(self, term, order=None):
+        matches = self.df['term'] == term
+        if matches.empty:
+            return
+
+        if order is None:
+            order = self.df['selected'].max() + 1
+        self.df.loc[matches, 'selected'] = order
 
     #
     # Add documents to the corpus
