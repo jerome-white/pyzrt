@@ -36,4 +36,4 @@ echo "[ `date` ] $query"
 results=`mktemp`
 IndriRunQuery $baseline -trecFormat=true -count=$count -index=$index $query > \
 	      $results
-trec_eval -q -m all_trec -c -M$count $qrels $results $output && rm $results
+trec_eval -q -mndcg -mndcg_cut.1000 -c -M$count $qrels $results $output && rm $results

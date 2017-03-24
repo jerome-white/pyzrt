@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 
 from zrtlib import logger
+from zrtlib.document import HiddenDocument
 
 class TermSelector:
     def __init__(self, strategy):
