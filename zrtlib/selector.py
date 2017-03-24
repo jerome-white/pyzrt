@@ -139,7 +139,7 @@ class Relevance(SelectionTechnique):
 
     def __next__(self):
         rels = self.documents[self.documents['document'].isin(self.relevant)]
-        elegible = rels.merge(self.query,
+        elegible = rels.merge(self.query.df,
                               left_on='term',
                               right_on=HiddenDocument.columns['visible'],
                               copy=False)
