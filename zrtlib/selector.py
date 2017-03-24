@@ -64,7 +64,7 @@ class SelectionStrategy:
         if request in constructor:
             return BlindHomogenous(constructor[request], **kwargs)
 
-        raise LookupError()
+        raise LookupError(request)
 
     def unselected(self, documents):
         return documents[documents['selected'] == 0]
