@@ -29,7 +29,11 @@ def read_trec(fp, summary=False):
             yield results
             results = {} # probably not necessary, but safe
 
-        results[metric] = float(value)
+        try:
+            results[metric] = float(value)
+        except ValueError:
+            results[metric] = value
+
         previous = run
 
     if results and previous.isdigit():
