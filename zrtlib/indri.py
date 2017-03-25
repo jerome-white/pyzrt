@@ -45,6 +45,16 @@ class IndriQuery:
     def __str__(self):
         return et.tostring(self.query, encoding='unicode')
 
+class TrecMetric:
+    def __init__(self, metric):
+        self.metric = metric
+
+    def __str__(self):
+        return '-m' + self.metric
+
+    def __repr__(self):
+        return '_'.join(self.metric.split('.', 1))
+
 class QueryExecutor:
     def __init__(self, index, qrels):
         self.index = index
@@ -106,18 +116,19 @@ class QueryExecutor:
                 if document in judgements:
                     yield document
 
-    def evaluate(self):
+    def evaluate(self, *metrics, all_metrics=True):
         cmd = [
             self.trec,
             '-q',
             '-c',
-            '-mall_trec',
+            '-mall_trec' if all_metrics else None,
+            *map(str, metrics),
             '-M{0}'.format(self.count),
             str(self.qrels),
             self.results_fp.name,
         ]
 
-        with subprocess.Popen(cmd,
+        with subprocess.Popen(filter(None, cmd),
                               bufsize=1,
                               stdout=subprocess.PIPE,
                               universal_newlines=True) as fp:

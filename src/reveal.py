@@ -79,6 +79,8 @@ if args.replay:
 else:
     initial = 1
 
+metric = TrecMetric(args.feedback_metric)
+
 #
 # Begin revealing
 #
@@ -97,25 +99,22 @@ with CSVWriter(args.output) as writer:
                 continue
 
             #
-            # Run the query
+            # Run the query and evaluate
             #
             engine.query(QueryBuilder(args.retrieval_model, query))
+            evaluation = engine.evaluate(metric)
 
             #
-            # Collect the results
+            # Collect and record the results
             #
             results = {
                 'guess': i,
                 'term': term,
+                **next(evaluation),
             }
-            results.update(next(engine.evaluate()))
-
-            #
-            # Record
-            #
             writer.writerow(results)
 
             #
             # Report back to the term selector
             #
-            ts.feedback = results[args.feedback_metric]
+            ts.feedback = results[repr(metric)]
