@@ -33,14 +33,15 @@ class CSVWriter:
         self.writer.writerow(row)
 
 arguments = ArgumentParser()
-arguments.add_argument('--index')
 arguments.add_argument('--retrieval-model')
 arguments.add_argument('--selection-strategy')
 arguments.add_argument('--feedback-metric')
+arguments.add_argument('--index', type=Path)
 arguments.add_argument('--query', type=Path)
 arguments.add_argument('--qrels', type=Path)
 arguments.add_argument('--input', type=Path)
 arguments.add_argument('--output', type=Path)
+arguments.add_argument('--replay', type=Path)
 arguments.add_argument('--guesses', type=int, default=np.inf)
 args = arguments.parse_args()
 
@@ -65,12 +66,25 @@ with Pool() as pool:
     for i in pool.imap_unordered(TermDocument, iterable):
         ts.add(i)
 
+if args.replay:
+    with args.replay.open() as fp:
+        guesses = []
+        reader = csv.reader(fp, delimiter=' ')
+        for (guess, term, metric) in reader:
+            query.flip(term)
+            guesses.append(int(guess))
+            ts.mark(term, guesses[-1])
+            ts.feedback = float(metric)
+    initial = max(guesses) + 1
+else:
+    initial = 1
+
 #
 # Begin revealing
 #
 with CSVWriter(args.output) as writer:
     with QueryExecutor(args.index, args.qrels) as engine:
-        for (i, term) in enumerate(ts, 1):
+        for (i, term) in enumerate(ts, initial):
             if i > args.guesses or not query:
                 break
 
