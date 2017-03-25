@@ -70,8 +70,8 @@ class HiddenDocument(TermDocument):
         return not remaining.empty
 
     def flip(self, term):
-        matches = self.df[self.columns['visible']] == term
-        self.df.loc[matches, self.columns['hidden']] = term
+        matches = self.df[self.columns['hidden']] == term
+        self.df.loc[matches, self.columns['visible']] = term
 
         return self.df[matches]
 
