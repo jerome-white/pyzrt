@@ -69,12 +69,18 @@ class HiddenDocument(TermDocument):
 
         return not remaining.empty
 
-    def flip(self, term):
-        matches = self.df[self.columns['hidden']] == term
-        self.df.loc[matches, self.columns['visible']] = term
+    def flip(self, term, which='visible'):
+        assert(which in self.columns.keys())
+        other = 'hidden' if which == 'visible' else 'visible'
 
-        return self.df[matches]
+        matches = self.df[self.columns[which]] == term
+        flipped = matches[matches == True].sum()
+        if flipped > 0:
+            self.df.loc[matches, self.columns[other]] = term
+
+        return flipped
 
     def reveal(self):
-        for i in self.df[self.columns['hidden']].unique():
-            self.flip(i)
+        col = 'visible'
+        for i in self.df[self.columns[col]].unique():
+            self.flip(i, col)
