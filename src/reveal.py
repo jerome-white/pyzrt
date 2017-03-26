@@ -10,8 +10,9 @@ import pandas as pd
 
 from zrtlib import logger
 from zrtlib import zutils
+from zrtlib import indri
 from zrtlib.query import QueryBuilder
-from zrtlib.indri import QueryDoc, QueryExecutor, relevant_documents
+from zrtlib.indri import QueryDoc, QueryExecutor, TrecMetric
 from zrtlib.document import TermDocument, HiddenDocument
 from zrtlib.selector import TermSelector, SelectionStrategy
 
@@ -41,7 +42,7 @@ arguments.add_argument('--query', type=Path)
 arguments.add_argument('--qrels', type=Path)
 arguments.add_argument('--input', type=Path)
 arguments.add_argument('--output', type=Path)
-arguments.add_argument('--replay', type=Path)
+arguments.add_argument('--replay', type=Path, action='append')
 arguments.add_argument('--guesses', type=int, default=np.inf)
 args = arguments.parse_args()
 
@@ -55,7 +56,7 @@ query = HiddenDocument(args.query)
 if args.selection_strategy == 'relevance':
     kwargs = {
         'query': query,
-        'relevant': set(relevant_documents(args.qrels)),
+        'relevant': set(indri.relevant_documents(args.qrels)),
     }
 else:
     kwargs = {}
@@ -66,27 +67,39 @@ with Pool() as pool:
     for i in pool.imap_unordered(TermDocument, iterable):
         ts.add(i)
 
-if args.replay:
-    with args.replay.open() as fp:
-        guesses = []
-        reader = csv.reader(fp, delimiter=' ')
-        for (guess, term, metric) in reader:
-            query.flip(term)
-            guesses.append(int(guess))
-            ts.mark(term, guesses[-1])
-            ts.feedback = float(metric)
-    initial = max(guesses) + 1
-else:
-    initial = 1
+#
+# Establish the metric of interest
+#
+eval_metric = TrecMetric(args.feedback_metric)
 
-metric = TrecMetric(args.feedback_metric)
+#
+# Load the data in the event that there are logs to replay
+#
+guesses = []
+if args.replay:
+    for i in args.replay:
+        with i.open() as fp:
+            for (instruction, *actions) in logger.readlog(fp, True):
+                if instruction == 'g':
+                    (guess, term, flipped) = actions
+                    f = query.flip(term)
+                    assert(f == int(flipped))
+                    guesses.append(int(guess))
+                    ts.mark_selected(term, guesses[-1])
+                elif instruction == 'f':
+                    (metric, value) = actions
+                    assert(metric == str(eval_metric))
+                    ts.feedback = float(value)
+                else:
+                    log.error('unknown instruction {1}'.format(instruction))
+initial = max(guesses) if guesses else 0
 
 #
 # Begin revealing
 #
 with CSVWriter(args.output) as writer:
     with QueryExecutor(args.index, args.qrels) as engine:
-        for (i, term) in enumerate(ts, initial):
+        for (i, term) in enumerate(ts, initial + 1):
             if i > args.guesses or not query:
                 break
 
@@ -94,7 +107,7 @@ with CSVWriter(args.output) as writer:
             # Flip the term
             #
             flipped = query.flip(term)
-            log.info('{0} {1} {2}'.format(i, term, len(flipped)))
+            log.info('g {0} {1} {2}'.format(i, term, len(flipped)))
             if flipped.empty:
                 continue
 
@@ -102,7 +115,7 @@ with CSVWriter(args.output) as writer:
             # Run the query and evaluate
             #
             engine.query(QueryBuilder(args.retrieval_model, query))
-            evaluation = engine.evaluate(metric)
+            evaluation = engine.evaluate(eval_metric)
 
             #
             # Collect and record the results
@@ -117,4 +130,5 @@ with CSVWriter(args.output) as writer:
             #
             # Report back to the term selector
             #
-            ts.feedback = results[repr(metric)]
+            ts.feedback = results[repr(eval_metric)]
+            log.info('f {0} {1}'.format(eval_metric, ts.feedback))
