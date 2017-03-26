@@ -8,9 +8,9 @@ from multiprocessing import Pool
 import numpy as np
 import pandas as pd
 
+from zrtlib import indri
 from zrtlib import logger
 from zrtlib import zutils
-from zrtlib import indri
 from zrtlib.query import QueryBuilder
 from zrtlib.indri import QueryDoc, QueryExecutor, TrecMetric
 from zrtlib.document import TermDocument, HiddenDocument
@@ -79,19 +79,24 @@ guesses = []
 if args.replay:
     for i in args.replay:
         with i.open() as fp:
+            cause = None
             for (instruction, *actions) in logger.readlog(fp, True):
                 if instruction == 'g':
-                    (guess, term, flipped) = actions
-                    f = query.flip(term)
-                    assert(f == int(flipped))
+                    cause = actions
+                elif instruction == 'f':
+                    assert(cause is not None)
+
+                    (guess, term, flipped) = cause
+                    n = query.flip(term)
+                    assert(n == int(flipped))
                     guesses.append(int(guess))
                     ts.mark_selected(term, guesses[-1])
-                elif instruction == 'f':
+
                     (metric, value) = actions
                     assert(metric == str(eval_metric))
                     ts.feedback = float(value)
                 else:
-                    log.error('unknown instruction {1}'.format(instruction))
+                    log.error('unknown instruction {0}'.format(instruction))
 initial = max(guesses) if guesses else 0
 
 #
@@ -131,4 +136,4 @@ with CSVWriter(args.output) as writer:
             # Report back to the term selector
             #
             ts.feedback = results[repr(eval_metric)]
-            log.info('f {0} {1}'.format(eval_metric, ts.feedback))
+            log.info('f {0} {1}'.format(eval_metric.metric, ts.feedback))
