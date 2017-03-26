@@ -107,7 +107,7 @@ with CSVWriter(args.output) as writer:
             # Flip the term
             #
             flipped = query.flip(term)
-            log.info('g {0} {1} {2}'.format(i, term, len(flipped)))
+            log.info('g {0} {1} {2}'.format(i, term, flipped))
             if flipped.empty:
                 continue
 
