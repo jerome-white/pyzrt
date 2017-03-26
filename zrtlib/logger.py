@@ -40,11 +40,11 @@ class LogConfigure:
             datesep_intra = ''
             datesep_inter = '.'
 
-            mdyhms = [ [ '%' + x for x in y ] for y in [mdy, hms] ]
+            mdyhms = [[ '%' + x for x in y ] for y in [ mdy, hms ]]
             datefmt = datesep_inter.join(map(datesep_intra.join, mdyhms))
 
             # configure!
-            logging.basicConfig(level=level,format=cls.msgfmt,datefmt=datefmt)
+            logging.basicConfig(level=level, format=msgfmt, datefmt=datefmt)
             cls.logname = '.'.join(map(str, [ platform.node(), os.getpid() ]))
 
         return cls.logname
