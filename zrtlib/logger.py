@@ -1,4 +1,5 @@
 import os
+import csv
 import time
 import logging
 import platform
@@ -12,22 +13,26 @@ import platform
 # NOTSET   0
 
 class LogConfigure:
-    logname = None # basename for clients
-    
+    # basename for clients
+    logname = None
+
+    # message format
+    msgfmt = [
+        '%(levelname)s',
+        '%(asctime)s',
+        '%(name)s',
+        '%(filename)s:%(lineno)d',
+        '%(message)s',
+    ]
+    msgsep = ' '
+
     def __new__(cls):
-        if not cls.logname:
+        if cls.logname is None:
             # log level
             level = logging.DEBUG
 
             # message format
-            msgfmt = [
-                '%(levelname)s %(asctime)s',
-                '%(name)s',
-                '%(filename)s:%(lineno)d',
-                '%(message)s',
-            ]
-            msgsep = ' '
-            msgfmt = msgsep.join(msgfmt)
+            msgfmt = cls.msgsep.join(cls.msgfmt)
 
             # date format
             mdy = [ 'm', 'd' ]
@@ -39,9 +44,9 @@ class LogConfigure:
             datefmt = datesep_inter.join(map(datesep_intra.join, mdyhms))
 
             # configure!
-            logging.basicConfig(level=level, format=msgfmt, datefmt=datefmt)
+            logging.basicConfig(level=level,format=cls.msgfmt,datefmt=datefmt)
             cls.logname = '.'.join(map(str, [ platform.node(), os.getpid() ]))
-            
+
         return cls.logname
 
 def getlogger(root=False):
@@ -49,8 +54,16 @@ def getlogger(root=False):
     if not root:
         elements.append(str(os.getpid()))
     name = '.'.join(elements)
-    
+
     return logging.getLogger(name)
+
+def readlog(fp, message_only=False):
+    reader = csv.reader(fp, delimiter=LogConfigure.msgsep)
+    msg = len(LogConfigure.msgfmt) - 1
+
+    for row in reader:
+        if not row.isspace():
+            yield row[msg:] if message_only else row
 
 #
 # Log messages periodically. Handy for when the alternative is just
