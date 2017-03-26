@@ -143,17 +143,16 @@ class Relevance(SelectionTechnique):
     def __init__(self, documents, query, relevant):
         super().__init__(documents)
 
-        self.query = query
+        self.query = query.df[HiddenDocument.columns['visible']]
         self.relevant = relevant
 
     def __next__(self):
-        rels = self.documents[self.documents['document'].isin(self.relevant)]
-        elegible = rels.merge(self.query.df,
-                              left_on='term',
-                              right_on=HiddenDocument.columns['visible'],
-                              copy=False)
+        df = self.documents[self.documents['document'].isin(self.relevant)]
+        df = df[df['term'].isin(self.query)]
+        if df.empty:
+            raise LookupError()
 
-        return next(DocumentFrequency(elegible))
+        return next(DocumentFrequency(df))
 
 # http://www.cs.bham.ac.uk/~pxt/IDA/term_selection.pdf
 class Entropy(SelectionTechnique):
