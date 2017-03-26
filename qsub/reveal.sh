@@ -71,6 +71,6 @@ qsub \
     -l nodes=1:ppn=20,mem=492GB,walltime=6:00:00 \
     -m abe \
     -M jsw7@nyu.edu \
-    -N reveal-`basename $query` \
+    -N reveal.`basename $query`-${strategy} \
     -V \
     $qsub
