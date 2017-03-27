@@ -17,9 +17,19 @@ from zrtlib.document import TermDocument, HiddenDocument
 from zrtlib.selector import TermSelector, SelectionStrategy
 
 class CSVWriter:
-    def __init__(self, fname):
-        self.fp = fname.open('w', buffering=1)
+    def __init__(self, query, path):
         self.writer = None
+
+        q = query
+        while True:
+            fname = path.joinpath(q)
+            if not fname.exists():
+                self.fp = fname.open('w', buffering=1)
+                break
+            (name, number) = q.split(QueryDoc.separator)
+            n = str(int(number) + 1).zfill(len(number))
+            assert(len(n) <= len(number))
+            q = QueryDoc.separator.join([ name, n ])
 
     def __enter__(self):
         return self
@@ -102,7 +112,7 @@ initial = max(guesses) if guesses else 0
 #
 # Begin revealing
 #
-with CSVWriter(args.output) as writer:
+with CSVWriter(args.query.stem, args.output) as writer:
     with QueryExecutor(args.index, args.qrels) as engine:
         for (i, term) in enumerate(ts, initial + 1):
             if i > args.guesses or not query:
