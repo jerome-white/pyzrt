@@ -139,6 +139,17 @@ class TermFrequency(Frequency):
     def then(self):
         return self.documents['term']
 
+# http://www.cs.bham.ac.uk/~pxt/IDA/term_selection.pdf
+class Entropy(SelectionTechnique):
+    def __next__(self):
+        groups = self.documents.groupby('document')
+
+        f = lambda x: pd.Series(x.value_counts(normalize=True))
+        df = groups['term'].apply(f).reset_index(level=0, drop=True)
+        df = df.groupby(df.index).aggregate(st.entropy)
+
+        return df.argmax()
+
 class Relevance(SelectionTechnique):
     def __init__(self, documents, query, relevant):
         super().__init__(documents)
@@ -152,15 +163,4 @@ class Relevance(SelectionTechnique):
         if df.empty:
             raise LookupError()
 
-        return next(DocumentFrequency(df))
-
-# http://www.cs.bham.ac.uk/~pxt/IDA/term_selection.pdf
-class Entropy(SelectionTechnique):
-    def __next__(self):
-        groups = self.documents.groupby('document')
-
-        f = lambda x: pd.Series(x.value_counts(normalize=True))
-        df = groups['term'].apply(f).reset_index(level=0, drop=True)
-        df = df.groupby(df.index).aggregate(st.entropy)
-
-        return df.argmax()
+        return next(Entropy(df))
