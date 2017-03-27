@@ -157,7 +157,7 @@ class QueryDoc:
         if not cls.isquery(doc):
             raise ValueError()
 
-        (name, number) = doc.stem.split('-')
+        (name, number) = doc.stem.split(QueryDoc.separator)
         topic = name[len(QueryDoc.prefix):]
 
         return QueryID(topic, number)
