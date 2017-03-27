@@ -39,8 +39,8 @@ if [ ! $topic ]; then
     topic=`python3 $ZR_HOME/src/query2topic.py --query $query`
 fi
 
-output=$root/selector/$ngrams/$strategy/$topic
-mkdir --parents `dirname $output`
+output=$root/selector/$ngrams/$strategy
+mkdir --parents $output
 
 qsub=`mktemp`
 judgements=`mktemp --directory`
@@ -68,7 +68,7 @@ EOF
 
 qsub \
     -j oe \
-    -l nodes=1:ppn=20,mem=492GB,walltime=6:00:00 \
+    -l nodes=1:ppn=20,mem=492GB,walltime=12:00:00 \
     -m abe \
     -M jsw7@nyu.edu \
     -N reveal.`basename $query`-${strategy} \
