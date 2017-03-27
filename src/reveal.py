@@ -116,6 +116,7 @@ with CSVWriter(args.query.stem, args.output) as writer:
     with QueryExecutor(args.index, args.qrels) as engine:
         for (i, term) in enumerate(ts, initial + 1):
             if i > args.guesses or not query:
+                log.debug('Guessing finished')
                 break
 
             #
