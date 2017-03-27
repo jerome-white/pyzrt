@@ -7,15 +7,19 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
+from zrtlib import logger
 from zrtlib.indri import QueryDoc
 
 def func(args):
     (path, metric) = args
 
-    index = 'guess'
+    log = logger.getlogger()
+    log.info(path)
+
+    index_col = 'guess'
     df = pd.read_csv(str(path),
-                     index_col=index,
-                     usecols=[ index, metric ])
+                     index_col=index_col,
+                     usecols=[ index_col, metric ])
 
     index = np.arange(df.index.min(), df.index.max())
     columns = dict(zip(('strategy', 'topic'), path.parts[-2:]))
@@ -24,8 +28,9 @@ def func(args):
 
 def each(args):
     topics = set(args.topic)
+    path = Path('**', QueryDoc.prefix + '*')
 
-    for i in args.top_level.glob('**/' + QueryDoc.prefix + '*'):
+    for i in args.top_level.glob(str(path)):
         qid = QueryDoc.components(i)
         if not topics or qid.topic in topics:
             yield (i, args.metric)
@@ -50,4 +55,5 @@ ax = sns.tsplot(time='guess',
                 condition='strategy',
                 data=df,
                 ci=30)
+ax.set(xlim=(None, df['guess'].max()))
 ax.figure.savefig('flips.png', bbox_inches='tight')
