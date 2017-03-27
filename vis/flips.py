@@ -1,39 +1,53 @@
 import csv
 from pathlib import Path
 from argparse import ArgumentParser
+from multiprocessing import Pool
 
+import numpy as np
 import pandas as pd
 import seaborn as sns
-import matplotlib.pyplot as plt
+
+from zrtlib.indri import QueryDoc
+
+def func(args):
+    (path, metric) = args
+
+    index = 'guess'
+    df = pd.read_csv(str(path),
+                     index_col=index,
+                     usecols=[ index, metric ])
+
+    index = np.arange(df.index.min(), df.index.max())
+    columns = dict(zip(('strategy', 'topic'), path.parts[-2:]))
+
+    return df.reindex(index, method='ffill').reset_index().assign(**columns)
+
+def each(args):
+    topics = set(args.topic)
+
+    for i in args.top_level.glob('**/' + QueryDoc.prefix + '*'):
+        qid = QueryDoc.components(i)
+        if not topics or qid.topic in topics:
+            yield (i, args.metric)
+
+def aquire(args):
+    with Pool() as pool:
+        yield from pool.imap_unordered(func, each(args))
 
 arguments = ArgumentParser()
 arguments.add_argument('--metric')
-arguments.add_argument('--input', type=Path)
+arguments.add_argument('--top-level', type=Path)
+arguments.add_argument('--topic', action='append', default=[])
 args = arguments.parse_args()
 
-index = 'guess'
-usecols = [
-    index,
-    args.metric,
-]
+df = pd.concat(aquire(args))
 
-df = pd.read_csv(str(args.input),
-                 index_col=usecols.index(index),
-                 usecols=usecols)
-df = (df.
-      reindex(range(df.index.min(), df.index.max()), method='ffill').
-      reset_index().
-      assign(**dict(zip(('strategy', 'topic'), args.input.parts[-2:])))
-)
-
-plt.figure(figsize=(24, 6))
-# sns.set_context('paper')
+sns.set_context('paper')
 sns.set(font_scale=1.7)
-ax = sns.pointplot(x=index,
-                   y=args.metric,
-                   hue='strategy',
-                   data=df,
-                   markers='')
-ax.set(ylim=(0, None),
-       ylabel=args.metric)
+ax = sns.tsplot(time='guess',
+                value=args.metric,
+                unit='topic',
+                condition='strategy',
+                data=df,
+                ci=30)
 ax.figure.savefig('flips.png', bbox_inches='tight')
