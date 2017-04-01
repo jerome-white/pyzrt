@@ -1,10 +1,12 @@
-import pandas as pd
-import scipy.stats as st
+import operator as op
+import collections
 
 import numpy as np
 import pandas as pd
+import scipy.stats as st
 
 from zrtlib import logger
+from zrtlib.stack import IterableStack
 from zrtlib.document import HiddenDocument
 
 class TermSelector:
@@ -98,6 +100,52 @@ class BlindHomogenous(SelectionStrategy):
 
     def choose(self, documents, feedback=None):
         return self.technique(self.unselected(documents), **self.kwargs)
+
+class Cooccurence(BlindHomogenous):
+    def __init__(self, feedback_handler, technique=Entropy, **kwargs):
+        super().__init__(technique, **kwargs)
+
+        self.feedback = feedback_handler
+        self.stack = IterableStack()
+
+    def f(self, documents, matches, window):
+        occurence = collections.Counter()
+
+        for i in matches.itertuples():
+            start = max(0, i.Index - window)
+            stop = min(len(documents), i.Index + window + 1)
+            for j in range(start, stop):
+                factor = abs(i.Index - j)
+                if factor != 0:
+                    term = documents.iloc[j]
+                    occurence[term['term']] += 1 / factor
+
+        return map(op.itemgetter(0), occurence.most_common())
+
+    def choose(self, documents, feedback=None):
+        if feedback is not None:
+            self.feedback.append(feedback)
+
+            if float(self.feedback) > 0:
+                last = documents['selected'].argmax()
+                term = documents.iloc[last]['term']
+                matches = documents[documents['term'] == term]
+                self.stack.push(self.f(documents, matches, len(self.feedback)))
+
+        return self.stack.pop() if self.stack else super().choose(documents)
+
+########################################################################
+
+class FeedbackHandler(collections.deque):
+    def __init__(self, n=1):
+        super().__init__(maxlen=n)
+
+    def __float__(self):
+        raise NotImplementedError()
+
+class RecentWeighted:
+    def __float__(self):
+        np.average(self, weights=np.linspace(0, 1, len(self)))
 
 ########################################################################
 
