@@ -101,38 +101,56 @@ class BlindHomogenous(SelectionStrategy):
     def choose(self, documents, feedback=None):
         return self.technique(self.unselected(documents), **self.kwargs)
 
-class Cooccurence(BlindHomogenous):
-    def __init__(self, feedback_handler, technique=Entropy, **kwargs):
+class CoOccurrence(BlindHomogenous):
+    def __init__(self, feedback, radius=1, technique=Entropy, **kwargs):
         super().__init__(technique, **kwargs)
 
-        self.feedback = feedback_handler
+        self.feedback = feedback
+        self.radius = radius
         self.stack = IterableStack()
 
-    def f(self, documents, matches, window):
+    def choose(self, documents, feedback=None):
+        if feedback is not None:
+            memory = float(self.feedback)
+
+            if feedback > memory:
+                last = documents['selected'].argmax()
+                term = documents.iloc[last]['term']
+                matches = documents[documents['term'] == term]
+                self.stack.push(self.proximity(documents, matches))
+            elif memory > feedback:
+                self.stack.peel()
+
+            self.feedback.append(feedback)
+
+        while self.stack:
+            choice = self.stack.pop()
+            matches = documents[documents['term'] == choice]
+            if not matches['selected'].any():
+                return choice
+
+        return super().choose(documents)
+
+    def discount(self, x):
+        return 1 / x
+
+    def proximity(self, documents, matches):
+        raise NotImplementedError()
+
+class DirectNeighbor(CoOccurrence):
+    def proximity(self, documents, matches):
         occurence = collections.Counter()
 
         for i in matches.itertuples():
-            start = max(0, i.Index - window)
-            stop = min(len(documents), i.Index + window + 1)
+            start = max(0, i.Index - self.radius)
+            stop = min(len(documents), i.Index + self.radius + 1)
             for j in range(start, stop):
                 factor = abs(i.Index - j)
                 if factor != 0:
                     term = documents.iloc[j]
-                    occurence[term['term']] += 1 / factor
+                    occurence[term['term']] += self.discount(factor)
 
-        return map(op.itemgetter(0), occurence.most_common())
-
-    def choose(self, documents, feedback=None):
-        if feedback is not None:
-            self.feedback.append(feedback)
-
-            if float(self.feedback) > 0:
-                last = documents['selected'].argmax()
-                term = documents.iloc[last]['term']
-                matches = documents[documents['term'] == term]
-                self.stack.push(self.f(documents, matches, len(self.feedback)))
-
-        return self.stack.pop() if self.stack else super().choose(documents)
+        yield from map(op.itemgetter(0), occurence.most_common())
 
 ########################################################################
 
