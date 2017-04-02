@@ -14,7 +14,7 @@ from zrtlib import zutils
 from zrtlib.query import QueryBuilder
 from zrtlib.indri import QueryDoc, QueryExecutor, TrecMetric
 from zrtlib.document import TermDocument, HiddenDocument
-from zrtlib.selector import TermSelector, SelectionStrategy
+from zrtlib.selector import TermSelector, SelectionStrategy, RecentWeighted
 
 class CSVWriter:
     def __init__(self, query, path):
@@ -67,6 +67,11 @@ if args.selection_strategy == 'relevance':
     kwargs = {
         'query': query,
         'relevant': set(indri.relevant_documents(args.qrels)),
+    }
+elif args.selection_strategy == 'cooccur':
+    kwargs = {
+        'feedback': RecentWeighted(),
+        'radius': 5,
     }
 else:
     kwargs = {}
