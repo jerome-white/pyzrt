@@ -43,12 +43,11 @@ output=$root/selector/$ngrams/$strategy
 mkdir --parents $output
 
 qsub=`mktemp`
-judgements=`mktemp --directory`
 
 cat <<EOF >> $qsub
 python3 -u $ZR_HOME/src/qrels.py \
     --input $qrels \
-    --output $judgements \
+    --output \$PBS_JOBTMP \
     --topic $topic \
     --document-class WSJ \
     --count $count
@@ -57,18 +56,16 @@ python3 -u $ZR_HOME/src/reveal.py \
     --index $root/indri/$ngrams \
     --input $root/pseudoterms/$ngrams \
     --output $output \
-    --qrels $judgements/$topic \
+    --qrels \$PBS_JOBTMP/$topic \
     --selection-strategy $strategy \
     --query $query \
     --retrieval-model $model \
     --feedback-metric $metric
-
-rm --recursive --force $judgements
 EOF
 
 qsub \
     -j oe \
-    -l nodes=1:ppn=20,mem=492GB,walltime=12:00:00 \
+    -l nodes=1:ppn=4,mem=150GB,walltime=12:00:00 \
     -m abe \
     -M jsw7@nyu.edu \
     -N reveal.`basename $query`-${strategy} \
