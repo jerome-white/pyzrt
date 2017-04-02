@@ -76,6 +76,12 @@ class SelectionStrategy:
         if request in constructor:
             return BlindHomogenous(constructor[request], **kwargs)
 
+        constructor = {
+            'direct': DirectNeighbor,
+        }
+        if request in constructor:
+            return constructor[request](**kwargs)
+
         raise LookupError(request)
 
     def unselected(self, documents):
