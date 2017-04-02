@@ -2,7 +2,7 @@ class IterableStack:
     def __init__(self):
         self.stack = []
 
-    def __bool__:
+    def __bool__(self):
         return bool(self.stack)
     
     def push(self, item):
