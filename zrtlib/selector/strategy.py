@@ -1,6 +1,7 @@
 import operator as op
 import collections
 
+from zrtlib import zutils
 import zrtlib.selector.technique as tek
 
 class IterableStack:
@@ -106,23 +107,40 @@ class CoOccurrence(BlindHomogenous):
         return 1 / x
 
     def proximity(self, documents, matches):
-        raise NotImplementedError()
-
-class DirectNeighbor(CoOccurrence):
-    def proximity(self, documents, matches):
         occurence = collections.Counter()
 
         for i in matches.itertuples():
-            start = max(0, i.Index - self.radius)
-            stop = min(len(documents), i.Index + self.radius + 1)
-            for j in range(start, stop):
-                term = documents.iloc[j]
-                factor = abs(i.Index - j)
-                if term['document'] == i.document and factor != 0:
-                    occurence[term['term']] += self.discount(factor)
+            docs = documents[documents['document'] == i.document]
+            for (term, distance) in self.proximity_(i, docs):
+                occurence[term['term']] += self.discount(distance)
 
         yield from map(op.itemgetter(0), occurence.most_common())
 
+class DirectNeighbor(CoOccurrence):
+    def proximity_(self, row, documents):
+        start = max(0, row.Index - self.radius)
+        stop = min(len(documents), row.Index + self.radius + 1)
+
+        for i in range(start, stop):
+            distance = abs(row.Index - j)
+            if distance != 0:
+                yield (documents.iloc[i], distance)
+
 class NearestNeighbor(CoOccurrence):
-    def proximity(self, documents, matches):
-        pass
+    def proximity_(self, row, documents, depth=None):
+        if depth is None:
+            depth = self.radius
+        elif depth < 1:
+            return
+
+        for step in (1, -1):
+            for i in itertools.count(row.Index + step, step):
+                if i < 0 or i >= len(documents):
+                    break
+                current = documents.iloc[i]
+                frames = (row, current)
+                (l, r) = [ set(range(x.start, x.end)) for x in frames ]
+                if l.isdisjoint(r):
+                    yield (current, self.radius - depth + 1)
+                    self.proximity_(current, documents, depth - 1)
+                    break
