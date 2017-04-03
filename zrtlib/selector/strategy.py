@@ -116,9 +116,13 @@ class DirectNeighbor(CoOccurrence):
             start = max(0, i.Index - self.radius)
             stop = min(len(documents), i.Index + self.radius + 1)
             for j in range(start, stop):
+                term = documents.iloc[j]
                 factor = abs(i.Index - j)
-                if factor != 0:
-                    term = documents.iloc[j]
+                if term['document'] == i.document and factor != 0:
                     occurence[term['term']] += self.discount(factor)
 
         yield from map(op.itemgetter(0), occurence.most_common())
+
+class NearestNeighbor(CoOccurrence):
+    def proximity(self, documents, matches):
+        pass
