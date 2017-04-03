@@ -12,6 +12,7 @@ class TermSelector:
     #
     def __iter__(self):
         self.df = pd.concat(self.documents.values(), copy=False)
+        self.df.reset_index(drop=True, inplace=True)
 
         return self
 
