@@ -30,26 +30,6 @@ class IterableStack:
             self.stack.pop()
 
 class SelectionStrategy:
-    @classmethod
-    def build(cls, request, **kwargs):
-        constructor = {
-            'tf': tek.TermFrequency,
-            'df': tek.DocumentFrequency,
-            'random': tek.Random,
-            'entropy': tek.Entropy,
-            'relevance': tek.Relevance,
-        }
-        if request in constructor:
-            return BlindHomogenous(constructor[request], **kwargs)
-
-        constructor = {
-            'direct': tek.DirectNeighbor,
-        }
-        if request in constructor:
-            return constructor[request](**kwargs)
-
-        raise LookupError(request)
-
     def unselected(self, documents):
         return documents[documents['selected'] == 0]
 
@@ -74,7 +54,7 @@ class BlindHomogenous(SelectionStrategy):
         return self.technique(self.unselected(documents), **self.kwargs)
 
 class CoOccurrence(BlindHomogenous):
-    def __init__(self, feedback, radius=1, technique=tek.Entropy, **kwargs):
+    def __init__(self, feedback, technique, radius=1, **kwargs):
         super().__init__(technique, **kwargs)
 
         self.feedback = feedback
@@ -103,16 +83,13 @@ class CoOccurrence(BlindHomogenous):
 
         return super().choose(documents)
 
-    def discount(self, x):
-        return 1 / x
-
     def proximity(self, documents, matches):
         occurence = collections.Counter()
 
         for i in matches.itertuples():
             docs = documents[documents['document'] == i.document]
             for (term, distance) in self.proximity_(i, docs):
-                occurence[term['term']] += self.discount(distance)
+                occurence[term['term']] += 1 / distance
 
         yield from map(op.itemgetter(0), occurence.most_common())
 
@@ -130,17 +107,18 @@ class NearestNeighbor(CoOccurrence):
     def proximity_(self, row, documents, depth=None):
         if depth is None:
             depth = self.radius
-        elif depth < 1:
+        if depth < 1:
             return
+
+        reference = set(zutils.count(row.start, row.end))
 
         for step in (1, -1):
             for i in itertools.count(row.Index + step, step):
                 if i < 0 or i >= len(documents):
                     break
                 current = documents.iloc[i]
-                frames = (row, current)
-                (l, r) = [ set(range(x.start, x.end)) for x in frames ]
-                if l.isdisjoint(r):
+                coverage = set(zutils.count(current['start'], current['end']))
+                if reference.isdisjoint(coverage):
                     yield (current, self.radius - depth + 1)
                     self.proximity_(current, documents, depth - 1)
                     break
