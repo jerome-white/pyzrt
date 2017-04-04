@@ -9,6 +9,6 @@ class FeedbackHandler(collections.deque):
     def __float__(self):
         raise NotImplementedError()
 
-class RecentWeighted:
+class RecentWeighted(FeedbackHandler):
     def __float__(self):
         np.average(self, weights=np.linspace(0, 1, len(self)))
