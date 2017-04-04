@@ -126,18 +126,29 @@ class NearestNeighbor(CoOccurrence):
                 break
 
 class RegionNeighbor(CoOccurrence):
-    def longest(self, documents):
-        current = None
-        for i in matches.itertuples():
-            c = Character(i.Index, i.start, i.end)
-            if current is None or len(current) < len(c):
-                current = c
-
-        return documents.iloc[current.docno]
-
     def proximity_(self, row, documents):
         regions = documents.groupby('region')
 
-        # TODO: iterate around regions and find longest
+        for step in (1, -1):
+            start = row['region'] + step
+            stop = step * self.depth + 1
+            for (i, r) in enumerate(range(start, stop, step), 1):
+                if r not in regions.groups:
+                    break
+                selection = regions.get_group(r)
 
-        raise NotImplementedError()
+                #
+                # The longest term within a region is the most
+                # important.
+                #
+                longest = None
+                for j in selection.itertuples():
+                    if longest is None:
+                        longest = j
+                    else:
+                        known = longest.end - longest.start
+                        current = j.end - j.start
+                        if current > known:
+                            longest = j
+
+                yield (longest, i)
