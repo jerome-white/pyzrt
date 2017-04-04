@@ -10,7 +10,7 @@ class IterableStack:
 
     def __bool__(self):
         return bool(self.stack)
-    
+
     def push(self, item):
         self.stack.append(list(item))
 
@@ -104,21 +104,40 @@ class DirectNeighbor(CoOccurrence):
                 yield (documents.iloc[i], distance)
 
 class NearestNeighbor(CoOccurrence):
-    def proximity_(self, row, documents, depth=None):
-        if depth is None:
-            depth = self.radius
+    def proximity_(self, row, documents):
+        for step in (1, -1):
+            yield from self.navigate(row, documents, self.radius, step)
+
+    def navigate(self, row, documents, depth, step):
         if depth < 1:
             return
 
         reference = set(zutils.count(row.start, row.end))
 
-        for step in (1, -1):
-            for i in itertools.count(row.Index + step, step):
-                if i < 0 or i >= len(documents):
-                    break
-                current = documents.iloc[i]
-                coverage = set(zutils.count(current['start'], current['end']))
-                if reference.isdisjoint(coverage):
-                    yield (current, self.radius - depth + 1)
-                    self.proximity_(current, documents, depth - 1)
-                    break
+        for i in itertools.count(row.Index + step, step):
+            if i < 0 or i >= len(documents):
+                break
+
+            current = documents.iloc[i]
+            coverage = set(zutils.count(current['start'], current['end']))
+            if reference.isdisjoint(coverage):
+                yield (current, self.radius - depth + 1)
+                yield from self.navigate(current, documents, depth - 1, step)
+                break
+
+class RegionNeighbor(CoOccurrence):
+    def longest(self, documents):
+        current = None
+        for i in matches.itertuples():
+            c = Character(i.Index, i.start, i.end)
+            if current is None or len(current) < len(c):
+                current = c
+
+        return documents.iloc[current.docno]
+
+    def proximity_(self, row, documents):
+        regions = documents.groupby('region')
+
+        # TODO: iterate around regions and find longest
+
+        raise NotImplementedError()
