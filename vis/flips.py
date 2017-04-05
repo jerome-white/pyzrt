@@ -31,6 +31,11 @@ def each(args):
     path = Path('**', QueryDoc.prefix + '*')
 
     for i in args.top_level.glob(str(path)):
+        if args.strategy:
+            strategy = i.parts[-2]
+            if strategy not in args.strategy:
+                continue
+
         qid = QueryDoc.components(i)
         if not topics or qid.topic in topics:
             yield (i, args.metric)
@@ -43,6 +48,7 @@ arguments = ArgumentParser()
 arguments.add_argument('--metric')
 arguments.add_argument('--top-level', type=Path)
 arguments.add_argument('--topic', action='append', default=[])
+arguments.add_argument('--strategy', action='append', default=[])
 args = arguments.parse_args()
 
 df = pd.concat(aquire(args))
@@ -55,5 +61,7 @@ ax = sns.tsplot(time='guess',
                 condition='strategy',
                 data=df,
                 ci=30)
-ax.set(xlim=(None, df['guess'].max()))
+print(df.iloc[df['guess'].argmax()])
+ax.set(xlim=(None, df['guess'].max()),
+       ylim=(0, None))
 ax.figure.savefig('flips.png', bbox_inches='tight')
