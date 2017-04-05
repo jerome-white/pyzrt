@@ -72,6 +72,9 @@ if args.selection_strategy == 'relevance':
 elif args.selection_strategy == 'direct':
     feedback = RecentWeighted()
     strat = DirectNeighbor(feedback=feedback, radius=5, technique=tek.Entropy)
+elif args.selection_strategy == 'nearest':
+    feedback = RecentWeighted()
+    strat = NearestNeighbor(feedback=feedback, radius=5, technique=tek.Entropy)
 else:
     technique = {
         'tf': tek.TermFrequency,
