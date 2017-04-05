@@ -21,7 +21,7 @@ def func(args):
                      index_col=index_col,
                      usecols=[ index_col, metric ])
 
-    index = np.arange(df.index.min(), df.index.max())
+    index = np.arange(df.index.min(), df.index.max() + 1)
     columns = dict(zip(('strategy', 'topic'), path.parts[-2:]))
 
     return df.reindex(index, method='ffill').reset_index().assign(**columns)
