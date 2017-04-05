@@ -61,7 +61,6 @@ ax = sns.tsplot(time='guess',
                 condition='strategy',
                 data=df,
                 ci=30)
-print(df.iloc[df['guess'].argmax()])
 ax.set(xlim=(None, df['guess'].max()),
        ylim=(0, None))
 ax.figure.savefig('flips.png', bbox_inches='tight')
