@@ -1,4 +1,3 @@
-import csv
 from pathlib import Path
 from argparse import ArgumentParser
 from multiprocessing import Pool
