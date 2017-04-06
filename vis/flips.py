@@ -30,6 +30,9 @@ def each(args):
     path = Path('**', QueryDoc.prefix + '*')
 
     for i in args.top_level.glob(str(path)):
+        if args.include and str(i) not in args.include:
+            continue
+
         if args.strategy:
             strategy = i.parts[-2]
             if strategy not in args.strategy:
@@ -47,6 +50,7 @@ arguments = ArgumentParser()
 arguments.add_argument('--metric')
 arguments.add_argument('--top-level', type=Path)
 arguments.add_argument('--topic', action='append', default=[])
+arguments.add_argument('--include', action='append', default=[])
 arguments.add_argument('--strategy', action='append', default=[])
 args = arguments.parse_args()
 
