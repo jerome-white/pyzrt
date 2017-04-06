@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 
 import zrtlib.selector.technique as tek
+import zrtlib.selector.strategy as strat
 from zrtlib import indri
 from zrtlib import logger
 from zrtlib import zutils
@@ -16,7 +17,6 @@ from zrtlib.query import QueryBuilder
 from zrtlib.indri import QueryDoc, QueryExecutor, TrecMetric
 from zrtlib.document import TermDocument, HiddenDocument
 from zrtlib.selector.feedback import RecentWeighted
-from zrtlib.selector.strategy import BlindHomogenous, DirectNeighbor
 from zrtlib.selector.management import TermSelector
 
 class CSVWriter:
@@ -68,13 +68,17 @@ query = HiddenDocument(args.query)
 
 if args.selection_strategy == 'relevance':
     relevant = set(indri.relevant_documents(args.qrels))
-    strat = BlindHomogenous(tek.Relevance, query=query, relevant=relevant)
+    st = strat.BlindHomogenous(tek.Relevance, query=query, relevant=relevant)
 elif args.selection_strategy == 'direct':
     feedback = RecentWeighted()
-    strat = DirectNeighbor(feedback=feedback, radius=5, technique=tek.Entropy)
+    st = strat.DirectNeighbor(feedback=feedback,
+                              radius=5,
+                              technique=tek.Entropy)
 elif args.selection_strategy == 'nearest':
     feedback = RecentWeighted()
-    strat = NearestNeighbor(feedback=feedback, radius=5, technique=tek.Entropy)
+    st = strat.NearestNeighbor(feedback=feedback,
+                               radius=5,
+                               technique=tek.Entropy)
 else:
     technique = {
         'tf': tek.TermFrequency,
@@ -82,9 +86,9 @@ else:
         'random': tek.Random,
         'entropy': tek.Entropy,
     }
-    strat = BlindHomogenous(technique[args.selection_strategy])
+    st = strat.BlindHomogenous(technique[args.selection_strategy])
 
-ts = TermSelector(strat)
+ts = TermSelector(st)
 with Pool() as pool:
     iterable = itertools.filterfalse(QueryDoc.isquery, zutils.walk(args.input))
     for i in pool.imap_unordered(TermDocument, iterable):
