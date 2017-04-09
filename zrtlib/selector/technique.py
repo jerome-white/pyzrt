@@ -7,7 +7,7 @@ from zrtlib.document import HiddenDocument
 
 class SelectionTechnique:
     def __init__(self):
-        self.documents = None
+        self.documents = iter(())
 
     def __next__(self):
         return next(self.documents)
@@ -66,9 +66,8 @@ class Relevance(SelectionTechnique):
         query = query.df[HiddenDocument.columns['visible']]
         df = df[df['term'].isin(query)]
 
-        if df.empty:
-            self.documents = iter(())
-        elif technique is None:
-            self.documents = iter(df['term'].unique())
-        else:
-            self.documents = technique(df)
+        if not df.empty:
+            if technique is None:
+                self.documents = iter(df['term'].unique())
+            else:
+                self.documents = technique(df)
