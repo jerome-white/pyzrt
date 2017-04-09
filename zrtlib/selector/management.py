@@ -17,14 +17,11 @@ class TermSelector:
         return self
 
     #
-    # Each iteration presents the dataframe to the strategy manager
+    # Each iteration presents the dataframe to the strategy and marks
+    # the choice as selected
     #
     def __next__(self):
-        # pass on to strategy
-        try:
-            term = self.strategy.pick(self.df, self.feedback)
-        except LookupError:
-            raise StopIteration()
+        term = self.strategy.pick(self.df, self.feedback)
         self.mark_selected(term)
 
         return term
