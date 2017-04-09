@@ -1,69 +1,74 @@
+import operator as op
+
 import pandas as pd
 import scipy.stats as st
 
 from zrtlib.document import HiddenDocument
 
 class SelectionTechnique:
-    def __init__(self, documents):
-        self.documents = documents
+    def __init__(self):
+        self.documents = None
 
-    def __next__(self, documents):
-        raise NotImplementedError()
+    def __next__(self):
+        return next(self.documents)
 
 class Random(SelectionTechnique):
     def __init__(self, documents, weighted=False, seed=None):
-        super().__init__(documents)
+        super().__init__()
 
-        self.weights = 'term' if weighted else None
-        self.seed = seed
-
-    def __next__(self):
-        df = (self.
-              documents['term'].
+        weights = 'term' if weighted else None
+        df = (documents['term'].
               value_counts().
-              reset_index().
-              sample(weights=self.weights, random_state=self.seed))
+              sample(frac=1, weights=weights, random_state=seed))
 
-        return df['index'].iloc[0]
+        self.documents = map(op.itemgetter(0), df.iteritems())
 
-class Frequency(SelectionTechnique):
-    def __next__(self):
-        return self.then().value_counts().argmax()
+class DocumentFrequency(SelectionTechnique):
+    def __init__(self, documents):
+        super().__init__()
 
-    def then(self):
-        raise NotImplementedError()
+        groups = documents.groupby('document', sort=False)
+        df = (groups['term'].
+              apply(lambda x: pd.Series(x.unique())).
+              value_counts())
 
-class DocumentFrequency(Frequency):
-    def then(self):
-        groups = self.documents.groupby('document')
-        return groups['term'].apply(lambda x: pd.Series(x.unique()))
+        self.documents = map(op.itemgetter(0), df.iteritems())
 
-class TermFrequency(Frequency):
-    def then(self):
-        return self.documents['term']
+class TermFrequency(SelectionTechnique):
+    def __init__(self, documents):
+        super().__init__()
+
+        df = documents['term'].value_counts()
+
+        self.documents = map(op.itemgetter(0), df.iteritems())
 
 # http://www.cs.bham.ac.uk/~pxt/IDA/term_selection.pdf
 class Entropy(SelectionTechnique):
-    def __next__(self):
-        groups = self.documents.groupby('document')
+    def __init__(self):
+        super().__init__()
+
+        groups = self.documents.groupby('document', sort=False)
 
         f = lambda x: pd.Series(x.value_counts(normalize=True))
         df = groups['term'].apply(f).reset_index(level=0, drop=True)
-        df = df.groupby(df.index).aggregate(st.entropy)
+        df = (df.
+              groupby(df.index, sort=False).
+              aggregate(st.entropy).
+              sort_values(ascending=False))
 
-        return df.argmax()
+        self.documents = map(op.itemgetter(0), df.iteritems())
 
 class Relevance(SelectionTechnique):
-    def __init__(self, documents, query, relevant):
-        super().__init__(documents)
+    def __init__(self, documents, query, relevant, technique=None):
+        super().__init__()
 
-        self.query = query.df[HiddenDocument.columns['visible']]
-        self.relevant = relevant
+        df = documents[documents['document'].isin(relevant)]
+        query = query.df[HiddenDocument.columns['visible']]
+        df = df[df['term'].isin(query)]
 
-    def __next__(self):
-        df = self.documents[self.documents['document'].isin(self.relevant)]
-        df = df[df['term'].isin(self.query)]
         if df.empty:
-            raise LookupError()
-
-        return next(Entropy(df))
+            self.documents = iter(())
+        elif technique is None:
+            self.documents = iter(df['term'].unique())
+        else:
+            self.documents = technique(df)
