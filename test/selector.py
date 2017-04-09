@@ -1,8 +1,11 @@
 from pathlib import Path
 
+import pandas as pd
+
 from zrtlib.document import TermDocument, HiddenDocument
-from zrtlib.selector.strategy import SelectionStrategy
+from zrtlib.selector.strategy import BlindHomogenous
 from zrtlib.selector.management import TermSelector
+from zrtlib.selector.technique import Random
 
 path = Path('/',
             'Volumes',
@@ -15,22 +18,17 @@ path = Path('/',
             'pseudoterms',
             '07')
 docs = [ path.joinpath('WSJ900402-00' + str(x)) for x in range(17, 20) ]
-query = HiddenDocument(path.joinpath('WSJQ00298-0000'))
 
-ts = TermSelector(SelectionStrategy.build('random'))
-
-if __name__ == '__main__':
-    kwargs = {
-        'query': query,
-        'relevant': [ x.stem for x in docs[:2] ],
-    }
-    ts = TermSelector(SelectionStrategy.build('relevance', **kwargs))
-
+ts = TermSelector(BlindHomogenous(Random))
 for i in docs:
     ts.add(TermDocument(i))
 
 if __name__ == '__main__':
+    query = HiddenDocument(path.joinpath('WSJQ00298-0000'))
     for i in ts:
         assert(i in query.df[HiddenDocument.columns['visible']].values)
         f = query.flip(i)
         print(i, f)
+else:
+    df = pd.concat(ts.documents.values(), copy=False)
+    df.reset_index(drop=True, inplace=True)
