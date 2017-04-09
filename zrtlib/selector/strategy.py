@@ -2,7 +2,11 @@ import operator as op
 import collections
 
 from zrtlib import zutils
-import zrtlib.selector.technique as tek
+from zrtlib.selector.technique import Random
+
+def unselected(documents, term):
+    matches = documents[documents['term'] == term]
+    return not matches['selected'].any()
 
 class IterableStack:
     def __init__(self):
@@ -30,38 +34,30 @@ class IterableStack:
             self.stack.pop()
 
 class SelectionStrategy:
-    def unselected(self, documents):
-        return documents[documents['selected'] == 0]
-
     def pick(self, documents, feedback=None):
-        remaining = self.unselected(documents)
-        if remaining.empty:
-            raise LookupError()
-
-        return next(self.choose(documents, feedback))
-
-    def choose(self, documents, feedback=None):
         raise NotImplementedError()
 
 class BlindHomogenous(SelectionStrategy):
     def __init__(self, technique, **kwargs):
-        super().__init__()
-
         self.technique = technique
         self.kwargs = kwargs
 
-    def choose(self, documents, feedback=None):
-        return self.technique(self.unselected(documents), **self.kwargs)
+    def pick(self, documents, feedback=None):
+        try:
+            return next(self.technique)
+        except TypeError:
+            self.technique = self.technique(documents, **self.kwargs)
+            return self.pick(documents, feedback)
 
 class CoOccurrence(BlindHomogenous):
-    def __init__(self, feedback, technique, radius=1, **kwargs):
-        super().__init__(technique, **kwargs)
-
+    def __init__(self, feedback, radius=1, technique=Random, **kwargs):
         self.feedback = feedback
         self.radius = radius
-        self.stack = IterableStack()
 
-    def choose(self, documents, feedback=None):
+        self.stack = IterableStack()
+        self.blind = BlindHomogenous(technique, **kwargs)
+
+    def pick(self, documents, feedback=None):
         if feedback is not None:
             memory = float(self.feedback)
 
@@ -77,11 +73,13 @@ class CoOccurrence(BlindHomogenous):
 
         while self.stack:
             choice = self.stack.pop()
-            matches = documents[documents['term'] == choice]
-            if not matches['selected'].any():
+            if unselected(choice, documents):
                 return choice
 
-        return super().choose(documents)
+        while True:
+            choice = self.blind.pick(documents)
+            if unselected(choice, documents):
+                return choice
 
     def proximity(self, documents, matches):
         occurence = collections.Counter()
