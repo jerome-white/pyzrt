@@ -91,6 +91,9 @@ class CoOccurrence(BlindHomogenous):
 
         yield from map(op.itemgetter(0), occurence.most_common())
 
+    def proximity_(self, row, documents):
+        raise NotImplementedError()
+
 class DirectNeighbor(CoOccurrence):
     def proximity_(self, row, documents):
         start = max(0, row.Index - self.radius)
