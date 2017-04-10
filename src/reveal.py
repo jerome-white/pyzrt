@@ -156,6 +156,7 @@ with CSVWriter(args.query.stem, args.output) as writer:
             results = {
                 'guess': i,
                 'term': term,
+                'hidden': float(query),
                 **next(evaluation),
             }
             writer.writerow(results)

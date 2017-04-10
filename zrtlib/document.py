@@ -60,14 +60,20 @@ class HiddenDocument(TermDocument):
         flip = lambda row: row[self.columns['visible']][::-1]
         self.df[self.columns['hidden']] = self.df.apply(flip, axis=1)
 
+    #
+    # True if hidden terms remain
+    #
     def __bool__(self):
-        '''
-        True if hidden terms remain
-        '''
-        (x, y) = self.columns.values()
-        remaining = self.df[self.df[x] != self.df[y]]
+        return float(self) > 0
 
-        return not remaining.empty
+    #
+    # Percentage of terms that are hidden
+    #
+    def __float__(self):
+        (x, y) = self.columns.values()
+        revealed = self.df[self.df[x] != self.df[y]]
+
+        return len(revealed) / len(self.df)
 
     def flip(self, term, which='visible'):
         assert(which in self.columns.keys())
