@@ -1,41 +1,38 @@
 import operator as op
+import itertools
 import collections
 
 from zrtlib import zutils
 from zrtlib.selector.technique import Random
 
-def unselected(documents, term):
-    matches = documents[documents['term'] == term]
-    return not matches['selected'].any()
+class IterableStack(list):
+    def __init__(self, descending=True):
+        self.order = 0 if descending else -1
 
-class IterableStack:
-    def __init__(self):
-        self.stack = []
+    def __iter__(self):
+        return self
 
-    def __bool__(self):
-        return bool(self.stack)
-
-    def push(self, item):
-        self.stack.append(list(item))
-
-    def pop(self):
+    def __next__(self):
         if not self:
-            raise BufferError()
+            raise StopIteration()
 
-        last = self.stack[-1]
-        item = last.pop(0)
+        last = self[-1]
+        item = last.pop(self.order)
         if not last:
-            self.peel()
+            self.pop()
 
         return item
 
-    def peel(self):
-        if self:
-            self.stack.pop()
+    def push(self, iterable):
+        self.append(list(iterable))
 
 class SelectionStrategy:
     def pick(self, documents, feedback=None):
         raise NotImplementedError()
+
+    def stream(self, documents, feedback=None):
+        while True:
+            yield self.pick(documents, feedback)
 
 class BlindHomogenous(SelectionStrategy):
     def __init__(self, technique, **kwargs):
@@ -45,7 +42,7 @@ class BlindHomogenous(SelectionStrategy):
     def pick(self, documents, feedback=None):
         try:
             return next(self.technique)
-        except TypeError:
+        except TypeError: # http://stackoverflow.com/a/1549854
             self.technique = self.technique(documents, **self.kwargs)
             return self.pick(documents, feedback)
 
@@ -67,19 +64,15 @@ class CoOccurrence(BlindHomogenous):
                 matches = documents[documents['term'] == term]
                 self.stack.push(self.proximity(documents, matches))
             elif memory > feedback:
-                self.stack.peel()
+                self.stack.pop()
 
             self.feedback.append(feedback)
 
-        while self.stack:
-            choice = self.stack.pop()
-            if unselected(choice, documents):
-                return choice
-
-        while True:
-            choice = self.blind.pick(documents)
-            if unselected(choice, documents):
-                return choice
+        iterable = (self.stack, self.blind.stream(documents))
+        for i in itertools.chain.from_iterable(iterable):
+            matches = documents[documents['term'] == i]
+            if not matches['selected'].any():
+                return i
 
     def proximity(self, documents, matches):
         occurence = collections.Counter()
