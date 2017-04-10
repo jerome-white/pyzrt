@@ -44,10 +44,10 @@ class TermFrequency(SelectionTechnique):
 
 # http://www.cs.bham.ac.uk/~pxt/IDA/term_selection.pdf
 class Entropy(SelectionTechnique):
-    def __init__(self):
+    def __init__(self, documents):
         super().__init__()
 
-        groups = self.documents.groupby('document', sort=False)
+        groups = documents.groupby('document', sort=False)
 
         f = lambda x: pd.Series(x.value_counts(normalize=True))
         df = groups['term'].apply(f).reset_index(level=0, drop=True)

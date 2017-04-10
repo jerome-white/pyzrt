@@ -93,7 +93,7 @@ class DirectNeighbor(CoOccurrence):
         stop = min(len(documents), row.Index + self.radius + 1)
 
         for i in range(start, stop):
-            distance = abs(row.Index - j)
+            distance = abs(row.Index - i)
             if distance != 0:
                 yield (documents.iloc[i], distance)
 
@@ -125,7 +125,8 @@ class RegionNeighbor(CoOccurrence):
 
         for step in (1, -1):
             start = row['region'] + step
-            stop = step * self.depth + 1
+            stop = step * self.radius + 1
+
             for (i, r) in enumerate(range(start, stop, step), 1):
                 if r not in regions.groups:
                     break
