@@ -1,16 +1,13 @@
 import string
 import itertools
 
-from zrtlib.stack import IterableStack
+from zrtlib.selector.strategy import IterableStack
 
 stack = IterableStack()
 stack.push(range(10))
 stack.push(map(lambda x: '.' + x, string.ascii_lowercase))
 
-for i in itertools.count():
-    item = stack.pop()
-    if item is None:
-        break
+for (i, item) in enumerate(stack):
     print(i, item)
     if i == 5:
         stack.push(map(lambda x: '+' + x, string.ascii_lowercase))
