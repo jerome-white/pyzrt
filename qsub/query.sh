@@ -1,6 +1,5 @@
 #!/bin/bash
 
-count=1000
 models=(
     ua
     sa
@@ -13,11 +12,9 @@ models=(
 while getopts "r:c:h" OPTION; do
     case $OPTION in
 	i) indri=$OPTARG ;;
-        c) count=$OPTARG ;;
 	h)
 	    cat<<EOF
 $0 -i indri term indexes (subdirectory of \$root in \$ZR_HOME/qsub/index.sh)
-   -c count (default $count)
 EOF
 	    exit
 	    ;;
