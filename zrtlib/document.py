@@ -70,16 +70,26 @@ class HiddenDocument(TermDocument):
     # Percentage of terms that are hidden
     #
     def __float__(self):
+        return len(self.hidden()) / len(self.df)
+
+    def hidden(self):
         (x, y) = self.columns.values()
-        revealed = self.df[self.df[x] != self.df[y]]
 
-        return len(revealed) / len(self.df)
+        return self.df[self.df[x] != self.df[y]]
 
-    def flip(self, term, which='visible'):
+    def flip(self, term=None, which='visible'):
         assert(which in self.columns.keys())
-        other = 'hidden' if which == 'visible' else 'visible'
 
-        matches = self.df[self.columns[which]] == term
+        other = 'hidden' if which == 'visible' else 'visible'
+        focus = self.columns[which]
+
+        if term is None:
+            potentials = self.hidden()
+            if potentials.empty:
+                return 0
+            term = potentials[focus].sample().get_value(0, takeable=True)
+
+        matches = self.df[focus] == term
         flipped = matches[matches == True].sum()
         if flipped > 0:
             self.df.loc[matches, self.columns[other]] = term
