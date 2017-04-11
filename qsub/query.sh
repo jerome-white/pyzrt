@@ -9,18 +9,25 @@ models=(
     saw
 )
 
-while getopts "r:c:h" OPTION; do
+while getopts "r:ph" OPTION; do
     case $OPTION in
 	i) indri=$OPTARG ;;
+        p) progressive=--progressive ;;
 	h)
 	    cat<<EOF
 $0 -i indri term indexes (subdirectory of \$root in \$ZR_HOME/qsub/index.sh)
+   -p generate progressive queries
 EOF
 	    exit
 	    ;;
         *) exit 1 ;;
     esac
 done
+
+q=queries
+if [ $progressive ]; then
+   q=$q
+fi
 
 rm --force jobs
 for i in $indri/*; do
@@ -33,6 +40,8 @@ for i in $indri/*; do
     cat <<EOF > $qsub
 root=`dirname $indri`
 terms=`basename $i`
+prog=$progressive
+
 for j in ${models[@]}; do
 EOF
     #
@@ -41,12 +50,12 @@ EOF
     cat <<"EOF" >> $qsub
     echo $terms $j
 
-    queries=$root/queries/$terms/$j
-    rm --recursive --force $queries
-    mkdir --parents $queries
+    output=$root/query${prog}/$terms/$j
+    rm --recursive --force $output
+    mkdir --parents $output
 
     find $root/pseudoterms/$terms -name 'WSJQ*' | \
-	python $ZR_HOME/src/term2query.py --output $queries --model $j
+	python $ZR_HOME/src/term2query.py $prog --output $output --model $j
 done
 echo $terms DONE
 EOF
@@ -55,7 +64,7 @@ EOF
 	-l nodes=1:ppn=20,mem=60GB,walltime=6:00:00 \
 	-m abe \
 	-M jsw7@nyu.edu \
-	-N query \
+	-N query$progressive \
 	-V \
 	$qsub >> jobs
 done
