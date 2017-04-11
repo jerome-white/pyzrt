@@ -9,13 +9,15 @@ models=(
     saw
 )
 
-while getopts "r:ph" OPTION; do
+while getopts "i:ph" OPTION; do
     case $OPTION in
 	i) indri=$OPTARG ;;
         p) progressive=--progressive ;;
 	h)
 	    cat<<EOF
-$0 -i indri term indexes (subdirectory of \$root in \$ZR_HOME/qsub/index.sh)
+$0
+   -i indri term indexes (subdirectory of
+      \$root in \$ZR_HOME/qsub/index.sh)
    -p generate progressive queries
 EOF
 	    exit
@@ -23,11 +25,6 @@ EOF
         *) exit 1 ;;
     esac
 done
-
-q=queries
-if [ $progressive ]; then
-   q=$q
-fi
 
 rm --force jobs
 for i in $indri/*; do
