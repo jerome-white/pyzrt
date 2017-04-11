@@ -32,13 +32,17 @@ def QueryBuilder(model, terms):
 class Query:
     def __init__(self, doc):
         self.doc = doc
-        
+
     def __str__(self):
-        terms = map(self.regionalize, self.doc.regions())
         query = IndriQuery()
-        query.add(' '.join(itertools.chain.from_iterable(terms)))
+        query.add(self.compose())
 
         return str(query)
+
+    def compose(self):
+        terms = map(self.regionalize, self.doc.regions())
+
+        return ' '.join(itertools.chain.from_iterable(terms))
 
     def regionalize(self, region):
         raise NotImplementedError()
