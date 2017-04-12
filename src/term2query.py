@@ -8,6 +8,15 @@ from zrtlib.indri import IndriQuery
 from zrtlib.query import QueryBuilder
 from zrtlib.document import TermDocument, HiddenDocument
 
+def instantaneous(args):
+    (terms, model, output, *query) = args
+
+    q = query.pop() if query else QueryBuilder(model, TermDocument(terms))
+    with output.joinpath(terms.stem).open('w') as fp:
+        print(q, file=fp)
+
+    return terms
+
 def progressive(args):
     (terms, model, output) = args
 
@@ -22,17 +31,7 @@ def progressive(args):
         query = QueryBuilder(model, document)
         indri.add(query.compose())
 
-    with output.joinpath(terms.stem).open('w') as fp:
-        fp.write(indri)
-
-def instantaneous(args):
-    (terms, model, output) = args
-
-    query = str(QueryBuilder(model, TermDocument(terms)))
-    with output.joinpath(terms.stem).open('w') as fp:
-        fp.write(query)
-
-    return terms
+    return instantaneous(args + (indri, ))
 
 arguments = ArgumentParser()
 arguments.add_argument('--model')
