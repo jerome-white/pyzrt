@@ -47,7 +47,7 @@ EOF
     cat <<"EOF" >> $qsub
     echo $terms $j
 
-    output=$root/query${prog}/$terms/$j
+    output=$root/queries${prog}/$terms/$j
     rm --recursive --force $output
     mkdir --parents $output
 
