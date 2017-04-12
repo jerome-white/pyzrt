@@ -26,7 +26,7 @@ def read_trec(fp, summary=False):
             continue
 
         if previous is not None and previous != run:
-            yield results
+            yield (run, results)
             results = {} # probably not necessary, but safe
 
         try:
@@ -37,7 +37,7 @@ def read_trec(fp, summary=False):
         previous = run
 
     if results and previous.isdigit():
-        yield results
+        yield (run, results)
 
 #
 # Return on the metric value from Indri stat output
