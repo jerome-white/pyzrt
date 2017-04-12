@@ -35,48 +35,52 @@ def max_guesses(path):
 
     return (path, max(guesses))
 
+def byoption(args, path):
+    if args.include and str(path) not in args.include:
+        return
+
+    if args.strategy:
+        strategy = path.parts[-2]
+        if strategy not in args.strategy:
+            return
+
+    if args.topic:
+        qid = QueryDoc.components(path)
+        if qid.topic not in args.topic:
+            return
+
+    yield path
+
 def byline(args):
     guess_count = collections.defaultdict(list)
     largest = collections.defaultdict(int)
 
+    log = logger.getlogger()
+
     with Pool() as pool:
-        iterable = args.top_level.glob(Path('**', QueryDoc.prefix + '*'))
-        for (path, guesses) in pool.imap_unordered(max_guesses, iterable):
-            strategy = path.parts[-2]
-            guess_count[strategy].append((path, guesses))
+        iterable = args.top_level.glob(str(Path('**', QueryDoc.prefix + '*')))
+        for (pth, guesses) in pool.imap_unordered(max_guesses, iterable):
+            strategy = pth.parts[-2]
+            guess_count[strategy].append((pth, guesses))
             largest[strategy] = max(largest[strategy], guesses)
 
     for (strategy, data) in guess_count.items():
         n = largest[strategy]
-        for (path, guesses) in data:
+        for (pth, guesses) in data:
+            log.info('{0} {1}'.format(pth, guesses))
+
             ratio = 1 - (n - guesses) / n
             if ratio >= args.threshold:
-                yield (path, args)
+                yield pth
 
-def byoption(args):
-    (path, options) = args
-
-    if options.include and str(path) not in options.include:
-        return
-
-    if options.strategy:
-        strategy = path.parts[-2]
-        if strategy not in options.strategy:
-            return
-
-    if options.topics:
-        qid = QueryDoc.components(path)
-        if qid.topic not in options.topics:
-            return
-
-    yield (path, options.metric)
+def each(args):
+    for i in byline(args):
+        for j in byoption(args, i):
+            yield (j, args.metric)
 
 def aquire(args):
     with Pool() as pool:
-        iterable = filter(None, byoption(byline(args)))
-        print(list(iterable))
-        exit()
-        yield from pool.imap_unordered(func, iterable)
+        yield from pool.imap_unordered(func, each(args))
 
 arguments = ArgumentParser()
 arguments.add_argument('--metric')
