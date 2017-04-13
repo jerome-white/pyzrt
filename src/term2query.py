@@ -61,6 +61,7 @@ def single(args):
 
 arguments = ArgumentParser()
 arguments.add_argument('--model')
+arguments.add_argument('--action')
 arguments.add_argument('--input', type=Path)
 arguments.add_argument('--output', type=Path)
 arguments.add_argument('--action', action='append')
@@ -70,9 +71,7 @@ log = logger.getlogger()
 registry = { i.__name__: i for i in (instantaneous, progressive, single) }
 
 with Pool() as pool:
+    f = registry[args.action]
     mkargs = lambda x: (x, args.model.lower(), args.output)
-    for i in args.action:
-        if i in registry:
-            f = registry[i]
-            for j in pool.imap(f, map(mkargs, zutils.walk(args.input))):
-                log.info(j.stem)
+    for i in pool.imap(f, map(mkargs, zutils.walk(args.input))):
+        log.info(i.stem)
