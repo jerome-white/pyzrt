@@ -100,38 +100,11 @@ with Pool() as pool:
 eval_metric = TrecMetric(args.feedback_metric)
 
 #
-# Load the data in the event that there are logs to replay
-#
-guesses = []
-if args.replay:
-    for i in args.replay:
-        with i.open() as fp:
-            cause = None
-            for (instruction, *actions) in logger.readlog(fp, True):
-                if instruction == 'g':
-                    cause = actions
-                elif instruction == 'f':
-                    assert(cause is not None)
-
-                    (guess, term, flipped) = cause
-                    n = query.flip(term)
-                    assert(n == int(flipped))
-                    guesses.append(int(guess))
-                    ts.mark_selected(term, guesses[-1])
-
-                    (metric, value) = actions
-                    assert(metric == str(eval_metric))
-                    ts.feedback = float(value)
-                else:
-                    log.error('unknown instruction {0}'.format(instruction))
-initial = max(guesses) if guesses else 0
-
-#
 # Begin revealing
 #
 with CSVWriter(args.query.stem, args.output) as writer:
     with QueryExecutor(args.index, args.qrels) as engine:
-        for (i, term) in enumerate(ts, initial + 1):
+        for (i, term) in enumerate(ts, 1):
             if i > args.guesses or not query:
                 log.debug('Guessing finished')
                 break
@@ -148,7 +121,7 @@ with CSVWriter(args.query.stem, args.output) as writer:
             # Run the query and evaluate
             #
             engine.query(QueryBuilder(args.retrieval_model, query))
-            evaluation = engine.evaluate(eval_metric)
+            evaluation = next(engine.evaluate(eval_metric))
 
             #
             # Collect and record the results
@@ -157,7 +130,7 @@ with CSVWriter(args.query.stem, args.output) as writer:
                 'guess': i,
                 'term': term,
                 'hidden': float(query),
-                **next(evaluation),
+                **evaluation,
             }
             writer.writerow(results)
 
