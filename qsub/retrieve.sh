@@ -17,6 +17,7 @@ module load parallel/20140722
 #  qrels   Location of QRELS tarball
 #  count   Depth of retrieval results (see Indri/trec_eval
 #          documentation)
+#  action  Term action (see src/term2query.py and query.sh)
 #
 
 root=`dirname ${queries}`
@@ -32,7 +33,7 @@ for term in ${queries}/*; do
     terms=`basename $term`
 
     for model in $term/*; do
-	trec=$root/evals/$terms/`basename $model`
+	trec=$root/evals/$action/$terms/`basename $model`
 	rm --recursive --force $trec
 	mkdir --parents $trec
 
