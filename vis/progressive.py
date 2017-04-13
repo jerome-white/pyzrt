@@ -26,7 +26,8 @@ def func(args):
             reset_index().
             assign(topic=int(QueryDoc.components(path).topic)).
             rename(columns={ 'index': 'query', 0: 'metric' }).
-            apply(pd.to_numeric))
+            apply(pd.to_numeric).
+            sort_values(by=[ 'topic', 'query' ]))
 
 def aquire(args):
     with Pool() as pool:
@@ -39,8 +40,9 @@ arguments.add_argument('--top-level', type=Path)
 args = arguments.parse_args()
 
 df = pd.concat(aquire(args))
+# df.to_pickle('progressive.pkl')
 
-sns.set_context('paper')
+sns.set_context('poster')
 sns.set(font_scale=1.7)
 ax = sns.tsplot(time='query',
                 value='metric',
