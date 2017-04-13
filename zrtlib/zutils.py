@@ -36,7 +36,7 @@ def read_trec(fp, summary=False):
 
         previous = run
 
-    if results and previous.isdigit() or summary:
+    if results and not (summary ^ previous.isdigit()):
         yield (run, results)
 
 #
