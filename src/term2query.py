@@ -64,7 +64,6 @@ arguments.add_argument('--model')
 arguments.add_argument('--action')
 arguments.add_argument('--input', type=Path)
 arguments.add_argument('--output', type=Path)
-arguments.add_argument('--action', action='append')
 args = arguments.parse_args()
 
 log = logger.getlogger()
