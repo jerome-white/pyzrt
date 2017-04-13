@@ -1,3 +1,4 @@
+import csv
 from pathlib import Path
 from argparse import ArgumentParser
 from multiprocessing import Pool
@@ -33,17 +34,45 @@ def progressive(args):
 
     return instantaneous(args + (indri, ))
 
+def single(args):
+    (terms, model, output) = args
+
+    log = logger.getlogger()
+    log.info(terms.stem)
+
+    indri = IndriQuery()
+    document = TermDocument(terms)
+
+    fieldnames = [ 'query', 'term' ]
+    record = output.joinpath(terms.stem).with_suffix('.csv')
+
+    with record.open('w') as fp:
+        writer = csv.DictWriter(fp, fieldnames=fieldnames)
+        writer.writeheader()
+
+        for (i, j) in enumerate(document.df['term'].unique()):
+            doc = HiddenDocument(terms)
+            doc.flip(j)
+            query = QueryBuilder(model, doc)
+            indri.add(query.compose())
+            writer.writerow(dict(zip(fieldnames, (i, j))))
+
+    return instantaneous(args + (indri, ))
+
 arguments = ArgumentParser()
 arguments.add_argument('--model')
 arguments.add_argument('--input', type=Path)
 arguments.add_argument('--output', type=Path)
-arguments.add_argument('--progressive', action='store_true')
+arguments.add_argument('--action', action='append')
 args = arguments.parse_args()
 
 log = logger.getlogger()
+registry = { i.__name__: i for i in (instantaneous, progressive, single) }
 
 with Pool() as pool:
-    func = progressive if args.progressive else instantaneous
     mkargs = lambda x: (x, args.model.lower(), args.output)
-    for i in pool.imap(func, map(mkargs, zutils.walk(args.input))):
-        log.info(i.stem)
+    for i in args.action:
+        if i in registry:
+            f = registry[i]
+            for j in pool.imap(f, map(mkargs, zutils.walk(args.input))):
+                log.info(j.stem)
