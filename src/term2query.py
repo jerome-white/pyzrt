@@ -28,7 +28,8 @@ def progressive(args):
     document = HiddenDocument(terms)
 
     while document:
-        document.flip()
+        flipped = document.flip()
+        assert(flipped > 0)
         query = QueryBuilder(model, document)
         indri.add(query.compose())
 
