@@ -13,25 +13,28 @@ def func(args):
     log = logger.getlogger()
     log.info(terms.stem)
 
-    writer = None    
     document = TermDocument(terms)
+
+    for i in document.df['term'].unique():
+        doc = HiddenDocument(terms)
+        doc.flip(i)
+
+        query = QueryBuilder(options.model, doc)
+        indri.add(query.compose())
 
     with options.output.joinpath(terms.stem).open('w') as fp:
         with QueryExecutor(options.index, options.qrels) as engine:
-            for i in document.df['term'].unique():
-                query = HiddenDocument(terms)        
-                query.flip(tr)
-                
-                engine.query(QueryBuilder(options.model, query))
-                results = {
-                    'term': i,
-                    **next(engine.evaluate()),
-                }
-                
+            engine.query(indri)
+            writer = None
+
+            for (run, results) in engine.evaluate():
+                assert('run' not in results)
+                row = { 'run': run, **results }
+
                 if writer is None:
-                    writer = csv.DictWriter(fp, fieldnames=results.keys())
+                    writer = csv.DictWriter(fp, fieldnames=row.keys())
                     writer.writeheader()
-                writer.writerow(results)
+                writer.writerow(row)
 
 arguments = ArgumentParser()
 arguments.add_argument('--model')
