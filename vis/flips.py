@@ -26,7 +26,7 @@ def func(args):
     index = np.arange(df.index.min(), df.index.max() + 1)
     columns = dict(zip(('strategy', 'topic'), path.parts[-2:]))
 
-    return df.reindex(index, method='ffill').reset_index().assign(**columns)
+    return df.reindex(index).reset_index().ffill().assign(**columns)
 
 def max_guesses(path):
     with path.open() as fp:
