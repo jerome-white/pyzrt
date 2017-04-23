@@ -132,7 +132,7 @@ class QueryExecutor:
                               bufsize=1,
                               stdout=subprocess.PIPE,
                               universal_newlines=True) as fp:
-            yield from map(op.itemgetter(-1), zutils.read_trec(fp.stdout))
+            yield from zutils.read_trec(fp.stdout)
 
 class QueryDoc:
     separator = '-'
