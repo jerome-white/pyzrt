@@ -18,16 +18,27 @@ def get_stats(directory, metric, summary):
 
 def read_trec(fp, summary=False):
     previous = None
+    summarised = False
     results = {}
 
     for line in fp:
         (metric, run, value) = line.strip().split()
-        if not summary and not run.isdigit():
-            continue
+        try:
+            run = int(run)
+            assert(run >= 0)
+        except ValueError:
+            if not summary:
+                continue
+            run = -1
 
         if previous is not None and previous != run:
+            assert(not summarised)
+
             yield (run, results)
             results = {} # probably not necessary, but safe
+
+            if run < 0:
+                summarised = True
 
         try:
             results[metric] = float(value)
@@ -36,7 +47,7 @@ def read_trec(fp, summary=False):
 
         previous = run
 
-    if results and not (summary ^ previous.isdigit()):
+    if results and not (summary ^ (previous >= 0)):
         yield (run, results)
 
 #
