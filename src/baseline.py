@@ -4,7 +4,7 @@ from pathlib import Path
 from argparse import ArgumentParser
 
 from zrtlib import logger
-from zrtlib.indri import QueryDoc, QueryExecutor
+from zrtlib.indri import QueryDoc, QueryExecutor, TrecMetric
 
 class JobQueue:
     def __init__(self, incoming, outgoing, jobs):
