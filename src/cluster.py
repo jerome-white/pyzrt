@@ -23,7 +23,7 @@ arguments.add_argument('--plot', type=Path)
 args = arguments.parse_args()
 
 if args.existing and args.existing.exists():
-    df.read_csv(str(args.existing))
+    df.read_csv(args.existing)
 else:
     with Pool as pool:
         df = pd.concat(pool.imap_unordered(func, args.documents.iterdir()))

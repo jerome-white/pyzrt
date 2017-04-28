@@ -8,7 +8,7 @@ class TermDocument:
     def __init__(self, document, include_lengths=True):
         self.name = document.stem
 
-        self.df = pd.read_csv(str(document))
+        self.df = pd.read_csv(document)
         self.df.sort_values(by=[ 'start', 'end' ], inplace=True)
 
         if include_lengths:
