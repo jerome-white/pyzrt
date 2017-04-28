@@ -1,12 +1,16 @@
 import csv
+import itertools
 import matplotlib.pyplot as plt
 from pathlib import Path
 from argparse import ArgumentParser
-from tempfile import NamedTemporaryFile
 from multiprocessing import Pool
 
+import numpy as np
 import pandas as pd
 from sklearn.cluster import dbscan as Cluster
+
+from zrtlib.indri import QueryDoc
+from zrtlib.document import TermDocument
 
 def func(path):
     document = TermDocument(path)
@@ -16,24 +20,32 @@ def func(path):
     return pd.DataFrame.from_dict([ counts.to_dict() ]).rename(transform)
 
 arguments = ArgumentParser()
-arguments.add_argument('--existing`', type=Path)
-arguments.add_argument('--documents', type=Path)
-arguments.add_argument('--output', type=Path)
 arguments.add_argument('--plot', type=Path)
+arguments.add_argument('--save', type=Path)
+arguments.add_argument('--output', type=Path)
+arguments.add_argument('--existing', type=Path)
+arguments.add_argument('--documents', type=Path)
 args = arguments.parse_args()
 
+#
+# Create the document matrix
+#
 if args.existing and args.existing.exists():
-    df.read_csv(str(args.existing))
+    df = pd.read_csv(args.existing)
 else:
-    with Pool as pool:
-        df = pd.concat(pool.imap_unordered(func, args.documents.iterdir()))
+    with Pool() as pool:
+        itr = itertools.filterfalse(QueryDoc.isquery, args.documents.iterdir())
+        df = pd.concat(pool.imap_unordered(func, itr))
     df.fillna(0, inplace=True)
-    with NamedTemporaryFile(mode='w', suffix='.csv', delete=False) as fp:
-        log.debug(fp.name)
-        df.to_csv(fp)
+    if args.save:
+        with args.save('w') as fp:
+            df.to_csv(fp)
 
+#
+# Cluster the matrix
+#
 cluster = Cluster(df.values)
-with output.open('w') as fp:
+with args.output.open('w') as fp:
     fieldnames = [ 'topic', 'cluster' ]
     writer = csv.DictWriter(fp, fieldnames=fieldnames)
     writer.writeheader()
@@ -50,7 +62,7 @@ if args.plot:
     colors = plt.cm.Spectral(np.linspace(0, 1, len(unique_labels)))
     for (k, col) in zip(unique_labels, colors):
         markerfacecolor = 'k' if k == -1 else col # black used for noise.
-        class_member_mask = (labels == k)
+        class_member_mask = (cluster.labels_ == k)
 
         xy = df.values[class_member_mask & core_samples_mask]
         plt.plot(xy[:, 0], xy[:, 1],
