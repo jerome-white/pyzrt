@@ -92,6 +92,7 @@ arguments = ArgumentParser()
 arguments.add_argument('--retrieval-model')
 arguments.add_argument('--selection-strategy')
 arguments.add_argument('--feedback-metric')
+arguments.add_argument('--seed', default='')
 arguments.add_argument('--index', type=Path)
 arguments.add_argument('--query', type=Path)
 arguments.add_argument('--qrels', type=Path)
@@ -149,7 +150,7 @@ eval_metric = TrecMetric(args.feedback_metric)
 with CSVWriter(args.query.stem, args.output) as writer:
     with QueryExecutor(args.index, args.qrels) as engine:
         query = HiddenQuery(document)
-        for (i, term) in enumerate(ts, 1):
+        for (i, term) in enumerate(itertools.chain(args.seed, ts), 1):
             if i > args.guesses or not query:
                 log.debug('Guessing finished')
                 break
