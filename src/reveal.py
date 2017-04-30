@@ -83,7 +83,7 @@ class ProgressiveQuery(Picker):
         return True
 
     def terms(self):
-        return TermDocument(io.StringIO(self.df.to_csv()))
+        return TermDocument(io.StringIO(self.df.to_csv(index=False)))
 
     def __float__(self):
         return float(len(self.df))
