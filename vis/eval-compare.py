@@ -10,48 +10,53 @@ import matplotlib.pyplot as plt
 from zrtlib import logger
 from zrtlib import zutils
 from zrtlib.indri import QueryDoc
-from zrtlib.jobqueu import SentinalJobQueue
+from zrtlib.jobqueue import SentinalJobQueue
 
-def func(keys, incoming, outgoing):
+def func(incoming, outgoing):
     while True:
         (ngram, model, metric, norms) = incoming.get()
 
-        for (topic, value) in zutils.get_stats(model, metric):
-            qid = QueryDoc.components(Path(topic))
-            if norms is not None:
-                value /= norms[qid.topic]
+        n = int(ngram.stem)
 
-            entry = [ int(ngram.stem), model.stem, qid.topic, value ]
-            log.info(' '.join(map(str, entry[:-1])))
+        for i in model.iterdir():
+            qid = QueryDoc.components(i)
+            with i.open() as fp:
+                for (_, values) in zutils.read_trec(fp):
+                    v = values[metric]
+                    if norms is not None:
+                        normalization = norms[qid.topic]
+                        if normalization != 0:
+                            v /= normalization
+                        else:
+                            assert(v == 0)
+                    entry = [ n, model.stem, qid.topic, v ]
+                    log.info(' '.join(map(str, entry[:-1])))
 
-            outgoing.put(dict(zip(keys, entry)))
+                    outgoing.put(entry)
 
         outgoing.put(None)
 
-def mkjobs(path, metric, min_ngrams=0, max_ngrams=np.inf):
-    for ngram in path.iterdir():
+def mkjobs(args):
+    if args.baseline is not None:
+        norms = dict(zutils.read_baseline(args.baseline, args.metric))
+    else:
+        norms = None
+
+    for ngram in args.zrt.iterdir():
         n = int(ngram.stem)
-        if min_ngrams <= n <= max_ngrams:
+        if args.min_ngrams <= n <= args.max_ngrams:
             for model in ngram.iterdir():
-                yield (ngram, model, metric)
-                
-def aquire(args):
-    keys = [ 'n-grams', 'model', 'topic', args.metric ]
+                yield (ngram, model, args.metric, norms)
+
+def aquire(args, metric):
+    keys = [ 'n-grams', 'model', 'topic', metric ]
     incoming = mp.Queue()
     outgoing = mp.Queue()
 
-    with mp.Pool(initializer=func, initargs=(keys, outgoing, incoming)):
-        items = mkjobs(args.zrt, args.metric, args.min_ngrams, args.max_ngrams)
-        
-        if args.baseline is not None:
-            with args.baseline.open() as fp:
-                reader = csv.reader(fp)
-                norms = { x: float(y) for (x, y) in reader }
-        else:
-            norms = None
-        jobs = map(lambda x: (*x, norms), items)
-        
-        yield from SentinalJobQueue(incoming, outgoing, jobs)
+    with mp.Pool(initializer=func, initargs=(outgoing, incoming)):
+        for i in SentinalJobQueue(incoming, outgoing, mkjobs(args)):
+            if i is not None:
+                yield dict(zip(keys, i))
 
 arguments = ArgumentParser()
 arguments.add_argument('--metric')
@@ -81,7 +86,7 @@ metric = {
 #
 # Aquire the data
 #
-df = pd.DataFrame(aquire(args))
+df = pd.DataFrame(aquire(args, metric))
 # http://stackoverflow.com/a/42014251 ???
 
 hues = df.model.unique()

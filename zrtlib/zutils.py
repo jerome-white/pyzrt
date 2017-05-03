@@ -17,18 +17,6 @@ def read_baseline(baseline, metric, single_topics=True):
                 seen.add(topic)
             yield (topic, float(line[metric]))
 
-#
-# Read Indri stat output
-#
-def get_stats(directory, metric, summary):
-    for i in directory.iterdir():
-        with i.open() as fp:
-            for line in fp:
-                (metric_, run, value) = line.strip().split()
-                aggregate = run == 'all'
-                if not (summary ^ aggregate) and metric == metric_:
-                    yield (i.stem, float(value))
-
 def read_trec(fp, summary=False):
     previous = None
     summarised = False
@@ -60,12 +48,6 @@ def read_trec(fp, summary=False):
 
     if results and (summary or run >= 0):
         yield (run, results)
-
-#
-# Return on the metric value from Indri stat output
-#
-def summary_stats(directory, metric, summary):
-    return [ x for (_, x) in get_stats(directory, metric, summary) ]
 
 def cut(word, pos=1):
     return (word[0:pos], word[pos:])
