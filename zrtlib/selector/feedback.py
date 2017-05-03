@@ -1,6 +1,17 @@
+import itertools
 import collections
+from functools import singledispatch
 
 import numpy as np
+
+@singledispatch
+def average(values):
+    return average(list(values))
+
+@average.register(list)
+def _(values):
+    weights = np.linspace(1, 2, len(values))
+    return np.average(values, weights=weights) if weights.size > 0 else 0
 
 class FeedbackHandler(collections.deque):
     def __init__(self, maxlen=1):
@@ -11,6 +22,13 @@ class FeedbackHandler(collections.deque):
 
 class RecentWeighted(FeedbackHandler):
     def __float__(self):
-        weights = np.linspace(1, 2, len(self))
+        return float(average(self))
 
-        return np.average(self, weights=weights) if weights.size > 0 else 0.0
+    def __int__(self):
+        if not self:
+            return 0
+
+        last = self[-1]
+        rest = average(itertools.islice(self, len(self) - 1))
+
+        return int(last > rest) - int(last < rest)

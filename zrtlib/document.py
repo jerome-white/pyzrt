@@ -1,3 +1,4 @@
+import io
 from collections import namedtuple
 
 import pandas as pd
@@ -6,9 +7,8 @@ Region = namedtuple('Region', 'n, first, last, df')
 
 class TermDocument:
     def __init__(self, document, include_lengths=True):
-        self.name = document.stem
-
-        self.df = pd.read_csv(str(document))
+        self.name = getattr(document, 'stem', None)
+        self.df = pd.read_csv(document)
         self.df.sort_values(by=[ 'start', 'end' ], inplace=True)
 
         if include_lengths:

@@ -5,28 +5,7 @@ from argparse import ArgumentParser
 
 from zrtlib import logger
 from zrtlib.indri import QueryDoc, QueryExecutor, TrecMetric
-
-class JobQueue:
-    def __init__(self, incoming, outgoing, jobs):
-        self.incoming = incoming
-        self.outgoing = outgoing
-        self.job_count = 0
-
-        for i in jobs:
-            self.outgoing.put(i)
-            self.job_count += 1
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        if not self.job_count:
-            raise StopIteration
-
-        item = self.incoming.get()
-        self.job_count -= 1
-
-        return item
+from zrtlib.jobqueue import JobQueue
 
 def func(incoming, outgoing, args):
     log = logger.getlogger()

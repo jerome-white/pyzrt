@@ -1,8 +1,10 @@
 import pandas as pd
 
 class TermSelector:
-    def __init__(self, strategy):
+    def __init__(self, strategy, feedback):
         self.strategy = strategy
+        self.feedback = feedback
+
         self.df = None
         self.feedback = None
         self.documents = {}

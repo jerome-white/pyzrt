@@ -1,3 +1,4 @@
+import csv
 from pathlib import Path
 from argparse import ArgumentParser
 from multiprocessing import Pool
@@ -10,15 +11,19 @@ import matplotlib.pyplot as plt
 from zrtlib import logger
 from zrtlib.indri import QueryDoc
 
-def aquire(path, metric):
+def aquire(path, metric, baseline=None):
     index_col = 'guess'
     df = pd.read_csv(str(path),
                      index_col=index_col,
                      usecols=[ index_col, metric ],
                      squeeze=True)
     df.name = QueryDoc.components(path).topic
+    df = df.reindex(index=np.arange(1, df.index.max() + 1)).ffill().fillna(0)
 
-    return df.reindex(index=np.arange(1, df.index.max() + 1)).ffill()
+    if baseline is not None:
+        df = df / baseline[df.name]
+
+    return df
 
 def func(args):
     (path, opts) = args
@@ -26,20 +31,35 @@ def func(args):
     title = path.stem
     output = opts.output.joinpath(title).with_suffix('.png')
 
-    frames = [ aquire(x, opts.metric) for x in path.iterdir() ]
+    if opts.baseline:
+        baseline = {}
+        with opts.baseline.open() as fp:
+            reader = csv.DictReader(fp)
+            for line in reader:
+                topic = line['topic']
+                assert(topic not in baseline)
+                baseline[topic] = float(line[opts.metric])
+    else:
+        baseline = None
+
+    frames = [ aquire(x, opts.metric, baseline) for x in path.iterdir() ]
     if not frames:
         return
-
     df = pd.concat(frames, axis='columns')
+
+    ymax = 1 if df.max().max() < 1 else None
+    ylabel = opts.metric
+    if baseline:
+        ylabel = 'Fraction of baseline ' + ylabel
 
     matplotlib.style.use('ggplot')
     plt.clf()
     df.plot(title=title.title(),
             grid=True,
             legend=False,
-            ylim=(0, 1))
+            ylim=(0, ymax))
     plt.xlabel('Guess')
-    plt.ylabel(opts.metric)
+    plt.ylabel(ylabel)
     plt.savefig(str(output), bbox_inches='tight')
 
     return path.stem
@@ -48,6 +68,7 @@ arguments = ArgumentParser()
 arguments.add_argument('--metric')
 arguments.add_argument('--top-level', type=Path)
 arguments.add_argument('--output', type=Path)
+arguments.add_argument('--baseline', type=Path)
 args = arguments.parse_args()
 
 log = logger.getlogger(True)

@@ -10,13 +10,17 @@ import matplotlib.pyplot as plt
 from zrtlib import logger
 from zrtlib import zutils
 from zrtlib.indri import QueryDoc
+from zrtlib.jobqueu import SentinalJobQueue
 
 def func(keys, incoming, outgoing):
     while True:
-        (ngram, model, metric, aggregate) = incoming.get()
+        (ngram, model, metric, norms) = incoming.get()
 
-        for (topic, value) in zutils.get_stats(model, metric, aggregate):
+        for (topic, value) in zutils.get_stats(model, metric):
             qid = QueryDoc.components(Path(topic))
+            if norms is not None:
+                value /= norms[qid.topic]
+
             entry = [ int(ngram.stem), model.stem, qid.topic, value ]
             log.info(' '.join(map(str, entry[:-1])))
 
@@ -24,32 +28,34 @@ def func(keys, incoming, outgoing):
 
         outgoing.put(None)
 
+def mkjobs(path, metric, min_ngrams=0, max_ngrams=np.inf):
+    for ngram in path.iterdir():
+        n = int(ngram.stem)
+        if min_ngrams <= n <= max_ngrams:
+            for model in ngram.iterdir():
+                yield (ngram, model, metric)
+                
 def aquire(args):
-    keys = [ 'n-grams', 'model', 'topic', metric ]
+    keys = [ 'n-grams', 'model', 'topic', args.metric ]
     incoming = mp.Queue()
     outgoing = mp.Queue()
 
     with mp.Pool(initializer=func, initargs=(keys, outgoing, incoming)):
-        jobs = 0
-
-        for ngram in args.zrt.iterdir():
-            n = int(ngram.stem)
-            if args.min_ngrams <= n <= args.max_ngrams:
-                for model in ngram.iterdir():
-                    outgoing.put((ngram, model, args.metric, args.all))
-                    jobs += 1
-
-        while jobs > 0:
-            stats = incoming.get()
-            if stats is None:
-                jobs -= 1
-            else:
-                yield stats
+        items = mkjobs(args.zrt, args.metric, args.min_ngrams, args.max_ngrams)
+        
+        if args.baseline is not None:
+            with args.baseline.open() as fp:
+                reader = csv.reader(fp)
+                norms = { x: float(y) for (x, y) in reader }
+        else:
+            norms = None
+        jobs = map(lambda x: (*x, norms), items)
+        
+        yield from SentinalJobQueue(incoming, outgoing, jobs)
 
 arguments = ArgumentParser()
 arguments.add_argument('--metric')
 arguments.add_argument('--kind')
-arguments.add_argument('--all', action='store_true') # "all" or runs only?
 arguments.add_argument('--zrt', type=Path)
 arguments.add_argument('--baseline', type=Path)
 arguments.add_argument('--min-ngrams', type=int, default=0)

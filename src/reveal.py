@@ -46,10 +46,51 @@ class CSVWriter:
             self. writer.writeheader()
         self.writer.writerow(row)
 
+class Picker:
+    def terms(self):
+        raise NotImplementedError()
+
+    def add(self, term):
+        raise NotImplementedError()
+
+    def __bool__(self):
+        return False
+
+class HiddenQuery(Picker):
+    def __init__(self, hidden_document):
+        self.document = hidden_document
+
+    def terms(self):
+        return self.document
+
+    def add(self, term):
+        return self.document.flip(term) > 0
+
+    def __float__(self):
+        return float(self.document)
+
+    def __bool__(self):
+        return bool(self.document)
+
+class ProgressiveQuery(Picker):
+    def __init__(self):
+        self.df = pd.DataFrame()
+
+    def add(self, term):
+        self.df = self.df.append(term, ignore_index=True)
+        return True
+
+    def terms(self):
+        return TermDocument(io.StringIO(self.df.to_csv(index=False)))
+
+    def __float__(self):
+        return float(len(self.df))
+
 arguments = ArgumentParser()
 arguments.add_argument('--retrieval-model')
 arguments.add_argument('--selection-strategy')
 arguments.add_argument('--feedback-metric')
+arguments.add_argument('--seed', default='')
 arguments.add_argument('--index', type=Path)
 arguments.add_argument('--query', type=Path)
 arguments.add_argument('--qrels', type=Path)
@@ -64,11 +105,13 @@ log = logger.getlogger()
 #
 # Initialise the query and the selector
 #
-query = HiddenDocument(args.query)
+document = HiddenDocument(args.query)
 
 if args.selection_strategy == 'relevance':
     relevant = set(indri.relevant_documents(args.qrels))
-    st = strat.BlindHomogenous(tek.Relevance, query=query, relevant=relevant)
+    st = strat.BlindHomogenous(tek.Relevance,
+                               query=document,
+                               relevant=relevant)
 elif args.selection_strategy == 'direct':
     feedback = RecentWeighted()
     st = strat.DirectNeighbor(feedback=feedback,
@@ -104,23 +147,25 @@ eval_metric = TrecMetric(args.feedback_metric)
 #
 with CSVWriter(args.query.stem, args.output) as writer:
     with QueryExecutor(args.index, args.qrels) as engine:
-        for (i, term) in enumerate(ts, 1):
+        query = HiddenQuery(document)
+        for (i, term) in enumerate(itertools.chain(args.seed, ts), 1):
             if i > args.guesses or not query:
                 log.debug('Guessing finished')
                 break
 
             #
-            # Flip the term
+            # Add the term to the query
             #
-            flipped = query.flip(term)
-            log.info('g {0} {1} {2}'.format(i, term, flipped))
-            if not flipped:
+            added = query.add(term)
+            log.info('g {0} {1} {2}'.format(i, term))
+            if not added:
+                ts.report(0)
                 continue
 
             #
             # Run the query and evaluate
             #
-            engine.query(QueryBuilder(args.retrieval_model, query))
+            engine.query(QueryBuilder(args.retrieval_model, query.terms()))
             (_, evaluation) = next(engine.evaluate(eval_metric))
 
             #
@@ -129,7 +174,7 @@ with CSVWriter(args.query.stem, args.output) as writer:
             results = {
                 'guess': i,
                 'term': term,
-                'hidden': float(query),
+                'progress': float(query),
                 **evaluation,
             }
             writer.writerow(results)
@@ -137,5 +182,5 @@ with CSVWriter(args.query.stem, args.output) as writer:
             #
             # Report back to the term selector
             #
-            ts.feedback = results[repr(eval_metric)]
+            ts.report(results[repr(eval_metric)])
             log.info('f {0} {1}'.format(eval_metric.metric, ts.feedback))
