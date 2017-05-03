@@ -29,19 +29,22 @@ class JobQueue:
         return item
 
 def func(incoming, outgoing, args):
-    metrics = map(TrecMetric, args.feedback_metrics)
+    log = logger.getlogger()
+    metrics = map(TrecMetric, args.feedback_metric)
 
-    with QueryExecutor(args.index, args.qrels) as engine:
-        while True:
-            query = incoming.get()
+    while True:
+        query = incoming.get()
+        log.info(query.stem)
 
-            results = { 'topic': QueryDoc.components(query).topic }
+        results = { 'topic': QueryDoc.components(query).topic }
+        judgements = args.qrels.joinpath(results['topic'])
+        with QueryExecutor(args.index, judgements, True) as engine:
             with query.open() as fp:
                 engine.query(fp.read())
             (_, evaluation) = next(engine.evaluate(*metrics))
-            results.update(evaluation)
+        results.update(evaluation)
 
-            outgoing.put(results)
+        outgoing.put(results)
 
 arguments = ArgumentParser()
 arguments.add_argument('--index', type=Path)
@@ -57,12 +60,15 @@ incoming = mp.Queue()
 outgoing = mp.Queue()
 
 with mp.Pool(initializer=func, initargs=(outgoing, incoming, args)):
+    results = []
+    fieldnames = set()
     queue = JobQueue(incoming, outgoing, args.query.iterdir())
 
-    with args.output('w') as fp:
-        writer = None
-        for i in queue:
-            if writer is None:
-                writer = csv.DictWriter(fp, fieldnames=i.keys())
-                writer.writeheader()
-            writer.writerow(i)
+    for i in queue:
+        fieldnames.update(i.keys())
+        results.append(i)
+
+    with args.output.open('w') as fp:
+        writer = csv.DictWriter(fp, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(results)
