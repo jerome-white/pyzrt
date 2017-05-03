@@ -27,14 +27,12 @@ def read_trec(fp, summary=False):
             run = int(run)
             assert(run >= 0)
         except ValueError:
-            if not summary:
-                continue
             run = -1
 
         if previous is not None and previous != run:
             assert(not summarised)
 
-            yield (run, results)
+            yield (previous, results)
             results = {} # probably not necessary, but safe
 
             if run < 0:
@@ -47,7 +45,7 @@ def read_trec(fp, summary=False):
 
         previous = run
 
-    if results and not (summary ^ (previous >= 0)):
+    if results and (summary or run >= 0):
         yield (run, results)
 
 #
