@@ -12,7 +12,7 @@ class JobQueue:
         return self
 
     def __next__(self):
-        if not self.job_count:
+        if self.job_count < 1:
             raise StopIteration
 
         item = self.incoming.get()
