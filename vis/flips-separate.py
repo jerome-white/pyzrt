@@ -9,6 +9,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 
 from zrtlib import logger
+from zrtilib import zutils
 from zrtlib.indri import QueryDoc
 
 def aquire(path, metric, baseline=None):
@@ -21,7 +22,7 @@ def aquire(path, metric, baseline=None):
     df = df.reindex(index=np.arange(1, df.index.max() + 1)).ffill().fillna(0)
 
     if baseline is not None:
-        df = df / baseline[df.name]
+        df /= baseline[df.name]
 
     return df
 
@@ -31,14 +32,8 @@ def func(args):
     title = path.stem
     output = opts.output.joinpath(title).with_suffix('.png')
 
-    if opts.baseline:
-        baseline = {}
-        with opts.baseline.open() as fp:
-            reader = csv.DictReader(fp)
-            for line in reader:
-                topic = line['topic']
-                assert(topic not in baseline)
-                baseline[topic] = float(line[opts.metric])
+    if opts.baseline is not None:
+        baseline = dict(zutils.read_baseline(opts.baseline, opts.metric))
     else:
         baseline = None
 
