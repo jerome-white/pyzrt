@@ -27,10 +27,10 @@ class IterableStack(list):
         self.append(list(iterable))
 
 class SelectionStrategy:
-    def pick(self, documents, feedback=None):
+    def pick(self, documents, feedback):
         raise NotImplementedError()
 
-    def stream(self, documents, feedback=None):
+    def stream(self, documents, feedback):
         while True:
             yield self.pick(documents, feedback)
 
@@ -39,34 +39,34 @@ class BlindHomogenous(SelectionStrategy):
         self.technique = technique
         self.kwargs = kwargs
 
-    def pick(self, documents, feedback=None):
+    def pick(self, documents, feedback):
         try:
             return next(self.technique)
         except TypeError: # http://stackoverflow.com/a/1549854
             self.technique = self.technique(documents, **self.kwargs)
             return self.pick(documents, feedback)
 
-class CoOccurrence(BlindHomogenous):
-    def __init__(self, feedback, radius=1, technique=Random, **kwargs):
-        self.feedback = feedback
+class CoOccurrence(SelectionStrategy):
+    def __init__(self, radius=1, sieve, technique=Random, **kwargs):
         self.radius = radius
-
-        self.stack = IterableStack()
+        self.sieve = sieve
         self.blind = BlindHomogenous(technique, **kwargs)
 
-    def pick(self, documents, feedback=None):
-        if feedback is not None:
-            memory = float(self.feedback)
+        self.stack = IterableStack()
 
-            if feedback > memory:
-                last = documents['selected'].argmax()
-                term = documents.iloc[last]['term']
-                matches = documents[documents['term'] == term]
-                self.stack.push(self.proximity(documents, matches))
-            elif memory > feedback:
-                self.stack.pop()
+    def pick(self, documents, feedback):
+        improvement = int(feedback)
 
-            self.feedback.append(feedback)
+        if improvement > 0:
+            last = documents['selected'].argmax()
+            term = documents.iloc[last]['term']
+
+            # relevant = self.sieve(documents, term)
+
+            matches = documents[documents['term'] == term]
+            self.stack.push(self.proximity(documents, matches))
+        elif improvement < 0:
+            self.stack.pop()
 
         iterable = (self.stack, self.blind.stream(documents))
         for i in itertools.chain.from_iterable(iterable):
