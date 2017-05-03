@@ -161,6 +161,7 @@ with CSVWriter(args.query.stem, args.output) as writer:
             added = query.add(term)
             log.info('g {0} {1} {2}'.format(i, term))
             if not added:
+                ts.report(0)
                 continue
 
             #
@@ -183,5 +184,5 @@ with CSVWriter(args.query.stem, args.output) as writer:
             #
             # Report back to the term selector
             #
-            ts.feedback = results[repr(eval_metric)]
+            ts.report(results[repr(eval_metric)])
             log.info('f {0} {1}'.format(eval_metric.metric, ts.feedback))
