@@ -16,20 +16,18 @@ def func(incoming, outgoing):
     while True:
         (ngram, model, metric, norms) = incoming.get()
 
-        n = int(ngram.stem)
-
         for i in model.iterdir():
             qid = QueryDoc.components(i)
             with i.open() as fp:
                 for (_, values) in zutils.read_trec(fp):
                     v = values[metric]
                     if norms is not None:
-                        normalization = norms[qid.topic]
-                        if normalization != 0:
-                            v /= normalization
+                        n = norms[qid.topic]
+                        if n != 0:
+                            v /= n
                         else:
                             assert(v == 0)
-                    entry = [ n, model.stem, qid.topic, v ]
+                    entry = [ ngram, model.stem, qid.topic, v ]
                     log.info(' '.join(map(str, entry[:-1])))
 
                     outgoing.put(entry)
@@ -46,7 +44,7 @@ def mkjobs(args):
         n = int(ngram.stem)
         if args.min_ngrams <= n <= args.max_ngrams:
             for model in ngram.iterdir():
-                yield (ngram, model, args.metric, norms)
+                yield (n, model, args.metric, norms)
 
 def aquire(args, metric):
     keys = [ 'n-grams', 'model', 'topic', metric ]
