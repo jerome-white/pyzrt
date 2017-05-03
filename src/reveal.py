@@ -73,17 +73,15 @@ class HiddenQuery(Picker):
         return bool(self.document)
 
 class ProgressiveQuery(Picker):
-    def __init__(self, seed=None):
+    def __init__(self):
         self.df = pd.DataFrame()
-        if seed is not None:
-            self.add(seed)
 
     def add(self, term):
         self.df = self.df.append(term, ignore_index=True)
         return True
 
     def terms(self):
-        return TermDocument(io.StringIO(self.df.to_csv()))
+        return TermDocument(io.StringIO(self.df.to_csv(index=False)))
 
     def __float__(self):
         return float(len(self.df))
