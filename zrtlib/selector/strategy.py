@@ -46,12 +46,10 @@ class BlindHomogenous(SelectionStrategy):
             self.technique = self.technique(documents, **self.kwargs)
             return self.pick(documents, feedback)
 
-class CoOccurrence(SelectionStrategy):
-    def __init__(self, radius=1, sieve, technique=Random, **kwargs):
-        self.radius = radius
+class Feedback(SelectionStrategy):
+    def __init__(self, sieve, technique=Random, **kwargs):
         self.sieve = sieve
         self.blind = BlindHomogenous(technique, **kwargs)
-
         self.stack = IterableStack()
 
     def pick(self, documents, feedback):
@@ -70,6 +68,15 @@ class CoOccurrence(SelectionStrategy):
             matches = documents[documents['term'] == i]
             if not matches['selected'].any():
                 return i
+
+class BlindRelevance(Feedback):
+    pass
+
+class CoOccurrence(Feedback):
+    def __init__(self, radius=1, sieve, technique=Random, **kwargs):
+        super().__init__(sieve, technique, **kwargs)
+
+        self.radius = radius
 
     def proximity(self, term, documents):
         occurrence = collections.Counter()
