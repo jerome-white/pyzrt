@@ -14,8 +14,8 @@ from zrtlib.document import TermDocument
 
 def func(path):
     document = TermDocument(path)
-    transform = lambda x: document.name
     counts = document.df['term'].value_counts()
+    transform = lambda x: document.name
 
     return pd.DataFrame.from_dict([ counts.to_dict() ]).rename(transform)
 
@@ -46,7 +46,7 @@ else:
 #
 cluster = Cluster(df.values)
 with args.output.open('w') as fp:
-    fieldnames = [ 'topic', 'cluster' ]
+    fieldnames = [ 'document', 'cluster' ]
     writer = csv.DictWriter(fp, fieldnames=fieldnames)
     writer.writeheader()
     for i in zip(df.index, cluster.labels_):
