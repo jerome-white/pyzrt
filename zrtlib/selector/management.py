@@ -1,9 +1,12 @@
+from collections import deque
+
 import pandas as pd
 
 class TermSelector:
-    def __init__(self, strategy, feedback):
+    def __init__(self, strategy, feedback, seed=None):
         self.strategy = strategy
         self.feedback = feedback
+        self.seed = deque(seed) if seed is not None else []
 
         self.df = None
         self.feedback = None
@@ -23,7 +26,10 @@ class TermSelector:
     # the choice as selected
     #
     def __next__(self):
-        term = self.strategy.pick(self.df, self.feedback)
+        if self.seed:
+            term = self.seed.popleft()
+        else:
+            term = self.strategy.pick(self.df, self.feedback)
         self.mark_selected(term)
 
         return term

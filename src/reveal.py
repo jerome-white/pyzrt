@@ -90,13 +90,12 @@ arguments = ArgumentParser()
 arguments.add_argument('--retrieval-model')
 arguments.add_argument('--selection-strategy')
 arguments.add_argument('--feedback-metric')
-arguments.add_argument('--seed', default='')
 arguments.add_argument('--index', type=Path)
 arguments.add_argument('--query', type=Path)
 arguments.add_argument('--qrels', type=Path)
 arguments.add_argument('--input', type=Path)
 arguments.add_argument('--output', type=Path)
-arguments.add_argument('--replay', type=Path, action='append')
+arguments.add_argument('--seed', action='append', default=[])
 arguments.add_argument('--guesses', type=int, default=np.inf)
 args = arguments.parse_args()
 
@@ -131,7 +130,7 @@ else:
     }
     st = strat.BlindHomogenous(technique[args.selection_strategy])
 
-ts = TermSelector(st)
+ts = TermSelector(st, RecentWeighted(), args.seed)
 with Pool() as pool:
     iterable = itertools.filterfalse(QueryDoc.isquery, zutils.walk(args.input))
     for i in pool.imap_unordered(TermDocument, iterable):
@@ -148,7 +147,7 @@ eval_metric = TrecMetric(args.feedback_metric)
 with CSVWriter(args.query.stem, args.output) as writer:
     with QueryExecutor(args.index, args.qrels) as engine:
         query = HiddenQuery(document)
-        for (i, term) in enumerate(itertools.chain(args.seed, ts), 1):
+        for (i, term) in enumerate(ts, 1):
             if i > args.guesses or not query:
                 log.debug('Guessing finished')
                 break
@@ -159,7 +158,7 @@ with CSVWriter(args.query.stem, args.output) as writer:
             added = query.add(term)
             log.info('g {0} {1} {2}'.format(i, term))
             if not added:
-                ts.report(0)
+                ts.feedback.append(0)
                 continue
 
             #
@@ -182,5 +181,5 @@ with CSVWriter(args.query.stem, args.output) as writer:
             #
             # Report back to the term selector
             #
-            ts.report(results[repr(eval_metric)])
+            ts.feedback.append(results[repr(eval_metric)])
             log.info('f {0} {1}'.format(eval_metric.metric, ts.feedback))
