@@ -32,7 +32,10 @@ class SelectionStrategy:
 
     def stream(self, documents, feedback):
         while True:
-            yield self.pick(documents, feedback)
+            choice = self.pick(documents, feedback)
+            if choice is None:
+                break
+            yield choice
 
 class BlindHomogenous(SelectionStrategy):
     def __init__(self, technique, **kwargs):
@@ -69,8 +72,12 @@ class Feedback(SelectionStrategy):
             if not matches['selected'].any():
                 return i
 
+    def proximity(self, term, documents):
+        raise NotImplementedError()
+
 class BlindRelevance(Feedback):
-    pass
+    def proximity(self, term, documents):
+        yield from Entropy(documents)
 
 class CoOccurrence(Feedback):
     def __init__(self, radius=1, sieve, technique=Random, **kwargs):
