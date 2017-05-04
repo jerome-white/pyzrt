@@ -60,11 +60,8 @@ class CoOccurrence(SelectionStrategy):
         if improvement > 0:
             last = documents['selected'].argmax()
             term = documents.iloc[last]['term']
-
-            # relevant = self.sieve(documents, term)
-
-            matches = documents[documents['term'] == term]
-            self.stack.push(self.proximity(documents, matches))
+            relevant = self.sieve.like(term, documents)
+            self.stack.push(self.proximity(term, relevant))
         elif improvement < 0:
             self.stack.pop()
 
@@ -74,15 +71,16 @@ class CoOccurrence(SelectionStrategy):
             if not matches['selected'].any():
                 return i
 
-    def proximity(self, documents, matches):
-        occurence = collections.Counter()
+    def proximity(self, term, documents):
+        occurrence = collections.Counter()
 
-        for i in matches.itertuples():
-            docs = documents[documents['document'] == i.document]
-            for (term, distance) in self.proximity_(i, docs):
-                occurence[term['term']] += 1 / distance
+        for df in documents:
+            rows = df[df['term'] == term]
+            for i in rows.itertuples():
+                for (neighbor, distance) in self.proximity_(i, df):
+                    occurrence[neighbor['term']] += 1 / distance
 
-        yield from map(op.itemgetter(0), occurence.most_common())
+        yield from map(op.itemgetter(0), occurrence.most_common())
 
     def proximity_(self, row, documents):
         raise NotImplementedError()
