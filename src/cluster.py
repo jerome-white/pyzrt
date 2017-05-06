@@ -1,4 +1,5 @@
 import csv
+import math
 import itertools
 import matplotlib.pyplot as plt
 from pathlib import Path
@@ -35,8 +36,9 @@ if args.existing and args.existing.exists():
 else:
     with Pool() as pool:
         itr = itertools.filterfalse(QueryDoc.isquery, args.documents.iterdir())
-        df = pd.concat(pool.imap_unordered(func, itr))
-    df.fillna(0, inplace=True)
+        df = pd.concat(pool.imap_unordered(func, itr)).fillna(0)
+    df = df.apply(lambda x: x / math.sqrt(sum(x ** 2)), axis='columns')
+
     if args.save:
         with args.save('w') as fp:
             df.to_csv(fp)
