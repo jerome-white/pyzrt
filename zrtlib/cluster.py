@@ -1,4 +1,6 @@
 import csv
+import operator as op
+import collections
 from multiprocessing import Pool
 
 import numpy as np
@@ -8,6 +10,8 @@ from sklearn import cluster
 from sklearn.feature_extraction.text import TfidfTransformer
 
 from zrtlib.document import TermDocument
+
+Entry = collections.namedtuple('Entry', 'type, cluster, value')
 
 def getdocs(path):
     document = TermDocument(path)
@@ -41,6 +45,11 @@ class Centroid(Cluster):
     def visualize_(self):
         raise NotImplementedError()
 
+    def write(self, fp, n_terms=10):
+        writer = csv.DictWriter(fp, fieldnames=Entry._fields)
+        writer.writeheader()
+        writer.writerows(map(op.methodcaller('_asdict'), self.extract()))
+
 class KMeans(Centroid):
     def mkmodel(self, **kwargs):
         return cluster.KMeans(**kwargs)
@@ -52,9 +61,6 @@ class KMeans(Centroid):
         raise NotImplementedError()
 
     def write(self, fp, n_terms=10):
-        data = []
-        keys = [ 'type', 'cluster', 'value' ]
-
         #
         # terms
         #
@@ -63,17 +69,13 @@ class KMeans(Centroid):
 
         for i in range(self.model.n_clusters):
             for j in order_centroids[i,:n_terms]:
-                data.append(dict(zip(keys, ('term', i, terms[i]))))
+                yield Entry('term', i, terms[i])
 
         #
         # documents
         #
         for i in zip(self.labels, self.model.labels_):
-            data.append(dict(zip(keys, ('document', *i))))
-
-        writer = csv.DictWriter(fp, fieldnames=keys)
-        writer.writeheader()
-        writer.writerows(data)
+            yield Entry('document', *i)
 
 class DBScan(Centroid):
     def mkmodel(self, **kwargs):
