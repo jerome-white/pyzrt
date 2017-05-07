@@ -27,7 +27,7 @@ def getdocs(documents):
     with Pool() as pool:
         return pd.concat(pool.imap_unordered(toframe, documents)).fillna(0)
 
-@getdocs.register(Path):
+@getdocs.register(Path)
 def _(documents):
     return pd.read_csv(documents)
 
