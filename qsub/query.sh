@@ -63,6 +63,7 @@ EOF
         --mem=60G \
         --time=6:00:00 \
         --mail-type=ALL \
+	--mail-user=jsw7@nyu.edu \
         --nodes=1 \
         --cpus-per-task=20 \
         --job-name=query-$action \

@@ -44,6 +44,7 @@ sbatch \
     --mem=492G \
     --time=2-0 \
     --mail-type=ALL \
+    --mail-user=jsw7@nyu.edu \
     --nodes=1 \
     --cpus-per-task=$cpus \
     --job-name=reveal-suffix \

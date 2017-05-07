@@ -6,6 +6,7 @@
 #SBATCH --nodes=1
 #SBATCH --job-name=pyzrt-cluster
 #SBATCH --mail-type=ALL
+#SBATCH --mail-user=jsw7@nyu.edu
 
 path=$SCRATCH/zrt/wsj/2017_0118_020518
 output=$path/cluster/04

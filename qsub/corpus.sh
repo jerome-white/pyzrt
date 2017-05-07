@@ -6,6 +6,7 @@
 #SBATCH --nodes=1
 #SBATCH --job-name=pyzrt-corpus
 #SBATCH --mail-type=ALL
+#SBATCH --mail-user=jsw7@nyu.edu
 
 #
 # Generate the queries
