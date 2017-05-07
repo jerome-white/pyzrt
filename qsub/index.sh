@@ -39,14 +39,14 @@ for i in $trees/*; do
 	path=( ${path[@]} $root/$j/$term )
     done
 
-    qsub=`mktemp`
+    job=`mktemp`
 
     #
     # Convert the suffix trees to term files
     #
     if [ $mkterms ]; then
 	install ${path[0]}
-	cat <<EOF >> $qsub
+	cat <<EOF >> $job
 python3 $ZR_HOME/src/suffix2terms.py \
   --suffix-tree $i \
   --output ${path[0]}
@@ -60,7 +60,7 @@ EOF
 	for j in ${path[@]:1}; do
 	    install $j
 	done
-	cat <<EOF >> $qsub
+	cat <<EOF >> $job
 find ${path[0]} -name 'WSJ*' -not -name 'WSJQ*' | \
   python3 $ZR_HOME/src/parse.py \
     --output ${path[1]} \
@@ -75,14 +75,14 @@ IndriBuildIndex \
 EOF
     fi
 
-    qsub \
-	-j oe \
-	-l nodes=1:ppn=20,mem=60GB,walltime=4:00:00 \
-	-m abe \
-	-M jsw7@nyu.edu \
-	-N index \
-	-V \
-	$qsub >> jobs
+    sbatch \
+        --mem=60G \
+        --time=4:00:00 \
+        --mail-type=ALL \
+        --nodes=1 \
+        --ntasks=20 \
+        --job-name=index \
+        $job >> jobs
 done
 
 # leave a blank line at the end

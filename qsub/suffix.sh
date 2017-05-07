@@ -2,7 +2,7 @@
 
 n=4
 m=12
-ppn=20
+ntasks=10
 
 while getopts "c:m:n:h" OPTION; do
     case $OPTION in
@@ -28,25 +28,25 @@ else
     mkdir --parents $output
 fi
 
-qsub=`mktemp`
-cat <<EOF > $qsub
+job=`mktemp`
+cat <<EOF > $job
 python3 -u $ZR_HOME/src/stree.py $existing \
     --input $corpus \
     --output $output \
     --min-gram $n \
     --max-gram $m \
     --prune 1 \
-    --workers `expr $ppn / 2` \
+    --workers $ntasks \
     --incremental
 EOF
 
-qsub \
-    -j oe \
-    -l nodes=1:ppn=$ppn,mem=492GB,walltime=48:00:00 \
-    -m abe \
-    -M jsw7@nyu.edu \
-    -N reveal-suffix \
-    -V \
-    $qsub
+sbatch \
+    --mem=492G \
+    --time=2-0 \
+    --mail-type=ALL \
+    --nodes=1 \
+    --ntasks=$ntasks \
+    --job-name=reveal-suffix \
+    $job
 
 # leave a blank line at the end

@@ -1,11 +1,11 @@
 #!/bin/bash
 
-#PBS -V
-#PBS -l nodes=1:ppn=4,mem=150GB,walltime=1:00:00
-#PBS -m abe
-#PBS -M jsw7@nyu.edu
-#PBS -N pyzrt-cluster
-#PBS -j oe
+#SBATCH --mem=150GB
+#SBATCH --time=60
+#SBATCH --ntasks=4
+#SBATCH --nodes=1
+#SBATCH --job-name=pyzrt-cluster
+#SBATCH --mail-type=ALL
 
 path=$SCRATCH/zrt/wsj/2017_0118_020518
 output=$path/cluster/04

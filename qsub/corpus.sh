@@ -1,11 +1,11 @@
 #!/bin/bash
 
-#PBS -V
-#PBS -l nodes=1:ppn=20,mem=60GB,walltime=1:00:00
-#PBS -m abe
-#PBS -M jsw7@nyu.edu
-#PBS -N pyzrt-corpus
-#PBS -j oe
+#SBATCH --mem=60GB
+#SBATCH --time=60
+#SBATCH --ntasks=20
+#SBATCH --nodes=1
+#SBATCH --job-name=pyzrt-corpus
+#SBATCH --mail-type=ALL
 
 #
 # Generate the queries

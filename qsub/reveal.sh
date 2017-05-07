@@ -42,9 +42,9 @@ fi
 output=$root/selector/$ngrams/$strategy
 mkdir --parents $output
 
-qsub=`mktemp`
+job=`mktemp`
 
-cat <<EOF >> $qsub
+cat <<EOF >> $job
 python3 -u $ZR_HOME/src/qrels.py \
     --input $qrels \
     --output \$PBS_JOBTMP \
@@ -63,11 +63,11 @@ python3 -u $ZR_HOME/src/reveal.py \
     --feedback-metric $metric
 EOF
 
-qsub \
-    -j oe \
-    -l nodes=1:ppn=4,mem=150GB,walltime=12:00:00 \
-    -m abe \
-    -M jsw7@nyu.edu \
-    -N reveal.`basename $query`-${strategy} \
-    -V \
-    $qsub
+sbatch \
+    --mem=150G \
+    --time=12:00:00 \
+    --mail-type=ALL \
+    --nodes=1 \
+    --ntasks=4 \
+    --job-name=reveal.`basename $query`-${strategy} \
+    $job

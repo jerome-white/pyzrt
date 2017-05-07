@@ -28,13 +28,13 @@ done
 
 rm --force jobs
 for i in $indri/*; do
-    qsub=`mktemp`
-    echo $i $qsub
+    job=`mktemp`
+    echo $i $job
 
     #
     # Establish the variables within the script...
     #
-    cat <<EOF > $qsub
+    cat <<EOF > $job
 root=`dirname $indri`
 terms=`basename $i`
 action=$action
@@ -44,7 +44,7 @@ EOF
     #
     # ... so their variable form can be left to interpretation.
     #
-    cat <<"EOF" >> $qsub
+    cat <<"EOF" >> $job
     echo $terms $j
 
     output=$root/queries/$action/$terms/$j
@@ -59,12 +59,12 @@ EOF
 done
 echo $terms DONE
 EOF
-    qsub \
-	-j oe \
-	-l nodes=1:ppn=20,mem=60GB,walltime=6:00:00 \
-	-m abe \
-	-M jsw7@nyu.edu \
-	-N query$action \
-	-V \
-	$qsub >> jobs
+    sbatch \
+        --mem=60G \
+        --time=6:00:00 \
+        --mail-type=ALL \
+        --nodes=1 \
+        --ntasks=20 \
+        --job-name=query-$action \
+        $job >> jobs
 done
