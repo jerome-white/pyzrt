@@ -22,8 +22,12 @@ def getdocs(path):
 
 class Cluster:
     def __init__(self, documents):
-        with Pool() as pool:
-            df = pd.concat(pool.imap_unordered(getdocs, documents)).fillna(0)
+        if documents.is_dir():
+            with Pool() as pool:
+                df = pd.concat(pool.imap_unordered(getdocs, documents))
+            df.fillna(0, inplace=True)
+        else:
+            df = pd.read_csv(documents)
         self.labels = df.index.values
         self.observations = TfidfTransformer().fit_transform(df.values)
 
@@ -31,7 +35,7 @@ class Centroid(Cluster):
     def __init__(self, documents, **kwargs):
         super().__init__(documents)
 
-        self.model = self.mkmodel(**{ 'n_jobs': -1, **kwargs })
+        self.model = self.mkmodel(**kwargs)
         self.model.fit(self.observations)
 
     def mkmodel(self, **kwargs):
@@ -60,22 +64,23 @@ class KMeans(Centroid):
     def elbow(self, output):
         raise NotImplementedError()
 
-    def write(self, fp, n_terms=10):
-        #
-        # terms
-        #
-        order_centroids = self.model.cluster_centers_.argsort()[:, ::-1]
-        terms = self.observations.get_feature_names()
-
-        for i in range(self.model.n_clusters):
-            for j in order_centroids[i,:n_terms]:
-                yield Entry('term', i, terms[i])
-
+    def write(self, fp, n_terms=0):
         #
         # documents
         #
         for i in zip(self.labels, self.model.labels_):
             yield Entry('document', *i)
+
+        #
+        # terms
+        #
+        if n_terms > 0:
+            order_centroids = self.model.cluster_centers_.argsort()[:, ::-1]
+            terms = self.observations.get_feature_names()
+
+            for i in range(self.model.n_clusters):
+                for j in order_centroids[i,:n_terms]:
+                    yield Entry('term', i, terms[i])
 
 class DBScan(Centroid):
     def mkmodel(self, **kwargs):
