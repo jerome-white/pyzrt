@@ -2,7 +2,7 @@
 
 #SBATCH --mem=150GB
 #SBATCH --time=60
-#SBATCH --ntasks=4
+#SBATCH --cpus-per-task=4
 #SBATCH --nodes=1
 #SBATCH --job-name=pyzrt-cluster
 #SBATCH --mail-type=ALL

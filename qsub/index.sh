@@ -80,7 +80,7 @@ EOF
         --time=4:00:00 \
         --mail-type=ALL \
         --nodes=1 \
-        --ntasks=20 \
+        --cpus-per-task=20 \
         --job-name=index \
         $job >> jobs
 done

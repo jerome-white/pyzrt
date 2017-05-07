@@ -68,6 +68,6 @@ sbatch \
     --time=12:00:00 \
     --mail-type=ALL \
     --nodes=1 \
-    --ntasks=4 \
+    --cpus-per-task=4 \
     --job-name=reveal.`basename $query`-${strategy} \
     $job

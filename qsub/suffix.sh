@@ -2,7 +2,7 @@
 
 n=4
 m=12
-ntasks=10
+cpus=10
 
 while getopts "c:m:n:h" OPTION; do
     case $OPTION in
@@ -36,7 +36,7 @@ python3 -u $ZR_HOME/src/stree.py $existing \
     --min-gram $n \
     --max-gram $m \
     --prune 1 \
-    --workers $ntasks \
+    --workers $cpus \
     --incremental
 EOF
 
@@ -45,7 +45,7 @@ sbatch \
     --time=2-0 \
     --mail-type=ALL \
     --nodes=1 \
-    --ntasks=$ntasks \
+    --cpus-per-task=$cpus \
     --job-name=reveal-suffix \
     $job
 

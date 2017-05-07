@@ -2,7 +2,7 @@
 
 #SBATCH --mem=60GB
 #SBATCH --time=60
-#SBATCH --ntasks=20
+#SBATCH --cpus-per-task=20
 #SBATCH --nodes=1
 #SBATCH --job-name=pyzrt-corpus
 #SBATCH --mail-type=ALL
