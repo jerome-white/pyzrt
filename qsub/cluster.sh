@@ -13,6 +13,6 @@ output=$path/cluster/04
 
 mkdir --parents $output
 
-python3 -u $ZR_HOME/src/cluster.py \
-    --input $path/pseudoterms/04 \        
+python $ZR_HOME/src/cluster.py \
+    --input $path/pseudoterms/04 \
     --output $output/kmeans.csv
