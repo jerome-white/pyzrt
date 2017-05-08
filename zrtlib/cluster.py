@@ -46,8 +46,8 @@ class Cluster:
         self.observations = TfidfTransformer().fit_transform(df.values)
 
 class Centroid(Cluster):
-    def __init__(self, documents):
-        super().__init__(documents)
+    def __init__(self, documents, save_raw_to=None):
+        super().__init__(documents, save_raw_to)
 
         self.model = self.get_model()
         self.model.fit(self.observations)
