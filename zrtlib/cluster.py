@@ -11,11 +11,15 @@ import matplotlib.pyplot as plt
 from sklearn import cluster
 from sklearn.feature_extraction.text import TfidfTransformer
 
+from zrtlib import logger
 from zrtlib.document import TermDocument
 
 Entry = collections.namedtuple('Entry', 'type, cluster, value')
 
 def toframe(path):
+    log = logger.getlogger()
+    log.info(path.stem)
+
     document = TermDocument(path)
     counts = document.df['term'].value_counts()
     transform = lambda x: document.name
@@ -32,45 +36,46 @@ def _(documents):
     return pd.read_csv(documents)
 
 class Cluster:
-    def __init__(self, documents):
+    def __init__(self, documents, save_raw_to=None):
         df = getdocs(documents)
-        self.labels = df.index.values
+        if save_raw_to is not None:
+            df.to_csv(save_raw_to)
+
+        self.labels = df.index
+        self.features = df.columns
         self.observations = TfidfTransformer().fit_transform(df.values)
 
 class Centroid(Cluster):
-    def __init__(self, documents, **kwargs):
+    def __init__(self, documents):
         super().__init__(documents)
 
-        self.model = self.mkmodel(**kwargs)
+        self.model = self.get_model()
         self.model.fit(self.observations)
 
-    def mkmodel(self, **kwargs):
+    def get_model(self):
         raise NotImplementedError()
 
-    def visualize(self, output):
+    def plot(self, output):
         plt.clf()
-        self.visualize_()
+        self.visualize()
         plt.savefig(str(output))
 
-    def visualize_(self):
-        raise NotImplementedError()
-
-    def write(self, fp, n_terms=10):
-        writer = csv.DictWriter(fp, fieldnames=Entry._fields)
-        writer.writeheader()
-        writer.writerows(map(op.methodcaller('_asdict'), self.extract()))
-
-class KMeans(Centroid):
-    def mkmodel(self, **kwargs):
-        return cluster.KMeans(**kwargs)
-
-    def visualize_(self):
-        raise NotImplementedError()
-
-    def elbow(self, output):
+    def visualize(self):
         raise NotImplementedError()
 
     def write(self, fp, n_terms=0):
+        writer = csv.DictWriter(fp, fieldnames=Entry._fields)
+        writer.writeheader()
+        writer.writerows(map(Entry._asdict, self.get_entries(n_terms)))
+
+    def get_entries(self, n_terms):
+        raise NotImplementedError()
+
+class KMeans(Centroid):
+    def get_model(self):
+        return cluster.KMeans(n_clusters=50, n_jobs=-1)
+
+    def get_entries(self, n_terms):
         #
         # documents
         #
@@ -82,18 +87,19 @@ class KMeans(Centroid):
         #
         if n_terms > 0:
             order_centroids = self.model.cluster_centers_.argsort()[:, ::-1]
-            terms = self.observations.get_feature_names()
-
             for i in range(self.model.n_clusters):
                 for j in order_centroids[i,:n_terms]:
-                    yield Entry('term', i, terms[i])
+                    yield Entry('term', i, self.features[i])
+
+    def elbow(self, output):
+        raise NotImplementedError()
 
 class DBScan(Centroid):
-    def mkmodel(self, **kwargs):
-        return cluster.DBSCAN(**kwargs)
+    def get_model(self):
+        return cluster.DBSCAN(n_jobs=-1)
 
     # http://scikit-learn.org/stable/auto_examples/cluster/plot_dbscan.html
-    def visualize_(self):
+    def visualize(self):
         core_samples_mask = np.zeros_like(self.model.labels_, dtype=bool)
         core_samples_mask[self.model.core_sample_indices_] = True
 
