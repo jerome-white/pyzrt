@@ -1,6 +1,8 @@
 import csv
 import operator as op
 import collections
+from pathlib import Path
+from functools import singledispatch
 from multiprocessing import Pool
 
 import numpy as np
@@ -13,21 +15,25 @@ from zrtlib.document import TermDocument
 
 Entry = collections.namedtuple('Entry', 'type, cluster, value')
 
-def getdocs(path):
+def toframe(path):
     document = TermDocument(path)
     counts = document.df['term'].value_counts()
     transform = lambda x: document.name
 
     return pd.DataFrame.from_dict([ counts.to_dict() ]).rename(transform)
 
+@singledispatch
+def getdocs(documents):
+    with Pool() as pool:
+        return pd.concat(pool.imap_unordered(toframe, documents)).fillna(0)
+
+@getdocs.register(Path)
+def _(documents):
+    return pd.read_csv(documents)
+
 class Cluster:
     def __init__(self, documents):
-        if documents.is_dir():
-            with Pool() as pool:
-                df = pd.concat(pool.imap_unordered(getdocs, documents))
-            df.fillna(0, inplace=True)
-        else:
-            df = pd.read_csv(documents)
+        df = getdocs(documents)
         self.labels = df.index.values
         self.observations = TfidfTransformer().fit_transform(df.values)
 

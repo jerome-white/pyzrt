@@ -5,11 +5,6 @@ import scipy.stats as st
 
 from zrtlib.document import HiddenDocument
 
-def technique_builder(technique, **kwargs):
-    def f(documents):
-        return technique(documents, **kwargs)
-    return f
-
 class SelectionTechnique:
     def __init__(self):
         self.documents = iter(())

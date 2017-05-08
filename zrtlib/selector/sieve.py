@@ -1,6 +1,8 @@
 import operator as op
 import collections
 
+import pandas as pd
+
 class Sieve:
     def like(self, term, documents):
         appearances = self.like_(term, documents)

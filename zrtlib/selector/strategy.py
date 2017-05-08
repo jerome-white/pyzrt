@@ -3,7 +3,7 @@ import itertools
 import collections
 
 from zrtlib import zutils
-from zrtlib.selector.technique import Random
+from zrtlib.selector.technique import Entropy
 
 class IterableStack(list):
     def __init__(self, descending=True):
@@ -38,21 +38,20 @@ class SelectionStrategy:
             yield choice
 
 class BlindHomogenous(SelectionStrategy):
-    def __init__(self, technique, **kwargs):
+    def __init__(self, technique):
         self.technique = technique
-        self.kwargs = kwargs
 
     def pick(self, documents, feedback):
         try:
             return next(self.technique)
         except TypeError: # http://stackoverflow.com/a/1549854
-            self.technique = self.technique(documents, **self.kwargs)
+            self.technique = self.technique(documents)
             return self.pick(documents, feedback)
 
 class Feedback(SelectionStrategy):
-    def __init__(self, sieve, technique=Random, **kwargs):
+    def __init__(self, sieve, technique):
         self.sieve = sieve
-        self.blind = BlindHomogenous(technique, **kwargs)
+        self.blind = BlindHomogenous(technique)
         self.stack = IterableStack()
 
     def pick(self, documents, feedback):
@@ -76,12 +75,16 @@ class Feedback(SelectionStrategy):
         raise NotImplementedError()
 
 class BlindRelevance(Feedback):
+    def __init__(self, sieve, technique, secondary_technique=Entropy):
+        super().__init__(sieve, secondary_technique)
+        self.technique = technique
+
     def proximity(self, term, documents):
-        yield from Entropy(documents)
+        yield from self.technique(documents)
 
 class CoOccurrence(Feedback):
-    def __init__(self, radius=1, sieve, technique=Random, **kwargs):
-        super().__init__(sieve, technique, **kwargs)
+    def __init__(self, sieve, technique, radius=1):
+        super().__init__(sieve, technique)
 
         self.radius = radius
 
