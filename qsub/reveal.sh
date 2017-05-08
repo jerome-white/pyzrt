@@ -67,7 +67,8 @@ sbatch \
     --mem=150G \
     --time=12:00:00 \
     --mail-type=ALL \
+    --mail-user=jsw7@nyu.edu \
     --nodes=1 \
-    --ntasks=4 \
+    --cpus-per-task=4 \
     --job-name=reveal.`basename $query`-${strategy} \
     $job
