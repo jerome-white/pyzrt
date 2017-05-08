@@ -1,5 +1,7 @@
-QSUB scripts for running the various Python scripts that go from raw
-data to results.
+Bash scripts that submit Python jobs to sbatch (SLURM). Scripts go
+from raw data to results.
+
+## Create
 
 1. `corpus.sh` Format various raw documents into a consistent TREC
    format and place them into a single location:
@@ -13,6 +15,9 @@ data to results.
    3. Generate Indri indexes based on TREC formatted documents.
 4. `query.sh` Build Indri-friendly queries from the TREC formatted
    queries (Step 1.2).
-5. Process:
-   * `retrieve.sh` Run and evaluate queries over Indri index.
-   * `reveal.sh` Play the reveal game.
+
+## Process
+
+* `retrieve.sh` Run and evaluate queries over Indri index.
+* `reveal.sh` Play the reveal game.
+* `cluster.sh` Build document clusters to support document filtering
