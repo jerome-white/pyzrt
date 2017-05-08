@@ -1,5 +1,6 @@
 import csv
 import itertools
+import functools
 from pathlib import Path
 from argparse import ArgumentParser
 from collections import defaultdict
@@ -89,7 +90,9 @@ class ProgressiveQuery(Picker):
 arguments = ArgumentParser()
 arguments.add_argument('--retrieval-model')
 arguments.add_argument('--selection-strategy')
+arguments.add_argument('--sieve')
 arguments.add_argument('--feedback-metric')
+arguments.add_argument('--clusters', type=Path)
 arguments.add_argument('--index', type=Path)
 arguments.add_argument('--query', type=Path)
 arguments.add_argument('--qrels', type=Path)
@@ -105,30 +108,35 @@ log = logger.getlogger()
 # Initialise the query and the selector
 #
 document = HiddenDocument(args.query)
-
-if args.selection_strategy == 'relevance':
+ss = args.selection_strategy
+if ss == 'relevance':
     relevant = set(indri.relevant_documents(args.qrels))
-    st = strat.BlindHomogenous(tek.Relevance,
-                               query=document,
-                               relevant=relevant)
-elif args.selection_strategy == 'direct':
-    feedback = RecentWeighted()
-    st = strat.DirectNeighbor(feedback=feedback,
-                              radius=5,
-                              technique=tek.Entropy)
-elif args.selection_strategy == 'nearest':
-    feedback = RecentWeighted()
-    st = strat.NearestNeighbor(feedback=feedback,
-                               radius=5,
-                               technique=tek.Entropy)
+    technique = functools.partial(tek.Relevance,
+                                  query=document,
+                                  relevant=relevant)
+    st = strat.BlindHomogenous(technique)
+elif ss == 'direct' or ss == 'nearest' or ss == 'feedback':
+    strategy = {
+        'direct': strat.DirectNeighbor,
+        'nearest': strat.NearestNeighbor,
+        'feedback': strat.BlindRelevance,
+    }[ss]
+    sieve = {
+        'cluster': functools.partial(ClusterSieve, args.clusters),
+        'term' : TermSieve,
+    }[args.sieve]()
+    technique = functools.partial(tek.Entropy)
+
+    st = strategy(sieve, technique)
 else:
-    technique = {
+    options = {
         'tf': tek.TermFrequency,
         'df': tek.DocumentFrequency,
         'random': tek.Random,
         'entropy': tek.Entropy,
     }
-    st = strat.BlindHomogenous(technique[args.selection_strategy])
+    technique = functools.partial(options[ss])
+    st = strat.BlindHomogenous(technique)
 
 ts = TermSelector(st, RecentWeighted(), args.seed)
 with Pool() as pool:
