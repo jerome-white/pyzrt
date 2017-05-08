@@ -1,12 +1,13 @@
 #!/bin/bash
 
-#SBATCH --mem=150GB
-#SBATCH --time=60
+#SBATCH --mem=300GB
+#SBATCH --time=2:00:00
 #SBATCH --cpus-per-task=4
 #SBATCH --nodes=1
 #SBATCH --job-name=pyzrt-cluster
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=jsw7@nyu.edu
+#SBATCH --verbose
 
 path=$SCRATCH/zrt/wsj/2017_0118_020518
 output=$path/cluster/04
