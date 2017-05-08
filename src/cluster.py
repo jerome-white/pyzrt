@@ -17,7 +17,7 @@ args = arguments.parse_args()
 
 documents = itertools.filterfalse(QueryDoc.isquery, args.input.iterdir())
 cluster = KMeans(documents, n_cluster=50, n_jobs=-1)
-with args.output.open('w') as fp:
+with args.output.open('w', buffering=1) as fp:
     cluster.write(fp)
 # if args.plot:
 #     cluster.visualize(args.plot)
