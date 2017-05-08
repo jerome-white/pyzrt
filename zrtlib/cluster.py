@@ -45,14 +45,24 @@ class Cluster:
         self.features = df.columns
         self.observations = TfidfTransformer().fit_transform(df.values)
 
-class Centroid(Cluster):
-    def __init__(self, documents):
-        super().__init__(documents)
-
         self.model = self.get_model()
         self.model.fit(self.observations)
 
     def get_model(self):
+        raise NotImplementedError()
+
+    def write(self, fp, n_terms=0):
+        writer = csv.DictWriter(fp, fieldnames=Entry._fields)
+        writer.writeheader()
+
+        for i in zip(self.labels, self.model.labels_):
+            entry = Entry('document', *i)
+            writer.writerow(entry._asdict())
+
+        if n_terms > 0:
+            writer.writerows(map(Entry._asdict, self.term_mapping(n_terms)))
+
+    def	term_mapping(self, n_terms):
         raise NotImplementedError()
 
     def plot(self, output):
@@ -63,33 +73,16 @@ class Centroid(Cluster):
     def visualize(self):
         raise NotImplementedError()
 
-    def write(self, fp, n_terms=0):
-        writer = csv.DictWriter(fp, fieldnames=Entry._fields)
-        writer.writeheader()
-        writer.writerows(map(Entry._asdict, self.get_entries(n_terms)))
-
-    def get_entries(self, n_terms):
-        raise NotImplementedError()
+class Centroid(Cluster):
+    def term_mapping(self, n_terms):
+        order_centroids = self.model.cluster_centers_.argsort()[:, ::-1]
+        for i in range(self.model.n_clusters):
+            for j in order_centroids[i,:n_terms]:
+                yield Entry('term', i, self.features[i])
 
 class KMeans(Centroid):
     def get_model(self):
-        return cluster.KMeans(n_clusters=50, n_jobs=-1)
-
-    def get_entries(self, n_terms):
-        #
-        # documents
-        #
-        for i in zip(self.labels, self.model.labels_):
-            yield Entry('document', *i)
-
-        #
-        # terms
-        #
-        if n_terms > 0:
-            order_centroids = self.model.cluster_centers_.argsort()[:, ::-1]
-            for i in range(self.model.n_clusters):
-                for j in order_centroids[i,:n_terms]:
-                    yield Entry('term', i, self.features[i])
+        return cluster.MiniBatchKMeans(n_clusters=50)
 
     def elbow(self, output):
         raise NotImplementedError()
