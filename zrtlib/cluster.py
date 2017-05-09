@@ -6,47 +6,46 @@ from functools import singledispatch
 from multiprocessing import Pool
 
 import numpy as np
-import pandas as pd
+# import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn import cluster
-from sklearn.feature_extraction.text import TfidfTransformer
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 from zrtlib import logger
 from zrtlib.document import TermDocument
 
 Entry = collections.namedtuple('Entry', 'type, cluster, value')
 
-def toframe(path):
-    log = logger.getlogger()
-    log.info(path.stem)
+# def toframe(path):
+#     log = logger.getlogger()
+#     log.info(path.stem)
 
-    document = TermDocument(path)
-    counts = document.df['term'].value_counts()
-    transform = lambda x: document.name
+#     document = TermDocument(path)
+#     counts = document.df['term'].value_counts()
+#     transform = lambda x: document.name
 
-    return pd.DataFrame.from_dict([ counts.to_dict() ]).rename(transform)
+#     return pd.DataFrame.from_dict([ counts.to_dict() ]).rename(transform)
 
-@singledispatch
-def getdocs(documents):
-    with Pool() as pool:
-        return pd.concat(pool.imap_unordered(toframe, documents)).fillna(0)
+# @singledispatch
+# def getdocs(documents):
+#     with Pool() as pool:
+#         return pd.concat(pool.imap_unordered(toframe, documents)).fillna(0)
 
-@getdocs.register(Path)
-def _(documents):
-    return pd.read_csv(documents)
+# @getdocs.register(Path)
+# def _(documents):
+#     return pd.read_csv(documents)
 
 class Cluster:
     def __init__(self, documents, save_raw_to=None):
-        df = getdocs(documents)
-        if save_raw_to is not None:
-            df.to_csv(save_raw_to)
+        preprocessor = lambda x: str(TermDocument(x))
+        self.vectorizer = TfidfVectorizer(lowercase=False,
+                                          preprocessor=preprocessor)
 
-        self.labels = df.index
-        self.features = df.columns
-        self.observations = TfidfTransformer().fit_transform(df.values)
+        self.labels = list(documents)
+        X = self.vectorizer.fit_transform(self.labels)
 
         self.model = self.get_model()
-        self.model.fit(self.observations)
+        self.model.fit(X)
 
     def get_model(self):
         raise NotImplementedError()
@@ -76,9 +75,11 @@ class Cluster:
 class Centroid(Cluster):
     def term_mapping(self, n_terms):
         order_centroids = self.model.cluster_centers_.argsort()[:, ::-1]
+        terms = self.vectorizer.get_feature_names()
+
         for i in range(self.model.n_clusters):
             for j in order_centroids[i,:n_terms]:
-                yield Entry('term', i, self.features[i])
+                yield Entry('term', i, terms[i])
 
 class KMeans(Centroid):
     def get_model(self):
