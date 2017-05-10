@@ -1,8 +1,8 @@
 #!/bin/bash
 
 #SBATCH --mem=300GB
-#SBATCH --time=2:00:00
-#SBATCH --cpus-per-task=16
+#SBATCH --time=4:00:00
+#SBATCH --cpus-per-task=4
 #SBATCH --nodes=1
 #SBATCH --job-name=pyzrt-cluster
 #SBATCH --mail-type=ALL
@@ -17,4 +17,4 @@ mkdir --parents $output
 
 python $ZR_HOME/src/cluster.py \
     --input $path/pseudoterms/04 \
-    --output $output/kmeans.csv
+    --output $output/kmeans-mini.csv
