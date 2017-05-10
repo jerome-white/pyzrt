@@ -12,7 +12,7 @@ from zrtlib.document import TermDocument, HiddenDocument
 def instantaneous(args):
     (terms, model, output, *query) = args
 
-    q = query.pop() if query else QueryBuilder(model, TermDocument(terms))
+    q = query.pop() if query else QueryBuilder(TermDocument(terms), model)
     with output.joinpath(terms.stem).open('w') as fp:
         print(q, file=fp)
 
@@ -30,7 +30,7 @@ def progressive(args):
     while document:
         flipped = document.flip()
         assert(flipped > 0)
-        query = QueryBuilder(model, document)
+        query = QueryBuilder(document, model)
         indri.add(query.compose())
 
     return instantaneous(args + (indri, ))
@@ -54,7 +54,7 @@ def single(args):
         for (i, j) in enumerate(document.df['term'].unique()):
             doc = HiddenDocument(terms)
             doc.flip(j)
-            query = QueryBuilder(model, doc)
+            query = QueryBuilder(doc, model)
             indri.add(query.compose())
             writer.writerow(dict(zip(fieldnames, (i, j))))
 

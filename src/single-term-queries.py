@@ -19,7 +19,7 @@ def func(args):
         doc = HiddenDocument(terms)
         doc.flip(i)
 
-        query = QueryBuilder(options.model, doc)
+        query = QueryBuilder(doc, options.model)
         indri.add(query.compose())
 
     with options.output.joinpath(terms.stem).open('w') as fp:

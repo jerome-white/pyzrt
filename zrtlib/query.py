@@ -13,7 +13,7 @@ Node_ = namedtuple('Node', 'term, offset')
 Node = lambda x: Node_(x.term, x.start)
 OptimalPath = namedtuple('OptimalPath', 'deviation, path')
 
-def QueryBuilder(model, terms):
+def QueryBuilder(terms, model='ua'):
     (Model, kwargs) = {
         'ua': (BagOfWords, {}),
         'sa': (Synonym, {}),

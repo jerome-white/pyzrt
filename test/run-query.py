@@ -23,7 +23,7 @@ log = logger.getlogger()
 
 with QueryExecutor() as engine:
     count = 1000
-    query = QueryBuilder('ua', TermDocument(args.query))
+    query = QueryBuilder(TermDocument(args.query))
     
     with NamedTemporaryFile(mode='w', delete=False) as tmp:
         log.debug(tmp.name)
