@@ -2,11 +2,9 @@ import csv
 import operator as op
 import collections
 from pathlib import Path
-from functools import singledispatch
 from multiprocessing import Pool
 
 import numpy as np
-# import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn import cluster
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -16,34 +14,20 @@ from zrtlib.document import TermDocument
 
 Entry = collections.namedtuple('Entry', 'type, cluster, value')
 
-# def toframe(path):
-#     log = logger.getlogger()
-#     log.info(path.stem)
-
-#     document = TermDocument(path)
-#     counts = document.df['term'].value_counts()
-#     transform = lambda x: document.name
-
-#     return pd.DataFrame.from_dict([ counts.to_dict() ]).rename(transform)
-
-# @singledispatch
-# def getdocs(documents):
-#     with Pool() as pool:
-#         return pd.concat(pool.imap_unordered(toframe, documents)).fillna(0)
-
-# @getdocs.register(Path)
-# def _(documents):
-#     return pd.read_csv(documents)
-
 class Cluster:
     def __init__(self, documents, save_raw_to=None):
+        log = logger.getlogger()
+
+        log.info('vectorize')
         preprocessor = lambda x: str(TermDocument(x))
         self.vectorizer = TfidfVectorizer(lowercase=False,
                                           preprocessor=preprocessor)
 
+        log.info('fit')
         self.labels = list(documents)
         X = self.vectorizer.fit_transform(self.labels)
 
+        log.info('cluster')
         self.model = self.get_model()
         self.model.fit(X)
 
@@ -54,8 +38,8 @@ class Cluster:
         writer = csv.DictWriter(fp, fieldnames=Entry._fields)
         writer.writeheader()
 
-        for i in zip(self.labels, self.model.labels_):
-            entry = Entry('document', *i)
+        for (document, cluster) in zip(self.labels, self.model.labels_):
+            entry = Entry('document', document.stem, cluster)
             writer.writerow(entry._asdict())
 
         if n_terms > 0:
