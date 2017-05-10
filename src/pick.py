@@ -20,33 +20,6 @@ from zrtlib.selector.picker import ProgressiveQuery
 from zrtlib.selector.feedback import RecentWeighted
 from zrtlib.selector.management import TermSelector
 
-class CSVWriter:
-    def __init__(self, query, path):
-        self.writer = None
-
-        q = query
-        while True:
-            fname = path.joinpath(q)
-            if not fname.exists():
-                self.fp = fname.open('w', buffering=1)
-                break
-            (name, number) = q.split(QueryDoc.separator)
-            n = str(int(number) + 1).zfill(len(number))
-            assert(len(n) <= len(number))
-            q = QueryDoc.separator.join([ name, n ])
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        self.fp.close()
-
-    def writerow(self, row):
-        if self.writer is None:
-            self.writer = csv.DictWriter(self.fp, fieldnames=row.keys())
-            self. writer.writeheader()
-        self.writer.writerow(row)
-
 arguments = ArgumentParser()
 
 arguments.add_argument('--strategy')
@@ -87,6 +60,9 @@ technique = functools.partial({
 # Sieve
 #
 
+if args.sieve == 'cluster':
+    assert(args.clusters)
+
 sieve = {
     'cluster': functools.partial(sv.ClusterSieve, args.clusters),
     'term' : sv.TermSieve,
@@ -121,10 +97,11 @@ eval_metric = TrecMetric(args.feedback_metric)
 #
 # Begin the game!
 #
+writer = None
+query = ProgressiveQuery()
 
-with CSVWriter(args.query.stem, args.output) as writer:
+with args.output('w') as fp:
     with QueryExecutor(args.index, args.qrels) as engine:
-        query = ProgressiveQuery()
         for (i, term) in enumerate(manager, 1):
             if i > args.guesses or not query:
                 log.debug('Guessing finished')
@@ -154,6 +131,9 @@ with CSVWriter(args.query.stem, args.output) as writer:
                 'progress': float(query),
                 **evaluation,
             }
+            if writer is None:
+                writer = csv.DictWriter(fp, fieldnames=results.keys())
+                writer.writeheader()
             writer.writerow(results)
 
             #
