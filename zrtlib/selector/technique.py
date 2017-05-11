@@ -75,6 +75,18 @@ class Relevance(SelectionTechnique):
                 self.documents = technique(df)
 
 class TFIDF(SelectionTechnique):
+    def __init__(self, documents):
+        self.indices = []
+
+        docs = documents.groupby('document', sort=False)
+        X = TfidfVectorizer().fit_transform(map(self.terms, docs))
+
+        ordered = np.max(X, axis=1)
+        ascending = np.argsort(ordered.toarray(), axis=0)
+        descending = np.flipud(ascending.squeeze())
+
+        self.documents = self.stitch(descending)
+
     # This might be redundant, but it ensures that the order in which
     # TfidfVectorizer sees the documents is the same order that is
     # mapped in the final stitching.
@@ -87,15 +99,3 @@ class TFIDF(SelectionTechnique):
     def stitch(self, indices):
         for i in indices:
             yield self.indices[i]
-
-    def __init__(self, documents):
-        self.indices = []
-
-        docs = documents.groupby('document', sort=False)
-        X = TfidfVectorizer().fit_transform(map(self.terms, docs))
-
-        ordered = np.max(X, axis=1)
-        ascending = np.argsort(ordered.toarray(), axis=0)
-        descending = np.flipud(ascending.squeeze())
-
-        self.documents = self.stitch(descending)
