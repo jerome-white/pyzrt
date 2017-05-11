@@ -65,7 +65,8 @@ class FromFeedback(SelectionStrategy):
         elif improvement < 0:
             self.stack.pop()
 
-        iterable = (self.stack, self.blind.stream(documents))
+        eligible = documents[documents['selected'] == 0]
+        iterable = (self.stack, self.blind.stream(eligible))
         for i in itertools.chain.from_iterable(iterable):
             matches = documents[documents['term'] == i]
             if not matches['selected'].any():
