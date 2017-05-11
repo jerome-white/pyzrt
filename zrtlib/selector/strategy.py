@@ -75,7 +75,10 @@ class Feedback(SelectionStrategy):
         raise NotImplementedError()
 
 class BlindRelevance(Feedback):
-    def __init__(self, sieve, technique, secondary_technique=Entropy):
+    def __init__(self, sieve, technique, secondary_technique=None):
+        if secondary_technique is None:
+            secondary_technique = technique
+
         super().__init__(sieve, secondary_technique)
         self.technique = technique
 
