@@ -1,6 +1,6 @@
 import csv
 import itertools
-import functools
+import functools as ft
 from pathlib import Path
 from argparse import ArgumentParser
 from multiprocessing import Pool
@@ -19,6 +19,10 @@ from zrtlib.document import TermDocument
 from zrtlib.selector.picker import ProgressiveQuery
 from zrtlib.selector.feedback import RecentWeighted
 from zrtlib.selector.management import TermSelector
+
+#
+# Arguments
+#
 
 arguments = ArgumentParser()
 
@@ -49,7 +53,7 @@ feedback = RecentWeighted(args.feedback_level)
 # Technique
 #
 
-technique = functools.partial({
+technique = ft.partial({
     'tf': tq.TermFrequency,
     'df': tq.DocumentFrequency,
     'random': tq.Random,
@@ -64,7 +68,7 @@ if args.sieve == 'cluster':
     assert(args.clusters)
 
 sieve = {
-    'cluster': functools.partial(sv.ClusterSieve, args.clusters),
+    'cluster': ft.partial(sv.ClusterSieve, args.clusters),
     'term' : sv.TermSieve,
 }[args.sieve]()
 
@@ -76,6 +80,7 @@ strategy = {
     'direct': st.DirectNeighbor,
     'nearest': st.NearestNeighbor,
     'feedback': st.BlindRelevance,
+    'tfidf': st.TFIDF,
 }[args.selection-strategy](sieve, technique)
 
 #
