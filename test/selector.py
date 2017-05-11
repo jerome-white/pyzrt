@@ -1,25 +1,23 @@
+import sys
 from pathlib import Path
 
 import pandas as pd
 
 from zrtlib.document import TermDocument, HiddenDocument
+from zrtlib.selector.feedback import RecentWeighted
 from zrtlib.selector.strategy import BlindHomogenous
 from zrtlib.selector.management import TermSelector
 import zrtlib.selector.technique as tech
 
-path = Path('/',
-            'Volumes',
-            'Elements',
-            'NYU',
-            'Research',
-            'pyzrt',
-            'wsj',
-            '2017_0118_020518',
-            'pseudoterms',
-            '07')
-docs = [ path.joinpath('WSJ900402-00' + str(x)) for x in range(17, 20) ]
+location = sys.argv[1] if len(sys.argv) > 1 else '.'
 
-ts = TermSelector(BlindHomogenous(tech.Entropy))
+WSJ = 'WSJ'
+docs = []
+for p in Path(location).iterdir():
+    if p.stem[:len(WSJ)] == WSJ:
+        docs.append(p)
+
+ts = TermSelector(BlindHomogenous(tech.Entropy), RecentWeighted())
 for i in docs:
     ts.add(TermDocument(i))
 
