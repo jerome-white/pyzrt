@@ -48,7 +48,7 @@ class BlindHomogenous(SelectionStrategy):
             self.technique = self.technique(documents)
             return self.pick(documents, feedback)
 
-class Feedback(SelectionStrategy):
+class FromFeedback(SelectionStrategy):
     def __init__(self, sieve, technique):
         self.sieve = sieve
         self.blind = BlindHomogenous(technique)
@@ -74,7 +74,7 @@ class Feedback(SelectionStrategy):
     def proximity(self, term, documents):
         raise NotImplementedError()
 
-class BlindRelevance(Feedback):
+class BlindRelevance(FromFeedback):
     def __init__(self, sieve, technique, secondary_technique=None):
         if secondary_technique is None:
             secondary_technique = technique
@@ -85,7 +85,7 @@ class BlindRelevance(Feedback):
     def proximity(self, term, documents):
         yield from self.technique(documents)
 
-class CoOccurrence(Feedback):
+class CoOccurrence(FromFeedback):
     def __init__(self, sieve, technique, radius=1):
         super().__init__(sieve, technique)
 
