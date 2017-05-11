@@ -47,7 +47,7 @@ job=`mktemp`
 cat <<EOF >> $job
 python3 -u $ZR_HOME/src/qrels.py \
     --input $qrels \
-    --output \$PBS_JOBTMP \
+    --output \$SLURM_JOBTMP \
     --topic $topic \
     --document-class WSJ \
     --count $count
@@ -56,7 +56,7 @@ python3 -u $ZR_HOME/src/reveal.py \
     --index $root/indri/$ngrams \
     --input $root/pseudoterms/$ngrams \
     --output $output \
-    --qrels \$PBS_JOBTMP/$topic \
+    --qrels \$SLURM_JOBTMP/$topic \
     --selection-strategy $strategy \
     --query $query \
     --retrieval-model $model \
