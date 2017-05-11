@@ -73,5 +73,5 @@ class Relevance(SelectionTechnique):
                 self.documents = technique(df)
 
 class TFIDF(SelectionTechnique):
-    def __init__(self, documents, term, matrix):
-        pass
+    def __init__(self, documents):
+        df = documents.groupby('document', sort=False)
