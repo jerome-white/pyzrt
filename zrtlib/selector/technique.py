@@ -73,10 +73,5 @@ class Relevance(SelectionTechnique):
                 self.documents = technique(df)
 
 class TFIDF(SelectionTechnique):
-    matrix = pd.DataFrame()
-
-    def __init__(self, documents, term):
-        if matrix.empty:
-            pass
-
-        self.documents = matrix[[term]].sort_values(by=term, axis='column')
+    def __init__(self, documents, term, matrix):
+        pass
