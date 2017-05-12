@@ -125,7 +125,7 @@ with CSVWriter(args.query.stem, args.output) as writer:
             # Add the term to the query
             #
             flipped = query.flip(term)
-            log.info('g {0} {1} {2}'.format(i, term))
+            log.info('g {0} {1} {2}'.format(i, term, flipped))
             if not added:
                 ts.feedback.append(0)
                 continue
