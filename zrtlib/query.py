@@ -1,4 +1,5 @@
 import itertools
+import functools
 import operator as op
 from collections import namedtuple
 
@@ -14,20 +15,14 @@ Node = lambda x: Node_(x.term, x.start)
 OptimalPath = namedtuple('OptimalPath', 'deviation, path')
 
 def QueryBuilder(terms, model='ua'):
-    (Model, kwargs) = {
-        'ua': (BagOfWords, {}),
-        'sa': (Synonym, {}),
-        'u1': (Synonym, {
-            'n_longest': 1,
-        }),
-        'un': (ShortestPath, {
-            'partials': False,
-        }),
-        'uaw': (TotalWeight, {}),
-        'saw': (LongestWeight, {}),
-    }[model]
-
-    return Model(terms, **kwargs)
+    return {
+        'ua': BagOfWords,
+        'sa': Synonym,
+        'u1': functools.partial(Synonym, n_longest=1),
+        'un': functools.partial(ShortestPath, partials=False),
+        'uaw': TotalWeight,
+        'saw': LongestWeight,
+    }[model](terms)
 
 class Query:
     def __init__(self, doc):
