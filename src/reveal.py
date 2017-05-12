@@ -48,50 +48,9 @@ class CSVWriter:
             self. writer.writeheader()
         self.writer.writerow(row)
 
-class Picker:
-    def terms(self):
-        raise NotImplementedError()
-
-    def add(self, term):
-        raise NotImplementedError()
-
-    def __bool__(self):
-        return False
-
-class HiddenQuery(Picker):
-    def __init__(self, hidden_document):
-        self.document = hidden_document
-
-    def terms(self):
-        return self.document
-
-    def add(self, term):
-        return self.document.flip(term) > 0
-
-    def __float__(self):
-        return float(self.document)
-
-    def __bool__(self):
-        return bool(self.document)
-
-class ProgressiveQuery(Picker):
-    def __init__(self):
-        self.df = pd.DataFrame()
-
-    def add(self, term):
-        self.df = self.df.append(term, ignore_index=True)
-        return True
-
-    def terms(self):
-        return TermDocument(io.StringIO(self.df.to_csv(index=False)))
-
-    def __float__(self):
-        return float(len(self.df))
-
 arguments = ArgumentParser()
-arguments.add_argument('--retrieval-model')
+arguments.add_argument('--retrieval-model', default='ua')
 arguments.add_argument('--selection-strategy')
-arguments.add_argument('--sieve')
 arguments.add_argument('--feedback-metric')
 arguments.add_argument('--clusters', type=Path)
 arguments.add_argument('--index', type=Path)
@@ -108,15 +67,10 @@ log = logger.getlogger()
 #
 # Initialise the query and the selector
 #
-document = HiddenDocument(args.query)
+query = HiddenDocument(args.query)
+
 ss = args.selection_strategy
-if ss == 'relevance':
-    relevant = set(indri.relevant_documents(args.qrels))
-    technique = functools.partial(tek.Relevance,
-                                  query=document,
-                                  relevant=relevant)
-    st = strat.BlindHomogenous(technique)
-elif ss == 'direct' or ss == 'nearest' or ss == 'feedback':
+if ss == 'direct' or ss == 'nearest' or ss == 'feedback':
     strategy = {
         'direct': strat.DirectNeighbor,
         'nearest': strat.NearestNeighbor,
@@ -130,13 +84,19 @@ elif ss == 'direct' or ss == 'nearest' or ss == 'feedback':
 
     st = strategy(sieve, technique)
 else:
-    options = {
-        'tf': tek.TermFrequency,
-        'df': tek.DocumentFrequency,
-        'random': tek.Random,
-        'entropy': tek.Entropy,
-    }
-    technique = functools.partial(options[ss])
+    if ss == 'relevance':
+        relevant = set(indri.relevant_documents(args.qrels))
+        technique = functools.partial(tek.Relevance,
+                                      query=query,
+                                      relevant=relevant)
+    else:
+        technique = functools.partial({
+            'tf': tek.TermFrequency,
+            'df': tek.DocumentFrequency,
+            'random': tek.Random,
+            'entropy': tek.Entropy,
+            'tfidf': tek.TFIDF,
+        }[ss])
     st = strat.BlindHomogenous(technique)
 
 ts = TermSelector(st, RecentWeighted(), args.seed)
@@ -155,7 +115,6 @@ eval_metric = TrecMetric(args.feedback_metric)
 #
 with CSVWriter(args.query.stem, args.output) as writer:
     with QueryExecutor(args.index, args.qrels) as engine:
-        query = HiddenQuery(document)
         for (i, term) in enumerate(ts, 1):
             if i > args.guesses or not query:
                 log.debug('Guessing finished')
@@ -164,7 +123,7 @@ with CSVWriter(args.query.stem, args.output) as writer:
             #
             # Add the term to the query
             #
-            added = query.add(term)
+            flipped = query.flip(term)
             log.info('g {0} {1} {2}'.format(i, term))
             if not added:
                 ts.feedback.append(0)
