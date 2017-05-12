@@ -98,16 +98,16 @@ class CoOccurrence(FromFeedback):
         for df in documents:
             rows = df[df['term'] == term]
             for i in rows.itertuples():
-                for (neighbor, distance) in self.proximity_(i, df):
+                for (neighbor, distance) in self._proximity(i, df):
                     occurrence[neighbor['term']] += 1 / distance
 
         yield from map(op.itemgetter(0), occurrence.most_common())
 
-    def proximity_(self, row, documents):
+    def _proximity(self, row, documents):
         raise NotImplementedError()
 
 class DirectNeighbor(CoOccurrence):
-    def proximity_(self, row, documents):
+    def _proximity(self, row, documents):
         start = max(0, row.Index - self.radius)
         stop = min(len(documents), row.Index + self.radius + 1)
 
@@ -117,7 +117,7 @@ class DirectNeighbor(CoOccurrence):
                 yield (documents.iloc[i], distance)
 
 class NearestNeighbor(CoOccurrence):
-    def proximity_(self, row, documents):
+    def _proximity(self, row, documents):
         for step in (1, -1):
             yield from self.navigate(row, documents, self.radius, step)
 
@@ -139,7 +139,7 @@ class NearestNeighbor(CoOccurrence):
                 break
 
 class RegionNeighbor(CoOccurrence):
-    def proximity_(self, row, documents):
+    def _proximity(self, row, documents):
         regions = documents.groupby('region')
 
         for step in (1, -1):
