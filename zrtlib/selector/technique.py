@@ -76,6 +76,8 @@ class Relevance(SelectionTechnique):
 
 class TFIDF(SelectionTechnique):
     def __init__(self, documents):
+        super().__init__()
+
         self.indices = []
 
         docs = documents.groupby('document', sort=False)

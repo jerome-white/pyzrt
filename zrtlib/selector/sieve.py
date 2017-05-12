@@ -1,6 +1,3 @@
-import operator as op
-import collections
-
 import pandas as pd
 
 class Sieve:

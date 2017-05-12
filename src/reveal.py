@@ -1,14 +1,11 @@
-import io
 import csv
 import itertools
 import functools
 from pathlib import Path
 from argparse import ArgumentParser
-from collections import defaultdict
 from multiprocessing import Pool
 
 import numpy as np
-import pandas as pd
 
 import zrtlib.selector.technique as tek
 import zrtlib.selector.strategy as strat
@@ -126,7 +123,7 @@ with CSVWriter(args.query.stem, args.output) as writer:
             #
             flipped = query.flip(term)
             log.info('g {0} {1} {2}'.format(i, term, flipped))
-            if not added:
+            if not flipped:
                 ts.feedback.append(0)
                 continue
 

@@ -3,7 +3,6 @@ import itertools
 import collections
 
 from zrtlib import zutils
-from zrtlib.selector.technique import Entropy
 
 class IterableStack(list):
     def __init__(self, descending=True):
