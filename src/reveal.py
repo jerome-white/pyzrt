@@ -12,6 +12,7 @@ import pandas as pd
 
 import zrtlib.selector.technique as tek
 import zrtlib.selector.strategy as strat
+import zrtlib.selector.sieve as sv
 from zrtlib import indri
 from zrtlib import logger
 from zrtlib import zutils
@@ -52,13 +53,13 @@ arguments = ArgumentParser()
 arguments.add_argument('--retrieval-model', default='ua')
 arguments.add_argument('--selection-strategy')
 arguments.add_argument('--feedback-metric')
+arguments.add_argument('--sieve')
 arguments.add_argument('--clusters', type=Path)
 arguments.add_argument('--index', type=Path)
 arguments.add_argument('--query', type=Path)
 arguments.add_argument('--qrels', type=Path)
 arguments.add_argument('--input', type=Path)
 arguments.add_argument('--output', type=Path)
-arguments.add_argument('--seed', action='append', default=[])
 arguments.add_argument('--guesses', type=int, default=np.inf)
 args = arguments.parse_args()
 
@@ -77,8 +78,8 @@ if ss == 'direct' or ss == 'nearest' or ss == 'feedback':
         'feedback': strat.BlindRelevance,
     }[ss]
     sieve = {
-        'cluster': functools.partial(ClusterSieve, args.clusters),
-        'term' : TermSieve,
+        'cluster': functools.partial(sv.ClusterSieve, args.clusters),
+        'term' : sv.TermSieve,
     }[args.sieve]()
     technique = functools.partial(tek.Entropy)
 
@@ -93,13 +94,13 @@ else:
         technique = functools.partial({
             'tf': tek.TermFrequency,
             'df': tek.DocumentFrequency,
+            'tfidf': tek.TFIDF,
             'random': tek.Random,
             'entropy': tek.Entropy,
-            'tfidf': tek.TFIDF,
         }[ss])
     st = strat.BlindHomogenous(technique)
 
-ts = TermSelector(st, RecentWeighted(), args.seed)
+ts = TermSelector(st, RecentWeighted())
 with Pool() as pool:
     iterable = itertools.filterfalse(QueryDoc.isquery, zutils.walk(args.input))
     for i in pool.imap_unordered(TermDocument, iterable):
