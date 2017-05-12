@@ -9,7 +9,6 @@ class TermSelector:
         self.seed = deque(seed) if seed is not None else []
 
         self.df = None
-        self.feedback = None
         self.documents = {}
 
     #
