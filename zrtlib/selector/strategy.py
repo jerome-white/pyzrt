@@ -30,23 +30,23 @@ class SelectionStrategy:
     def pick(self, documents, feedback):
         raise NotImplementedError()
 
-    def stream(self, documents, feedback):
-        while True:
-            choice = self.pick(documents, feedback)
-            if choice is None:
-                break
-            yield choice
-
 class BlindHomogenous(SelectionStrategy):
     def __init__(self, technique):
         self.technique = technique
 
-    def pick(self, documents, feedback):
+    def pick(self, documents, feedback=None):
         try:
             return next(self.technique)
         except TypeError: # http://stackoverflow.com/a/1549854
             self.technique = self.technique(documents)
-            return self.pick(documents, feedback)
+            return self.pick(documents)
+
+    def stream(self, documents):
+        while True:
+            choice = self.pick(documents)
+            if choice is None:
+                break
+            yield choice
 
 class FromFeedback(SelectionStrategy):
     def __init__(self, sieve, technique):
