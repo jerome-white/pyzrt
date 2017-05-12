@@ -130,7 +130,7 @@ with CSVWriter(args.query.stem, args.output) as writer:
             #
             # Run the query and evaluate
             #
-            engine.query(QueryBuilder(query.terms(), args.retrieval_model))
+            engine.query(QueryBuilder(query, args.retrieval_model))
             (_, evaluation) = next(engine.evaluate(eval_metric))
 
             #
