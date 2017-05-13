@@ -1,13 +1,14 @@
 #!/bin/bash
 
 model=ua
-while getopts "q:r:s:c:t:n:p:m:x:h" OPTION; do
+while getopts "q:r:s:c:t:n:p:m:x:v:h" OPTION; do
     case $OPTION in
         q) query=$OPTARG ;;
         r) qrels=$OPTARG ;;
         s) strategy=$OPTARG ;;
         c) count=$OPTARG ;;
         x) metric=$OPTARG ;;
+	v) sieve=$OPTARG ;;
         # optional
         t) topic=$OPTARG ;;
         n) ngrams=$OPTARG ;;
@@ -45,6 +46,8 @@ mkdir --parents $output
 job=`mktemp`
 
 cat <<EOF >> $job
+#!/bin/bash
+
 python3 -u $ZR_HOME/src/qrels.py \
     --input $qrels \
     --output \$SLURM_JOBTMP \
@@ -60,13 +63,15 @@ python3 -u $ZR_HOME/src/reveal.py \
     --selection-strategy $strategy \
     --query $query \
     --retrieval-model $model \
-    --feedback-metric $metric
+    --feedback-metric $metric \
+    --clusters $SCRATCH/zrt/wsj/2017_0118_020518/cluster/04/kmeans-mini.csv \
+    --sieve $sieve
 EOF
 
 sbatch \
     --mem=150G \
     --time=12:00:00 \
-    --mail-type=ALL \
+    --mail-type=END,FAIL \
     --mail-user=jsw7@nyu.edu \
     --nodes=1 \
     --cpus-per-task=4 \
