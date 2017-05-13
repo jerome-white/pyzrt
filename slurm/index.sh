@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #SBATCH --mem=60G
-#SBATCH --time=4:00:00
+#SBATCH --time=3:00:00
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=jsw7@nyu.edu
 #SBATCH --nodes=1
@@ -23,17 +23,19 @@ ngrams=`printf "%02d" ${1}`
 #
 # Convert the suffix trees to term files
 #
+
 pseudoterms=${2}/pseudoterms/$ngrams
 rm --recursive --force $pseudoterms
 mkdir --parents $pseudoterms
 
 python3 $ZR_HOME/src/suffix2terms.py \
-  --suffix-tree ${2}/trees/$ngrams \
+  --suffix-tree ${2}/trees/${ngrams}.csv \
   --output $pseudoterms
 
 #
 # Generate TREC formatted documents
 #
+
 documents=`mktemp --directory --tmpdir=$SLURM_JOBTMP`
 
 find $pseudoterms -name 'WSJ*' -not -name 'WSJQ*' | \
