@@ -7,6 +7,7 @@ import operator as op
 import xml.etree.ElementTree as et
 from tempfile import NamedTemporaryFile
 
+from zrtlib import logger
 from zrtlib import zutils
 
 QueryID = collections.namedtuple('QueryID', 'topic, number')
@@ -56,7 +57,7 @@ class TrecMetric:
         return '_'.join(self.metric.split('.', 1))
 
 class QueryExecutor:
-    def __init__(self, index, qrels):
+    def __init__(self, index, qrels, keep=False):
         self.index = index
         self.indri = shutil.which('IndriRunQuery')
         self.trec = shutil.which('trec_eval')
@@ -70,8 +71,14 @@ class QueryExecutor:
 
         self.qrels = qrels
 
-        self.query_fp = NamedTemporaryFile(mode='w')
-        self.results_fp = NamedTemporaryFile(mode='w')
+        delete = not keep
+        self.query_fp = NamedTemporaryFile(mode='w', delete=delete)
+        self.results_fp = NamedTemporaryFile(mode='w', delete=delete)
+
+        if keep:
+            log = logger.getlogger()
+            log.debug(self.query_fp.name)
+            log.debug(self.results_fp.name)
 
     def __enter__(self):
         return self
