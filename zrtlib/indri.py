@@ -1,4 +1,5 @@
 import os
+import sys
 import shutil
 import subprocess
 import collections
@@ -24,7 +25,7 @@ def relevant_documents(qrels):
     with qrels.open() as fp:
         # http://trec.nist.gov/data/qrels_eng/
         for line in fp:
-            (topic, iteration, document, relevant) = line.strip().split()
+            (topic, _, document, relevant) = line.strip().split()
             if int(topic) == 0 and int(relevant) > 0:
                 yield document
 
@@ -72,7 +73,7 @@ class QueryExecutor:
         delete = not keep
         f = lambda x: NamedTemporaryFile(mode='w',
                                          delete=delete,
-                                         suffix='-{0}{1}'.format(x,qrels.stem))
+                                         prefix='{0}{1}-'.format(x,qrels.stem))
         (self.query_fp, self.results_fp) = map(f, 'qr')
 
         if keep:
@@ -87,7 +88,7 @@ class QueryExecutor:
         self.query_fp.close()
         self.results_fp.close()
 
-    def query(self, query, verify=True):
+    def query(self, query, check=True):
         # erase the query and results files
         for i in (self.query_fp, self.results_fp):
             if i.tell() > 0:
@@ -105,12 +106,10 @@ class QueryExecutor:
             '-index={0}'.format(self.index),
             self.query_fp.name,
         ]
-        result = subprocess.run(cmd, stdout=self.results_fp)
-        self.results_fp.flush()
 
-        if verify:
-            result.check_returncode()
-            assert(os.stat(self.results_fp.name).st_size > 0)
+        result = subprocess.run(cmd, check=check, stdout=self.results_fp)
+        sys.stdout.flush()
+        self.results_fp.flush()
 
         return result
 
@@ -127,6 +126,12 @@ class QueryExecutor:
                     yield document
 
     def evaluate(self, *metrics, all_metrics=True):
+        if os.stat(self.results_fp.name).st_size == 0:
+            log = logger.getlogger()
+            log.warning('No results')
+
+            return
+
         cmd = [
             self.trec,
             '-q',
