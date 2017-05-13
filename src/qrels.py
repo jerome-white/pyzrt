@@ -35,7 +35,7 @@ def write(output, jobs):
         log.info(topic)
 
         path = output.joinpath(topic)
-        with path.open('w') as fp:
+        with path.open('w', buffering=1) as fp:
             writer = csv.writer(fp, delimiter=' ')
             for entry in relevance:
                 writer.writerows(entry.repeat(args.count))
