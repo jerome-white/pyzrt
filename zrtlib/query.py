@@ -5,10 +5,9 @@ from collections import namedtuple
 
 import numpy as np
 import networkx as nx
-import matplotlib.pyplot as plt
 
 from zrtlib.indri import IndriQuery
-from zrtlib.document import TermDocument, Region
+from zrtlib.document import Region
 
 Node_ = namedtuple('Node', 'term, offset')
 Node = lambda x: Node_(x.term, x.start)
