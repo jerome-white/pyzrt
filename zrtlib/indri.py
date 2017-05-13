@@ -110,7 +110,7 @@ class QueryExecutor:
 
         if verify:
             result.check_returncode()
-            assert(os.stat(self.results_fp).st_size > 0)
+            assert(os.stat(self.results_fp.name).st_size > 0)
 
         return result
 
