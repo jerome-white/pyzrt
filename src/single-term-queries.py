@@ -22,9 +22,7 @@ def func(args):
     document = TermDocument(terms)
 
     for i in document.df['term'].unique():
-        doc = HiddenDocument(terms)
-        doc.flip(i)
-        indri.add(QueryBuilder(doc).compose())
+        indri.add(i)
 
     #
     # Pose the set of queries to Indri
