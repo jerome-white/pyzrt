@@ -6,7 +6,7 @@ from multiprocessing import Pool
 from zrtlib import zutils
 from zrtlib import logger
 from zrtlib.query import QueryBuilder
-from zrtlib.indri import IndriQuery, QueryExecutor
+from zrtlib.indri import IndriQuery, QueryExecutor, QueryDoc
 from zrtlib.document import TermDocument, HiddenDocument
 
 def func(args):
@@ -31,8 +31,10 @@ def func(args):
     #
     rows = []
     fieldnames = set()
+    qid = QueryDoc.components(terms)
+    qrels = options.qrels.joinpath(qid.topic)
 
-    with QueryExecutor(options.index, options.qrels) as engine:
+    with QueryExecutor(options.index, qrels, True) as engine:
         engine.query(indri)
         for (run, results) in engine.evaluate():
             assert('run' not in results)
