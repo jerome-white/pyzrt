@@ -39,7 +39,7 @@ output=$root/evals/single/$ngrams
 rm --force --recursive $output
 mkdir --parents $output
 
-find $root/pseudoterms/$terms -name 'WSJQ*' | \
+find $root/pseudoterms/$ngrams -name 'WSJQ*' | \
     python $ZR_HOME/src/single-term-queries.py \
            --index $root/indri/$ngrams \
            --qrels $judgements \
