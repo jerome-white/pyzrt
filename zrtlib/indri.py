@@ -1,9 +1,7 @@
-import sys
-import shlex
+import os
 import shutil
 import subprocess
 import collections
-import operator as op
 import xml.etree.ElementTree as et
 from tempfile import NamedTemporaryFile
 
@@ -72,8 +70,10 @@ class QueryExecutor:
         self.qrels = qrels
 
         delete = not keep
-        self.query_fp = NamedTemporaryFile(mode='w', delete=delete)
-        self.results_fp = NamedTemporaryFile(mode='w', delete=delete)
+        f = lambda x: NamedTemporaryFile(mode='w',
+                                         delete=delete,
+                                         suffix='-{0}{1}'.format(x,qrels.stem))
+        (self.query_fp, self.results_fp) = map(f, 'qr')
 
         if keep:
             log = logger.getlogger()
@@ -106,8 +106,11 @@ class QueryExecutor:
             self.query_fp.name,
         ]
         result = subprocess.run(cmd, stdout=self.results_fp)
+        self.results_fp.flush()
+
         if verify:
             result.check_returncode()
+            assert(os.stat(self.results_fp).st_size > 0)
 
         return result
 
