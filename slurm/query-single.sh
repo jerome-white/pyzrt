@@ -1,12 +1,12 @@
 #!/bin/bash
 
-#SBATCH mem=60G
-#SBATCH time=6:00:00
-#SBATCH mail-type=ALL
-#SBATCH mail-user=jsw7@nyu.edu
-#SBATCH nodes=1
-#SBATCH cpus-per-task=20
-#SBATCH job-name=query-single
+#SBATCH --mem=60G
+#SBATCH --time=6:00:00
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=jsw7@nyu.edu
+#SBATCH --nodes=1
+#SBATCH --cpus-per-task=20
+#SBATCH --job-name=query-single
 
 # ${1} /path/to/qrels
 # ${2} run (directory inside wsj)
