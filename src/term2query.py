@@ -35,31 +35,6 @@ def progressive(args):
 
     return instantaneous(args + (indri, ))
 
-def single(args):
-    (terms, model, output) = args
-
-    log = logger.getlogger()
-    log.info(terms.stem)
-
-    indri = IndriQuery()
-    document = TermDocument(terms)
-
-    fieldnames = [ 'query', 'term' ]
-    record = output.joinpath(terms.stem).with_suffix('.csv')
-
-    with record.open('w') as fp:
-        writer = csv.DictWriter(fp, fieldnames=fieldnames)
-        writer.writeheader()
-
-        for (i, j) in enumerate(document.df['term'].unique()):
-            doc = HiddenDocument(terms)
-            doc.flip(j)
-            query = QueryBuilder(doc, model)
-            indri.add(query.compose())
-            writer.writerow(dict(zip(fieldnames, (i, j))))
-
-    return instantaneous(args + (indri, ))
-
 arguments = ArgumentParser()
 arguments.add_argument('--model')
 arguments.add_argument('--action')
