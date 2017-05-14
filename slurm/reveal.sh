@@ -37,7 +37,7 @@ if [ ! $root ] || [ ! $ngrams ]; then
 fi
 
 if [ ! $topic ]; then
-    topic=`python3 $ZR_HOME/src/query2topic.py --query $query`
+    topic=`python3 $ZR_HOME/src/support/query2topic.py --query $query`
 fi
 
 output=$root/selector/$ngrams/$strategy
@@ -48,14 +48,14 @@ job=`mktemp`
 cat <<EOF >> $job
 #!/bin/bash
 
-python3 -u $ZR_HOME/src/qrels.py \
+python3 -u $ZR_HOME/src/support/qrels.py \
     --input $qrels \
     --output \$SLURM_JOBTMP \
     --topic $topic \
     --document-class WSJ \
     --count $count
 
-python3 -u $ZR_HOME/src/reveal.py \
+python3 -u $ZR_HOME/src/select/reveal.py \
     --index $root/indri/$ngrams \
     --input $root/pseudoterms/$ngrams \
     --output $output \

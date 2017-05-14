@@ -24,7 +24,7 @@ module load parallel/20140722
 root=`dirname ${queries}`
 
 judgements=`mktemp --directory`
-python3 -u $ZR_HOME/src/qrels.py \
+python3 -u $ZR_HOME/src/support/qrels.py \
     --input ${qrels} \
     --output $judgements \
     --document-class WSJ \

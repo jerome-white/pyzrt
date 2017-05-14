@@ -26,7 +26,7 @@ ngrams=`printf "%02d" ${3}`
 # Make QRELS
 #
 judgements=`mktemp --directory`
-python3 $ZR_HOME/src/qrels.py \
+python3 $ZR_HOME/src/support/qrels.py \
         --input ${1} \
         --output $judgements \
         --document-class WSJ \
@@ -40,7 +40,7 @@ rm --force --recursive $output
 mkdir --parents $output
 
 find $root/pseudoterms/$ngrams -name 'WSJQ*' | \
-    python $ZR_HOME/src/single-term-queries.py \
+    python $ZR_HOME/src/query/single-term-queries.py \
            --index $root/indri/$ngrams \
            --qrels $judgements \
            --output $output

@@ -52,7 +52,7 @@ EOF
     mkdir --parents $output
 
     find $root/pseudoterms/$terms -name 'WSJQ*' | \
-	python $ZR_HOME/src/term2query.py \
+	python $ZR_HOME/src/query/term2query.py \
                --action $action \
                --output $output \
                --model $j

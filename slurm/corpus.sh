@@ -15,7 +15,7 @@ o1=$ZR_HOME/data/queries
 rm --recursive --force $o1
 mkdir --parents $o1
 
-python3 $ZR_HOME/src/topics.py \
+python3 $ZR_HOME/src/support/topics.py \
   --topics $ZR_HOME/data/topics.251-300.gz \
   --output $o1 \
   --with-title \
@@ -29,7 +29,7 @@ o2=$HOME/var/WSJ/0000
 rm --recursive --force $o2
 mkdir --parents $o2
 
-python3 $ZR_HOME/src/qformatter.py \
+python3 $ZR_HOME/src/create/qformatter.py \
     --input $o1 \
     --output $o2 \
     --with-topic
@@ -43,7 +43,7 @@ o3=$SCRATCH/zrt/wsj/`date +'%Y_%m%d_%H%M%S'`/corpus
 rm --force --recursive $o3
 mkdir --parents $o3
 
-python3 $ZR_HOME/src/parse.py \
+python3 $ZR_HOME/src/create/parse.py \
     --input $o2 \
     --output $o3 \
     --parser wsj \

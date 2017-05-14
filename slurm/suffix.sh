@@ -30,7 +30,7 @@ fi
 
 job=`mktemp`
 cat <<EOF > $job
-python3 -u $ZR_HOME/src/stree.py $existing \
+python3 -u $ZR_HOME/src/create/stree.py $existing \
     --input $corpus \
     --output $output \
     --min-gram $n \

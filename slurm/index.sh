@@ -28,7 +28,7 @@ pseudoterms=${2}/pseudoterms/$ngrams
 rm --recursive --force $pseudoterms
 mkdir --parents $pseudoterms
 
-python3 $ZR_HOME/src/suffix2terms.py \
+python3 $ZR_HOME/src/create/suffix2terms.py \
   --suffix-tree ${2}/trees/${ngrams}.csv \
   --output $pseudoterms
 
@@ -39,7 +39,7 @@ python3 $ZR_HOME/src/suffix2terms.py \
 documents=`mktemp --directory --tmpdir=$SLURM_JOBTMP`
 
 find $pseudoterms -name 'WSJ*' -not -name 'WSJQ*' | \
-  python3 $ZR_HOME/src/parse.py \
+  python3 $ZR_HOME/src/create/parse.py \
     --output $documents \
     --parser pt \
     --strainer trec \

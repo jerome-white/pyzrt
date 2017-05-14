@@ -15,6 +15,6 @@ output=$path/cluster/04
 
 mkdir --parents $output
 
-python $ZR_HOME/src/cluster.py \
+python $ZR_HOME/src/support/cluster.py \
     --input $path/pseudoterms/04 \
     --output $output/kmeans-mini.csv
