@@ -5,9 +5,8 @@ from multiprocessing import Pool
 
 from zrtlib import zutils
 from zrtlib import logger
-from zrtlib.query import QueryBuilder
 from zrtlib.indri import IndriQuery, QueryExecutor, QueryDoc
-from zrtlib.document import TermDocument, HiddenDocument
+from zrtlib.document import TermDocument
 
 def func(args):
     (terms, options) = args
@@ -19,9 +18,9 @@ def func(args):
     # Create a set of queries with a different term flipped.
     #
     indri = IndriQuery()
-    document = TermDocument(terms)
+    qterms = TermDocument(terms).df['term'].unique()
 
-    for i in document.df['term'].unique():
+    for i in qterms:
         indri.add(i)
 
     #
@@ -32,11 +31,11 @@ def func(args):
     qid = QueryDoc.components(terms)
     qrels = options.qrels.joinpath(qid.topic)
 
-    with QueryExecutor(options.index, qrels, True) as engine:
+    with QueryExecutor(options.index, qrels) as engine:
         engine.query(indri)
         for (run, results) in engine.evaluate():
-            assert('run' not in results)
-            rows.append({ 'run': run, **results })
+            assert('term' not in results)
+            rows.append({ 'term': qterms[run], **results })
             fieldnames.update(rows[-1].keys())
 
     #
