@@ -3,6 +3,7 @@ import itertools
 import functools as ft
 from pathlib import Path
 from argparse import ArgumentParser
+from tempfile import NamedTemporaryFile
 from multiprocessing import Pool
 
 import numpy as np
@@ -82,7 +83,7 @@ strategy = {
     'direct': st.DirectNeighbor,
     'nearest': st.NearestNeighbor,
     'feedback': st.BlindRelevance,
-}[args.selection_strategy](sieve, technique)
+}[args.strategy](sieve, technique)
 
 #
 # Selection manager
