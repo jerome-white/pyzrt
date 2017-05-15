@@ -2,8 +2,11 @@ import sys
 import csv
 import itertools
 import operator as op
+import collections
 from pathlib import Path
 from functools import singledispatch
+
+TrecMeasurement = collections.namedtuple('Measurement', 'run, results')
 
 def read_baseline(baseline, metric, single_topics=True):
     seen = set()
@@ -33,7 +36,7 @@ def read_trec(fp, summary=False):
         if previous is not None and previous != run:
             assert(not summarised)
 
-            yield (previous, results)
+            yield TrecMeasurement(previous, results)
             results = {} # probably not necessary, but safe
 
             if run < 0:
@@ -47,7 +50,7 @@ def read_trec(fp, summary=False):
         previous = run
 
     if results and (summary or run >= 0):
-        yield (run, results)
+        yield TrecMeasurement(run, results)
 
 def cut(word, pos=1):
     return (word[0:pos], word[pos:])
