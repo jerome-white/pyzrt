@@ -131,7 +131,7 @@ with NamedTemporaryFile(mode='w',
             #
             # Run the query and evaluate
             #
-            engine.query(QueryBuilder(query.terms()))
+            engine.query(QueryBuilder(query))
             (_, evaluation) = next(engine.evaluate(eval_metric))
 
             #

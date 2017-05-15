@@ -8,7 +8,7 @@ class Picker:
     def add(self, term):
         raise NotImplementedError()
 
-    def terms(self):
+    def __str__(self):
         raise NotImplementedError()
 
 class HiddenQuery(Picker):
@@ -18,26 +18,26 @@ class HiddenQuery(Picker):
     def __float__(self):
         return float(self.document)
 
+    def __str__(self):
+        return str(self.document)
+
     def add(self, term):
         if not self.document:
             raise BufferError()
 
         return self.document.flip(term) > 0
 
-    def terms(self):
-        return self.document
-
 class ProgressiveQuery(Picker):
     def __init__(self):
-        self.df = pd.DataFrame()
+        self.terms = []
 
     def __float__(self):
-        return float(len(self.df))
+        return float(len(self.terms))
+
+    def __str__(self):
+        return ' '.join(self.terms)
 
     def add(self, term):
-        self.df = self.df.append(term, ignore_index=True)
+        self.terms.append(term)
 
         return True
-
-    def terms(self):
-        return TermDocument(io.StringIO(self.df.to_csv(index=False)))
