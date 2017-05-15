@@ -1,25 +1,28 @@
-import io
-
-import pandas as pd
-
-from zrtlib.document import TermDocument
+from zrtlib.indri import QueryBuilder, IndriQuery
 
 class Picker:
-    def add(self, term):
-        raise NotImplementedError()
+    def __float__(self):
+        return float(self.document)
 
+    #
+    # Allows a Picker to be passed directly to QueryExecutor::query
+    #
     def __str__(self):
         raise NotImplementedError()
 
+    def add(self, term):
+        raise NotImplementedError()
+
 class HiddenQuery(Picker):
-    def __init__(self, hidden_document):
+    def __init__(self, hidden_document, model='ua'):
         self.document = hidden_document
+        self.model = model
 
     def __float__(self):
         return float(self.document)
 
     def __str__(self):
-        return str(self.document)
+        return str(QueryBuilder(self.document, self.model))
 
     def add(self, term):
         if not self.document:
@@ -35,7 +38,10 @@ class ProgressiveQuery(Picker):
         return float(len(self.terms))
 
     def __str__(self):
-        return ' '.join(self.terms)
+        indri = IndriQuery()
+        indri.add(' '.join(self.terms))
+
+        return str(indri)
 
     def add(self, term):
         self.terms.append(term)

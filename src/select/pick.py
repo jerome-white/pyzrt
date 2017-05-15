@@ -11,7 +11,6 @@ import zrtlib.selector.strategy as st
 import zrtlib.selector.sieve as sv
 from zrtlib import logger
 from zrtlib import zutils
-from zrtlib.query import QueryBuilder
 from zrtlib.indri import QueryDoc, QueryExecutor, TrecMetric
 from zrtlib.document import TermDocument
 from zrtlib.selector.picker import ProgressiveQuery
@@ -131,7 +130,7 @@ with NamedTemporaryFile(mode='w',
             #
             # Run the query and evaluate
             #
-            engine.query(QueryBuilder(query))
+            engine.query(query)
             (_, evaluation) = next(engine.evaluate(eval_metric))
 
             #
