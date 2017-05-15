@@ -4,7 +4,7 @@ import operator as op
 from collections import namedtuple
 
 import numpy as np
-import networkx as nx
+import graph_tool.all as gt
 
 from zrtlib.indri import IndriQuery
 from zrtlib.document import Region
@@ -67,14 +67,14 @@ class Weighted(Query):
 
     def discount(self, df):
         previous = []
-        
+
         for row in df.itertuples():
             w = self.alpha * (row.end - row.start)
             i = w / (1 + w)
             j = np.prod(previous) if previous else 1
-            
+
             yield (row.Index, i * j)
-            
+
             previous.append(1 - i)
 
     def combine(self, df, weights):
@@ -120,30 +120,34 @@ class ShortestPath(Query):
             if len(df) == 0:
                 return ''
 
-        graph = nx.DiGraph()
+        graph = gt.Graph(directed=True)
+        nodes = graph.new_vertex_property('object')
+        weights = graph.new_edge_property('int')
 
         for source in df.itertuples():
-            u = Node(source)
+            u = graph.add_vertex()
+            nodes[u] = source
             dest = df[(df.start > source.start) & (df.start <= source.end)]
             for target in dest.itertuples():
-                v = Node(target)
-                weight = source.end - target.start
-                graph.add_edge(u, v, weight=weight)
+                v = graph.add_vertex()
+                nodes[v] = target
+                edge = graph.add_edge(u, v)
+                weights[edge] = source.end - target.start
 
         if len(graph) == 0:
             return u.term
         # assert(nx.is_directed_acyclic_graph(graph))
 
-        (source, target) = [ Node(df.iloc[x]) for x in (0, -1) ]
+        (source, target) = [ nodes[x] for x in (0, -1) ]
         optimal = OptimalPath(np.inf, None)
 
-        for i in nx.all_shortest_paths(graph, source, target, weight='weight'):
-            weights = []
+        for i in gt.all_shortest_paths(graph, source, target, weights):
+            path = []
             for (u, v) in zip(i, i[1:]):
-                d = graph.get_edge_data(u, v)
-                weights.append(d['weight'])
+                edge = graph.edge(u, v)
+                path.append(weights[edge])
 
-            deviation = np.std(weights)
+            deviation = np.std(path)
             if deviation < optimal.deviation:
                 optimal = OptimalPath(deviation, i)
 
