@@ -6,12 +6,9 @@ from argparse import ArgumentParser
 from tempfile import NamedTemporaryFile
 from multiprocessing import Pool
 
-import numpy as np
-
 import zrtlib.selector.technique as tq
 import zrtlib.selector.strategy as st
 import zrtlib.selector.sieve as sv
-from zrtlib import indri
 from zrtlib import logger
 from zrtlib import zutils
 from zrtlib.query import QueryBuilder
@@ -40,7 +37,7 @@ arguments.add_argument('--output-directory', type=Path)
 arguments.add_argument('--clusters', type=Path)
 
 arguments.add_argument('--seed', action='append', default=[])
-arguments.add_argument('--guesses', type=int, default=np.inf)
+arguments.add_argument('--guesses', type=int)
 args = arguments.parse_args()
 
 log = logger.getlogger()
@@ -114,18 +111,22 @@ with NamedTemporaryFile(mode='w',
 
     with QueryExecutor(args.index, args.qrels) as engine:
         for (i, term) in enumerate(manager, 1):
-            if i > args.guesses or not query:
-                log.debug('Guessing finished')
+            if args.guesses is not None and i > args.guesses:
+                log.error('Maximum guesses reached')
                 break
 
             #
             # Add the term to the query
             #
-            added = query.add(term)
-            log.info('g {0} {1} {2}'.format(i, term, added))
-            if not added:
-                manager.feedback.append(0)
-                continue
+            try:
+                added = query.add(term)
+                log.info('g {0} {1} {2}'.format(i, term, added))
+                if not added:
+                    manager.feedback.append(0)
+                    continue
+            except BufferError:
+                log.error('Query at capacity')
+                break
 
             #
             # Run the query and evaluate

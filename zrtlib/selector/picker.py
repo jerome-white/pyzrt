@@ -5,9 +5,6 @@ import pandas as pd
 from zrtlib.document import TermDocument
 
 class Picker:
-    def __bool__(self):
-        return False
-
     def add(self, term):
         raise NotImplementedError()
 
@@ -21,10 +18,10 @@ class HiddenQuery(Picker):
     def __float__(self):
         return float(self.document)
 
-    def __bool__(self):
-        return bool(self.document)
-
     def add(self, term):
+        if not self.document:
+            raise BufferError()
+
         return self.document.flip(term) > 0
 
     def terms(self):
@@ -39,6 +36,7 @@ class ProgressiveQuery(Picker):
 
     def add(self, term):
         self.df = self.df.append(term, ignore_index=True)
+
         return True
 
     def terms(self):
