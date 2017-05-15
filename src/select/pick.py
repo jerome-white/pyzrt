@@ -30,11 +30,12 @@ arguments.add_argument('--strategy')
 arguments.add_argument('--technique')
 arguments.add_argument('--sieve')
 arguments.add_argument('--feedback-level', type=int, default=2)
+arguments.add_argument('--feedback-metric')
 
 arguments.add_argument('--index', type=Path)
+arguments.add_argument('--documents', type=Path)
 arguments.add_argument('--qrels', type=Path)
-arguments.add_argument('--input', type=Path)
-arguments.add_argument('--output', type=Path)
+arguments.add_argument('--output-directory', type=Path)
 arguments.add_argument('--clusters', type=Path)
 
 arguments.add_argument('--seed', action='append', default=[])
@@ -56,6 +57,7 @@ feedback = RecentWeighted(args.feedback_level)
 technique = ft.partial({
     'tf': tq.TermFrequency,
     'df': tq.DocumentFrequency,
+    'tfidf': tq.TFIDF,
     'random': tq.Random,
     'entropy': tq.Entropy,
 }[args.technique])
@@ -80,8 +82,7 @@ strategy = {
     'direct': st.DirectNeighbor,
     'nearest': st.NearestNeighbor,
     'feedback': st.BlindRelevance,
-    'tfidf': st.TFIDF,
-}[args.selection-strategy](sieve, technique)
+}[args.selection_strategy](sieve, technique)
 
 #
 # Selection manager
@@ -90,7 +91,8 @@ strategy = {
 manager = TermSelector(strategy, feedback, args.seed)
 
 with Pool() as pool:
-    iterable = itertools.filterfalse(QueryDoc.isquery, zutils.walk(args.input))
+    docs = zutils.walk(args.documents)
+    iterable = itertools.filterfalse(QueryDoc.isquery, docs)
     for i in pool.imap_unordered(TermDocument, iterable):
         manager.add(i)
 
@@ -102,10 +104,13 @@ eval_metric = TrecMetric(args.feedback_metric)
 #
 # Begin the game!
 #
-writer = None
-query = ProgressiveQuery()
+with NamedTemporaryFile(mode='w',
+                        buffering=1,
+                        dir=str(args.output_directory),
+                        delete=False) as fp:
+    writer = None
+    query = ProgressiveQuery()
 
-with args.output('w') as fp:
     with QueryExecutor(args.index, args.qrels) as engine:
         for (i, term) in enumerate(manager, 1):
             if i > args.guesses or not query:
@@ -116,7 +121,7 @@ with args.output('w') as fp:
             # Add the term to the query
             #
             added = query.add(term)
-            log.info('g {0} {1} {2}'.format(i, term))
+            log.info('g {0} {1} {2}'.format(i, term, added))
             if not added:
                 manager.feedback.append(0)
                 continue
