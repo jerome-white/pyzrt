@@ -67,7 +67,7 @@ EOF
                 sbatch \
                     --mem=150G \
                     --time=12:00:00 \
-                    --mail-type=ALL \
+                    --mail-type=END,FAIL \
                     --mail-user=jsw7@nyu.edu \
                     --nodes=1 \
                     --cpus-per-task=2 \
