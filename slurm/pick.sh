@@ -42,6 +42,8 @@ for i in $root/evals/single/$ngrams/*; do
 
                 job=`mktemp`
                 cat <<EOF >> $job
+#!/bin/bash
+
 python3 -u $ZR_HOME/src/support/qrels.py \
     --input $zrt/qrels.251-300.parts1-5.tar.gz \
     --output \$SLURM_JOBTMP \
