@@ -20,8 +20,8 @@ class ClusterSieve(TermSieve):
     def like_(self, term, documents):
         relevant = super().like_(term, documents)
         column = 'value'
-        docs = self.clusters[self.clusters['type'] == 'document' &
-                             self.clusters[column].isin(relevant)]
+        docs = self.clusters[(self.clusters['type'] == 'document') &
+                             (self.clusters[column].isin(relevant))]
 
         for (_, group) in docs.groupby('cluster', sort=False):
             df = group[column]
