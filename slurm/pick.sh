@@ -21,7 +21,7 @@ ngrams=`printf "%02d" $n`
 
 for i in $root/evals/single/$ngrams/*; do
     seed=( `python3 $ZR_HOME/src/support/top-terms.py \
-            --metric ndcg.cut_10 \
+            --metric ndcg_cut.10 \
             --results $i \
             --non-zero | \
             head --lines=$seed_size` )
