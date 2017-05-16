@@ -3,6 +3,7 @@
 n=4
 seed_size=1
 zrt=$SCRATCH/zrt
+metric=ndcg_cut.10
 root=$zrt/wsj/2017_0118_020518
 
 unset ntopics
@@ -21,7 +22,7 @@ ngrams=`printf "%02d" $n`
 
 for i in $root/evals/single/$ngrams/*; do
     seed=( `python3 $ZR_HOME/src/support/top-terms.py \
-            --metric ndcg_cut.10 \
+            --metric $metric \
             --results $i \
             --non-zero | \
             head --lines=$seed_size` )
@@ -56,7 +57,7 @@ python3 -u $ZR_HOME/src/select/pick.py \
     --strategy $strategy \
     --technique $technique \
     --sieve $sieve \
-    --feedback-metric ndcg.cut_10 \
+    --feedback-metric $metric \
     --clusters $root/cluster/04/kmeans-mini.csv \
     --seed $seed
 EOF
