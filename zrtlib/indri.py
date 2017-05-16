@@ -46,13 +46,23 @@ class IndriQuery:
         return et.tostring(self.query, encoding='unicode')
 
 class TrecMetric:
+    '''The trec_eval program uses different formats for the way metrics
+    are specified and how they are presented in their results; this
+    class acts a shield between knowing the difference.
+    '''
     def __init__(self, metric):
+        '''A metric as it would be specified the trec_eval command.
+        '''
         self.metric = metric
 
     def __str__(self):
+        '''Suitable for supplying directly to the trec_eval command
+        '''
         return '-m' + self.metric
 
     def __repr__(self):
+        '''The key in trec_eval results
+        '''
         return '_'.join(self.metric.split('.', 1))
 
 class QueryExecutor:
