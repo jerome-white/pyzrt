@@ -40,13 +40,6 @@ class BlindHomogenous(SelectionStrategy):
             self.technique = self.technique(documents)
             return self.pick(documents)
 
-    def stream(self, documents):
-        while True:
-            choice = self.pick(documents)
-            if choice is None:
-                break
-            yield choice
-
 class FromFeedback(SelectionStrategy):
     def __init__(self, sieve, technique):
         self.sieve = sieve
@@ -65,7 +58,7 @@ class FromFeedback(SelectionStrategy):
             self.stack.pop()
 
         eligible = documents[documents['selected'] == 0]
-        iterable = (self.stack, self.blind.stream(eligible))
+        iterable = (self.stack, zutils.stream(eligible, self.blind.pick))
         for i in itertools.chain.from_iterable(iterable):
             matches = documents[documents['term'] == i]
             if not matches['selected'].any():
@@ -83,7 +76,7 @@ class BlindRelevance(FromFeedback):
         self.technique = technique
 
     def proximity(self, term, documents):
-        yield from self.technique(documents)
+        yield from zutils.stream(documents)
 
 class CoOccurrence(FromFeedback):
     def __init__(self, sieve, technique, radius=1):

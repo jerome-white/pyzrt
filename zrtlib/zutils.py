@@ -8,6 +8,18 @@ from functools import singledispatch
 
 TrecMeasurement = collections.namedtuple('Measurement', 'run, results')
 
+def stream(items, move=next, stop=None, compare=op.eq):
+    '''Iterate through a sequence that doesn't strictly conform to
+    Python's iterable semantics.
+
+    '''
+
+    while True:
+        i = move(items)
+        if compare(i, stop):
+            break
+        yield i
+
 def read_baseline(baseline, metric, single_topics=True):
     seen = set()
 
