@@ -87,7 +87,7 @@ class CoOccurrence(FromFeedback):
     def proximity(self, term, documents):
         occurrence = collections.Counter()
 
-        for df in documents:
+        for (_, df) in documents.groupby('document', sort=False):
             rows = df[df['term'] == term]
             for i in rows.itertuples():
                 for (neighbor, distance) in self._proximity(i, df):
