@@ -39,7 +39,7 @@ class Cluster:
         writer.writeheader()
 
         for (document, cluster) in zip(self.labels, self.model.labels_):
-            entry = Entry('document', document.stem, cluster)
+            entry = Entry('document', cluster, document.stem)
             writer.writerow(entry._asdict())
 
         if n_terms > 0:
