@@ -3,6 +3,7 @@ import itertools
 import collections
 
 from zrtlib import zutils
+from zrtlib import logger
 
 class IterableStack(list):
     def __init__(self, descending=True):
@@ -23,7 +24,10 @@ class IterableStack(list):
         return item
 
     def push(self, iterable):
-        self.append(list(iterable))
+        attachment = list(iterable)
+        if not attachment:
+            raise ValueError()
+        self.append(attachment)
 
 class SelectionStrategy:
     def pick(self, documents, feedback):
@@ -53,7 +57,12 @@ class FromFeedback(SelectionStrategy):
             last = documents['selected'].argmax()
             term = documents.iloc[last]['term']
             relevant = self.sieve.like(term, documents)
-            self.stack.push(self.proximity(term, relevant))
+            potentials = self.proximity(term, relevant)
+            try:
+                self.stack.push(potentials)
+            except ValueError:
+                log = logger.getlogger()
+                log.warning('Unable to add potential values')
         elif improvement < 0:
             self.stack.pop()
 
