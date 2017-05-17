@@ -54,10 +54,17 @@ class FromFeedback(SelectionStrategy):
         improvement = int(feedback)
 
         if improvement > 0:
+            # get the last term that was guessed
             last = documents['selected'].argmax()
             term = documents.iloc[last]['term']
+
+            # find documents to explore based on that term
             relevant = self.sieve.like(term, documents)
+
+            # find terms to explore based on those documents
             potentials = self.proximity(term, relevant)
+
+            # add those terms to the stack
             try:
                 self.stack.push(potentials)
             except ValueError:
@@ -85,7 +92,7 @@ class BlindRelevance(FromFeedback):
         self.technique = technique
 
     def proximity(self, term, documents):
-        yield from zutils.stream(documents)
+        yield from documents['term']
 
 class CoOccurrence(FromFeedback):
     def __init__(self, sieve, technique, radius=1):
