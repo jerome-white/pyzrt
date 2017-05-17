@@ -96,7 +96,7 @@ class BlindRelevance(FromFeedback):
         self.technique = technique
 
     def proximity(self, term, documents):
-        yield from zrutils.stream(self.technique(documents))
+        yield from zutils.stream(self.technique(documents))
 
 class CoOccurrence(FromFeedback):
     def __init__(self, sieve, technique, radius=1):
