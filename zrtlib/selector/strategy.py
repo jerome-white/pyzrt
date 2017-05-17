@@ -29,6 +29,10 @@ class IterableStack(list):
             raise ValueError()
         self.append(attachment)
 
+    def peel(self):
+        if self:
+            self.pop()
+
 class SelectionStrategy:
     def pick(self, documents, feedback):
         raise NotImplementedError()
@@ -71,7 +75,7 @@ class FromFeedback(SelectionStrategy):
                 log = logger.getlogger()
                 log.warning('Unable to add potential values')
         elif improvement < 0:
-            self.stack.pop()
+            self.stack.peel()
 
         eligible = documents[documents['selected'] == 0]
         iterable = (self.stack, zutils.stream(eligible, self.blind.pick))
@@ -92,7 +96,7 @@ class BlindRelevance(FromFeedback):
         self.technique = technique
 
     def proximity(self, term, documents):
-        yield from documents['term']
+        yield from zrutils.stream(self.technique(documents))
 
 class CoOccurrence(FromFeedback):
     def __init__(self, sieve, technique, radius=1):
