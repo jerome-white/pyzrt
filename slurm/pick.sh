@@ -36,9 +36,21 @@ for i in $root/evals/single/$ngrams/*; do
     for strategy in ${strategies[@]}; do
         for technique in ${techniques[@]}; do
             for sieve in ${sieves[@]}; do
+                path=$root/picker/$ngrams/$strategy/$sieve
+                mkdir --parents $path
 
-                output=$root/picker/$ngrams/$strategy/$sieve/$topic
-                mkdir --parents $output
+                sequence=1
+                while :; do
+                    output=$path/WSJQ00${topic}-`printf "%04d" $sequence`
+                    if [ ! -e $output ]; then
+                        break
+                    fi
+                    (( sequence++ ))
+                    if [ $sequence -gt 9999 ]; then
+                        echo "ERROR: No more sequence numbers" >&2
+                        exit 1
+                    fi
+                done
 
                 job=`mktemp`
                 cat <<EOF >> $job
@@ -54,7 +66,7 @@ python3 -u $ZR_HOME/src/support/qrels.py \
 python3 -u $ZR_HOME/src/select/pick.py \
     --index $root/indri/$ngrams \
     --documents $root/pseudoterms/$ngrams \
-    --output-directory $output \
+    --output $output \
     --qrels \$SLURM_JOBTMP/$topic \
     --strategy $strategy \
     --technique $technique \
@@ -71,7 +83,7 @@ EOF
                     --mail-user=jsw7@nyu.edu \
                     --nodes=1 \
                     --cpus-per-task=2 \
-                    --job-name=pick_$strategy-$sieve-$topic \
+                    --job-name=pick-${strategy}_${sieve}_${topic} \
                     $job
             done
         done

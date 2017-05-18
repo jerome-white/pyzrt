@@ -3,7 +3,6 @@ import itertools
 import functools as ft
 from pathlib import Path
 from argparse import ArgumentParser
-from tempfile import NamedTemporaryFile
 from multiprocessing import Pool
 
 import zrtlib.selector.technique as tq
@@ -26,13 +25,13 @@ arguments = ArgumentParser()
 arguments.add_argument('--strategy')
 arguments.add_argument('--technique')
 arguments.add_argument('--sieve')
-arguments.add_argument('--feedback-level', type=int, default=2)
 arguments.add_argument('--feedback-metric')
+arguments.add_argument('--feedback-level', type=int, default=2)
 
 arguments.add_argument('--index', type=Path)
 arguments.add_argument('--documents', type=Path)
 arguments.add_argument('--qrels', type=Path)
-arguments.add_argument('--output-directory', type=Path)
+arguments.add_argument('--output', type=Path)
 arguments.add_argument('--clusters', type=Path)
 
 arguments.add_argument('--seed', action='append', default=[])
@@ -96,19 +95,17 @@ with Pool() as pool:
 #
 # Metric
 #
+
 eval_metric = TrecMetric(args.feedback_metric)
 
 #
 # Begin the game!
 #
-with NamedTemporaryFile(mode='w',
-                        buffering=1,
-                        dir=str(args.output_directory),
-                        delete=False) as fp:
-    writer = None
-    query = ProgressiveQuery()
-
+with args.output.open('w') as fp
     with QueryExecutor(args.index, args.qrels) as engine:
+        writer = None
+        query = ProgressiveQuery()
+
         for (i, term) in enumerate(manager, 1):
             if args.guesses is not None and i > args.guesses:
                 log.error('Maximum guesses reached')
