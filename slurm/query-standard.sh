@@ -51,6 +51,6 @@ mkdir --parents $output
 python3 src/query/standard.py \
         --index $root/indri/$ngrams \
         --qrels $judgements \
-        --output $output
+        --output $output \
         --term-files $root/pseudoterms/$ngrams \
         --model `sed -e's/ / --model /g' <<< ${models[@]}`
