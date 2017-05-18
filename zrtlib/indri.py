@@ -185,7 +185,7 @@ class QueryDoc:
         (name, number) = doc.stem.split(QueryDoc.separator)
         topic = name[len(QueryDoc.prefix):]
 
-        return QueryID(topic, number)
+        return QueryID(topic, int(number))
 
     def add(self, query):
         attrs = collections.OrderedDict()
