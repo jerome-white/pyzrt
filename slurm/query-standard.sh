@@ -48,7 +48,7 @@ output=$root/evals/models/$ngrams
 rm --force --recursive $output
 mkdir --parents $output
 
-python3 src/query/standard.py \
+python3 $ZR_HOME/src/query/standard.py \
         --index $root/indri/$ngrams \
         --qrels $judgements \
         --output $output \
