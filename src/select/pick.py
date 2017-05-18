@@ -26,7 +26,7 @@ arguments.add_argument('--strategy')
 arguments.add_argument('--technique')
 arguments.add_argument('--sieve')
 arguments.add_argument('--feedback-metric')
-arguments.add_argument('--feedback-level', type=int, default=2)
+arguments.add_argument('--feedback-history', type=int, default=2)
 
 arguments.add_argument('--index', type=Path)
 arguments.add_argument('--documents', type=Path)
@@ -96,7 +96,7 @@ with Pool() as pool:
 # Metric
 #
 
-eval_metric = TrecMetric(args.feedback_metric)
+eval_metric = TrecMetric(args.feedback_history)
 
 #
 # Begin the game!
