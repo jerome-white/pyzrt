@@ -55,7 +55,9 @@ assert(args.model)
 
 log = logger.getlogger()
 
+log.info('++ begin')
 with Pool() as pool:
     iterable = filter(QueryDoc.isquery, zutils.walk(args.term_files))
     for i in pool.imap(func, map(lambda x: (x, args), iterable)):
         log.info(i.stem)
+log.info('-- end')
