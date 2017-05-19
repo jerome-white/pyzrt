@@ -23,7 +23,7 @@ def func(args):
     qrels = options.qrels.joinpath(QueryDoc.components(terms).topic)
 
     with QueryExecutor(options.index, qrels) as engine:
-        for i in options.models:
+        for i in options.model:
             log.info('{0} {1}'.format(terms.stem, i))
 
             engine.query(QueryBuilder(document, i))
