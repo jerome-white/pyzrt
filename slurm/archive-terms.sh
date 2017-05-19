@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --mem=32G
+#SBATCH --mem=60G
 #SBATCH --time=4:00:00
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=jsw7@nyu.edu
@@ -11,12 +11,13 @@
 module load parallel/20161122
 
 for i in $SCRATCH/zrt/wsj/${1}/pseudoterms/*; do
+    j=`basename $i`
     cat <<EOF
 tar \
     --create \
     --bzip2 \
-    --file=`basename $i`.tar.bz \
+    --file=$j.tar.bz \
     --directory=`dirname $i` \
-    $i
+    $j
 EOF
 done | parallel --no-notice
