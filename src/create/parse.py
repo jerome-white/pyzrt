@@ -1,4 +1,3 @@
-import sys
 import multiprocessing as mp
 from pathlib import Path
 from argparse import ArgumentParser
@@ -57,7 +56,7 @@ def func(args, document_queue):
 arguments = ArgumentParser()
 arguments.add_argument('--parser')
 arguments.add_argument('--strainer')
-arguments.add_argument('--input', type=Path)
+arguments.add_argument('--documents', type=Path)
 arguments.add_argument('--output', type=Path)
 arguments.add_argument('--consolidate', action='store_true')
 args = arguments.parse_args()
@@ -68,7 +67,7 @@ log.info('>| begin')
 document_queue = mp.JoinableQueue()
 with mp.Pool(initializer=func, initargs=(args, document_queue)):
     args.output.mkdir(parents=True, exist_ok=True)
-    for i in zutils.walk(args.input):
+    for i in zutils.walk(args.documents):
         document_queue.put(i)
     document_queue.join()
 
