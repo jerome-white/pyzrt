@@ -14,12 +14,6 @@ from raw data to results.
    2. Put term files into TREC format.
    3. Generate Indri indexes based on TREC formatted documents.
 
-## Query
-
-* `query-models.sh` Build and execute term TREC queries for various
-  query models.
-* `query-single.sh` Build and execute queries for individual terms.
-
 ## Process
 
 * `cluster.sh` Build document clusters to support document filtering
