@@ -10,14 +10,18 @@
 
 module load parallel/20161122
 
-for i in $SCRATCH/zrt/wsj/${1}/pseudoterms/*; do
+directory=$SCRATCH/zrt/wsj/${1}/pseudoterms
+tmp=`mktemp --directory --tmpdir=.`
+
+for i in $directory/*; do
     j=`basename $i`
     cat <<EOF
 tar \
     --create \
     --bzip2 \
-    --file=$j.tar.bz \
-    --directory=`dirname $i` \
-    $j
+    --verbose \
+    --file=$directory/$j.tar.bz \
+    --directory=$directory \
+    $j &> $tmp/$j
 EOF
 done | parallel --no-notice
