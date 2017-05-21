@@ -5,7 +5,7 @@ from argparse import ArgumentParser
 import numpy as np
 import pandas as pd
 import seaborn as sns
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 from zrtlib import logger
 from zrtlib import zutils
@@ -27,8 +27,6 @@ def func(incoming, outgoing, non_zero):
                         n = norms[qid.topic]
                         if n != 0:
                             v /= n
-                        else:
-                            assert(v == 0)
                     entry = (ngram, model.stem, qid.topic, v)
                     log.info(' '.join(map(str, entry[:-1])))
 
