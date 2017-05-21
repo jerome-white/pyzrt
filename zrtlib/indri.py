@@ -66,7 +66,7 @@ class TrecMetric:
         return '_'.join(self.metric.split('.', 1))
 
 class QueryExecutor:
-    def __init__(self, index, qrels, keep=False):
+    def __init__(self, index, qrels):
         self.index = index
         self.indri = shutil.which('IndriRunQuery')
         self.trec = shutil.which('trec_eval')
@@ -80,16 +80,9 @@ class QueryExecutor:
 
         self.qrels = qrels
 
-        delete = not keep
         f = lambda x: NamedTemporaryFile(mode='w',
-                                         delete=delete,
                                          prefix='{0}{1}-'.format(x,qrels.stem))
         (self.query_fp, self.results_fp) = map(f, 'qr')
-
-        if keep:
-            log = logger.getlogger()
-            log.debug(self.query_fp.name)
-            log.debug(self.results_fp.name)
 
     def __enter__(self):
         return self
@@ -123,9 +116,8 @@ class QueryExecutor:
 
         return result
 
-    def saveq(self, fp):
-        self.query_fp.seek(0)
-        shutil.copyfileobj(self.query_fp, fp)
+    def saveq(self, dest):
+        shutil.copy(self.query_fp.name, dest)
 
     def relevant(self, judgements=None, limit=None):
         if judgements is None:

@@ -44,8 +44,9 @@ def func(args):
                                             prefix=prefix,
                                             delete=False,
                                             dir=str(p)) as fp:
-                        engine.saveq(fp)
-                        msg += ' ' + fp.name
+                        dest = fp.name
+                    engine.saveq(dest)
+                    msg += ' ' + dest
 
                 log.error(msg)
                 continue
@@ -76,7 +77,7 @@ assert(args.model)
 
 log = logger.getlogger()
 
-log.info('++ begin')
+log.info('++ begin {0} {1}'.format(args.term_files.stem, ','.join(args.model)))
 with Pool() as pool:
     iterable = filter(QueryDoc.isquery, zutils.walk(args.term_files))
     for i in pool.imap(func, map(lambda x: (x, args), iterable)):
