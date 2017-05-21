@@ -1,4 +1,4 @@
-#!/bin/bash
+B1;95;0c#!/bin/bash
 
 #SBATCH --mem=60G
 #SBATCH --time=24:00:00
@@ -39,7 +39,7 @@ tar \
     --extract \
     --bzip \
     --directory=\$SLURM_JOBTMP \
-    --file=$root/pseudoterms/$ngrams &
+    --file=$root/pseudoterms/${ngrams}.tar.bz &
 
 wait
 
