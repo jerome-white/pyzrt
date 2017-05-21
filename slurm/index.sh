@@ -18,7 +18,7 @@
 # $ZR_HOME/qsub/suffix.sh)
 #
 
-ngrams=`printf "%02d" ${1}`
+ngrams=`printf "%02.f" ${1}`
 
 #
 # Convert the suffix trees to term files

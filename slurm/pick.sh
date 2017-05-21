@@ -19,7 +19,7 @@ sieves=(
 )
 techniques=( entropy )
 
-ngrams=`printf "%02d" $n`
+ngrams=`printf "%02.f" $n`
 
 for i in $root/evals/single/$ngrams/*; do
     seed=( `python3 $ZR_HOME/src/support/top-terms.py \

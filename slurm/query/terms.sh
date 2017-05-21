@@ -20,7 +20,7 @@ else
 fi
 
 root=$SCRATCH/zrt/wsj/${2}
-ngrams=`printf "%02d" ${3}`
+ngrams=`printf "%02.f" ${3}`
 
 #
 # Make QRELS
