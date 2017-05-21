@@ -12,7 +12,7 @@ class CommentReader(Comment):
 
     def __next__(self):
         line = self.fp.readline()
-        if not line:
+        if not line or line[:len(self.comment)] != self.comment:
             raise StopIteration
 
         return line[len(self.comment):].strip()
