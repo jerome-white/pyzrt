@@ -5,6 +5,7 @@ seed_size=1
 zrt=$SCRATCH/zrt
 metric=ndcg_cut.10
 root=$zrt/wsj/2017_0118_020518
+clusters=kmeans-mini.csv
 
 unset ntopics
 strategies=(
@@ -36,21 +37,9 @@ for i in $root/evals/single/$ngrams/*; do
     for strategy in ${strategies[@]}; do
         for technique in ${techniques[@]}; do
             for sieve in ${sieves[@]}; do
-                path=$root/picker/$ngrams/$strategy/$sieve
+                path=$root/picker/$ngrams
                 mkdir --parents $path
-
-                sequence=1
-                while :; do
-                    output=$path/WSJQ00${topic}-`printf "%04d" $sequence`
-                    if [ ! -e $output ]; then
-                        break
-                    fi
-                    (( sequence++ ))
-                    if [ $sequence -gt 9999 ]; then
-                        echo "ERROR: No more sequence numbers" >&2
-                        exit 1
-                    fi
-                done
+		output=`mktemp --tmpdir=$path $topic.XXXXX`
 
                 job=`mktemp`
                 cat <<EOF >> $job
@@ -61,18 +50,26 @@ python3 -u $ZR_HOME/src/support/qrels.py \
     --output \$SLURM_JOBTMP \
     --topic $topic \
     --document-class WSJ \
-    --count 1000
+    --count 1000 &
+
+tar \
+    --extract \
+    --bzip \
+    --directory=\$SLURM_JOBTMP \
+    --file=$root/pseudoterms/$ngrams &
+
+wait
 
 python3 -u $ZR_HOME/src/select/pick.py \
     --index $root/indri/$ngrams \
-    --documents $root/pseudoterms/$ngrams \
-    --output $output \
     --qrels \$SLURM_JOBTMP/$topic \
+    --documents \$SLURM_JOBTMP/$ngrams \
+    --output $output \
     --strategy $strategy \
     --technique $technique \
     --sieve $sieve \
     --feedback-metric $metric \
-    --clusters $root/cluster/04/kmeans-mini.csv \
+    --clusters $root/cluster/$ngrams/$clusters \
     --seed $seed
 EOF
 

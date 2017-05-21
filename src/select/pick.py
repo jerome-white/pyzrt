@@ -10,6 +10,7 @@ import zrtlib.selector.strategy as st
 import zrtlib.selector.sieve as sv
 from zrtlib import logger
 from zrtlib import zutils
+from zrtlib import commenter
 from zrtlib.indri import QueryDoc, QueryExecutor, TrecMetric
 from zrtlib.document import TermDocument
 from zrtlib.selector.picker import ProgressiveQuery
@@ -21,10 +22,9 @@ from zrtlib.selector.management import TermSelector
 #
 
 arguments = ArgumentParser()
-
+arguments.add_argument('--sieve')
 arguments.add_argument('--strategy')
 arguments.add_argument('--technique')
-arguments.add_argument('--sieve')
 arguments.add_argument('--feedback-metric')
 arguments.add_argument('--feedback-history', type=int, default=2)
 
@@ -101,10 +101,18 @@ eval_metric = TrecMetric(args.feedback_history)
 #
 # Begin the game!
 #
-with args.output.open('w') as fp
+with args.output.open('w') as fp:
+    commenter.save(fp, args)
+
     with QueryExecutor(args.index, args.qrels) as engine:
         writer = None
         query = ProgressiveQuery()
+        info = {
+            'strategy': args.strategy,
+            'technique': args.technique,
+            'sieve': args.sieve,
+            'topic': args.qrels.stem, # assumption!
+        }
 
         for (i, term) in enumerate(manager, 1):
             if args.guesses is not None and i > args.guesses:
@@ -137,8 +145,10 @@ with args.output.open('w') as fp
                 'guess': i,
                 'term': term,
                 'progress': float(query),
-                **evaluation,
             }
+            assert(not any([ x in evaluation for x in results.keys() ]))
+            results.update(**evaluation)
+
             if writer is None:
                 writer = csv.DictWriter(fp, fieldnames=results.keys())
                 writer.writeheader()
