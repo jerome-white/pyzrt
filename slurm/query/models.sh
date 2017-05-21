@@ -38,7 +38,7 @@ python3 -u $ZR_HOME/src/support/qrels.py \
 tar \
     --extract \
     --bzip \
-    --directory=\$SLURM_JOBTMP \
+    --directory=$SLURM_JOBTMP \
     --file=$root/pseudoterms/${ngrams}.tar.bz &
 
 wait
@@ -63,5 +63,5 @@ python3 $ZR_HOME/src/query/models.py \
         --index $root/indri/$ngrams \
         --qrels $judgements \
         --output $output \
-        --term-files \$SLURM_JOBTMP/$ngrams \
+        --term-files $SLURM_JOBTMP/$ngrams \
         --model `sed -e's/ / --model /g' <<< ${models[@]}`
