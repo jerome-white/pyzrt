@@ -1,4 +1,4 @@
-B1;95;0c#!/bin/bash
+#!/bin/bash
 
 #SBATCH --mem=60G
 #SBATCH --time=24:00:00
