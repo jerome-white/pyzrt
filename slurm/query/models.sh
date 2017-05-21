@@ -30,7 +30,18 @@ python3 -u $ZR_HOME/src/support/qrels.py \
         --input ${1} \
         --output $judgements \
         --document-class WSJ \
-        --count $count
+        --count $count &
+
+#
+# Extract the term files
+#
+tar \
+    --extract \
+    --bzip \
+    --directory=\$SLURM_JOBTMP \
+    --file=$root/pseudoterms/$ngrams &
+
+wait
 
 #
 # Run the queries
@@ -52,5 +63,5 @@ python3 $ZR_HOME/src/query/models.py \
         --index $root/indri/$ngrams \
         --qrels $judgements \
         --output $output \
-        --term-files $root/pseudoterms/$ngrams \
+        --term-files \$SLURM_JOBTMP/$ngrams \
         --model `sed -e's/ / --model /g' <<< ${models[@]}`
