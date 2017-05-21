@@ -1,6 +1,8 @@
+import os
 import csv
 from pathlib import Path
 from argparse import ArgumentParser
+from tempfile import NamedTemporaryFile
 from multiprocessing import Pool
 
 from zrtlib import zutils
@@ -27,7 +29,26 @@ def func(args):
             log.info('{0} {1}'.format(terms.stem, i))
 
             engine.query(QueryBuilder(document, i))
-            (_, evaluation) = next(engine.evaluate(*metrics))
+            try:
+                (_, evaluation) = next(engine.evaluate(*metrics))
+            except ValueError:
+                msg = 'No results'
+                errdir = 'HOME'
+
+                if errdir in os.environ:
+                    p = Path(os.environ[errdir], '.pyzrt', 'errors')
+                    p.mkdir(parents=True, exist_ok=True)
+
+                    prefix = '{0}-{1}.'.format(terms.stem, i)
+                    with NamedTemporaryFile(mode='w',
+                                            prefix=prefix,
+                                            delete=False,
+                                            dir=str(p)) as fp:
+                        engine.saveq(fp)
+                        msg += ' ' + fp.name
+
+                log.error(msg)
+                continue
 
             assert(model_key not in evaluation)
             results = { model_key: i, **evaluation }

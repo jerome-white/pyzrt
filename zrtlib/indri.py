@@ -35,15 +35,15 @@ class IndriQuery:
         self.query = element('parameter')
         self.keys = ('type', 'number', 'text')
 
+    def __str__(self):
+        return et.tostring(self.query, encoding='unicode')
+
     def add(self, text):
         q = element('query', self.query)
         for (i, j) in zip(self.keys, ('indri', str(self.i), text)):
             element(i, q, j)
 
         self.i += 1
-
-    def __str__(self):
-        return et.tostring(self.query, encoding='unicode')
 
 class TrecMetric:
     '''The trec_eval program uses different formats for the way metrics
@@ -123,6 +123,10 @@ class QueryExecutor:
 
         return result
 
+    def saveq(self, fp):
+        self.query_fp.seek(0)
+        shutil.copyfileobj(self.query_fp, fp)
+
     def relevant(self, judgements=None, limit=None):
         if judgements is None:
             judgements = relevant_documents(self.qrels)
@@ -137,10 +141,7 @@ class QueryExecutor:
 
     def evaluate(self, *metrics, all_metrics=True):
         if os.stat(self.results_fp.name).st_size == 0:
-            log = logger.getlogger()
-            log.warning('No results')
-
-            return
+            raise ValueError()
 
         cmd = [
             self.trec,
