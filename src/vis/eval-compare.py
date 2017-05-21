@@ -12,7 +12,7 @@ from zrtlib import zutils
 from zrtlib.indri import QueryDoc
 from zrtlib.jobqueue import SentinalJobQueue
 
-def func(incoming, outgoing):
+def func(incoming, outgoing, non_zero):
     while True:
         (ngram, model, metric, norms) = incoming.get()
 
@@ -21,13 +21,15 @@ def func(incoming, outgoing):
             with i.open() as fp:
                 for (_, values) in zutils.read_trec(fp):
                     v = values[metric]
+                    if v == 0 and non_zero:
+                        continue
                     if norms is not None:
                         n = norms[qid.topic]
                         if n != 0:
                             v /= n
                         else:
                             assert(v == 0)
-                    entry = [ ngram, model.stem, qid.topic, v ]
+                    entry = (ngram, model.stem, qid.topic, v)
                     log.info(' '.join(map(str, entry[:-1])))
 
                     outgoing.put(entry)
@@ -51,7 +53,8 @@ def aquire(args, metric):
     incoming = mp.Queue()
     outgoing = mp.Queue()
 
-    with mp.Pool(initializer=func, initargs=(outgoing, incoming)):
+    initargs = (outgoing, incoming, args.non_zero)
+    with mp.Pool(initializer=func, initargs=initargs):
         for i in SentinalJobQueue(incoming, outgoing, mkjobs(args)):
             if i is not None:
                 yield dict(zip(keys, i))
@@ -63,6 +66,8 @@ arguments.add_argument('--zrt', type=Path)
 arguments.add_argument('--baseline', type=Path)
 arguments.add_argument('--min-ngrams', type=int, default=0)
 arguments.add_argument('--max-ngrams', type=float, default=np.inf)
+arguments.add_argument('--non-zero', action='store_true')
+arguments.add_argument('--output', type=Path)
 args = arguments.parse_args()
 
 log = logger.getlogger()
@@ -75,6 +80,10 @@ metric = {
     'map': 'Mean Average Precision',
     'recip_rank': 'Mean Reciprocal Rank',
 }[args.metric]
+if args.baseline:
+    metric = 'Relative ' + metric
+if args.non_zero:
+    metric += ' (non-zero)'
 
 (plotter, kwargs) = {
     'bar': (sns.barplot, { 'errwidth': 0.1 }),
@@ -105,5 +114,4 @@ ax.legend(ncol=round(len(hues) / 2), loc='upper center')
 ax.set(ylim=(0, None),
        ylabel=metric)
 
-fname = 'evals-{1}-{0}.png'.format(args.kind, args.metric)
-ax.figure.savefig(fname, bbox_inches='tight')
+ax.figure.savefig(str(args.output), bbox_inches='tight')
