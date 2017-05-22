@@ -69,13 +69,13 @@ class Weighted(Query):
         previous = []
         
         for row in df.itertuples():
-            w = self.alpha * (row.end - row.start)
-            i = w / (1 + w)
-            j = np.prod(previous) if previous else 1
+            a = self.alpha * (row.end - row.start)
+            w = a / (1 + a)
+            p = np.prod(previous) if previous else 1
             
-            yield (row.Index, i * j)
+            yield (row.Index, w * p)
             
-            previous.append(1 - i)
+            previous.append(1 - w)
 
     def combine(self, df, weights):
         for row in df.itertuples():
@@ -103,7 +103,7 @@ class LongestWeight(Weighted):
     def regionalize(self, region):
         df = region.df.nlargest(len(region.df), 'length')
         weights = dict(self.discount(df))
-        body = super().combine(df, weights)
+        body = self.combine(df, weights)
 
         yield from itertools.chain(['#wsyn('], body, [')'])
 
