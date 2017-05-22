@@ -66,7 +66,7 @@ class Weighted(Query):
         previous = []
         
         for row in df.itertuples():
-            a = self.alpha * (row.end - row.start)
+            a = self.alpha * row.length
             w = a / (1 + a)
             p = np.prod(previous) if previous else 1
             
