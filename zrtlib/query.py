@@ -74,14 +74,15 @@ class Weighted(Query):
             
             previous.append(1 - w)
 
-    def discount(self, df, cutoff=4):
+    def discount(self, df, lower_bound=0.0001):
         computed = dict(self._discount(df))
         high = max(computed.values())
+        assert(high > 0)
 
-        for (i, j) in computed.items():
-            weight = j / high
-            if weight > 1 / 10 ** cutoff:
-                yield (i, j / high)
+        for (term, gross) in computed.items():
+            net = gross / high
+            if net > lower_bound:
+                yield (term, net)
 
     def combine(self, df, weights):
         for row in df.itertuples():
