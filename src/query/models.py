@@ -77,7 +77,7 @@ assert(args.model)
 
 log = logger.getlogger()
 
-log.info('++ begin {0} {1}'.format(args.term_files.stem, ','.join(args.model)))
+log.info('++ begin {0}'.format(args.term_files))
 with Pool() as pool:
     iterable = filter(QueryDoc.isquery, zutils.walk(args.term_files))
     for i in pool.imap(func, map(lambda x: (x, args), iterable)):
