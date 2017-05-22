@@ -6,6 +6,7 @@ from collections import namedtuple
 import numpy as np
 import networkx as nx
 
+# from zrtlib import logger
 from zrtlib.indri import IndriQuery
 from zrtlib.document import Region
 
@@ -35,7 +36,6 @@ class Query:
 
     def compose(self):
         terms = map(self.regionalize, self.doc.regions())
-
         return ' '.join(itertools.chain.from_iterable(terms))
 
     def regionalize(self, region):
@@ -62,58 +62,48 @@ class Weighted(Query):
         super().__init__(doc)
         self.alpha = alpha
 
-    def _discount(self, df):
+    def discount(self, df):
         previous = []
-        
+
         for row in df.itertuples():
             a = self.alpha * row.length
             w = a / (1 + a)
             p = np.prod(previous) if previous else 1
-            
+
             yield (row.Index, w * p)
             
             previous.append(1 - w)
 
-    def discount(self, df, lower_bound=0.0001):
-        computed = dict(self._discount(df))
-        high = max(computed.values())
-        assert(high > 0)
+    def get_weights(self, docs):
+        by = [ 'length', 'start', 'end' ]
+        return dict(self.discount(docs.sort_values(by=by, ascending=False)))
 
-        for (term, gross) in computed.items():
-            net = gross / high
-            if net > lower_bound:
-                yield (term, net)
-
-    def combine(self, df, weights):
+    def combine(self, df, weights, precision=10):
         for row in df.itertuples():
             if row.Index in weights:
-                yield '{0} {1}'.format(weights[row.Index], row.term)
-
-    def regionalize(self, region):
-        raise NotImplementedError()
+                kg = '{1:.{0}f}'.format(precision, weights[row.Index])
+                if float(kg) != 0:
+                    yield kg + ' ' + row.term
 
 class TotalWeight(Weighted):
     def __init__(self, doc, alpha=0.5):
         super().__init__(doc, alpha)
 
-        by = [ 'length', 'start', 'end' ]
-        df = self.doc.df.sort_values(by=by, ascending=False)
-        self.computed = dict(self.discount(df))
+        self.weights = self.get_weights(self.doc.df)
 
     def regionalize(self, region):
         if region.first:
             yield '#weight('
 
-        yield from self.combine(region.df, self.computed)
+        yield from self.combine(region.df, self.weights)
 
         if region.last:
             yield ')'
 
 class LongestWeight(Weighted):
     def regionalize(self, region):
-        df = region.df.nlargest(len(region.df), 'length')
-        weights = dict(self.discount(df))
-        body = self.combine(df, weights)
+        weights = self.get_weights(region.df)
+        body = self.combine(region.df, weights)
 
         yield from itertools.chain(['#wsyn('], body, [')'])
 
