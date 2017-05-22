@@ -46,8 +46,8 @@ class BagOfWords(Query):
         yield from map(op.attrgetter('term'), region.df.itertuples())
 
 class Synonym(BagOfWords):
-    def __init__(self, path, n_longest=None):
-        super().__init__(path)
+    def __init__(self, doc, n_longest=None):
+        super().__init__(doc)
         self.n = n_longest
 
     def regionalize(self, region):
@@ -58,14 +58,11 @@ class Synonym(BagOfWords):
         yield from itertools.chain(['#syn('], super().regionalize(r), [')'])
 
 class Weighted(Query):
-    def __init__(self, path, alpha=0.5):
-        super().__init__(path)
+    def __init__(self, doc, alpha=0.5):
+        super().__init__(doc)
         self.alpha = alpha
 
-    def regionalize(self, region):
-        raise NotImplementedError()
-
-    def discount(self, df):
+    def _discount(self, df):
         previous = []
         
         for row in df.itertuples():
@@ -77,14 +74,26 @@ class Weighted(Query):
             
             previous.append(1 - w)
 
+    def discount(self, df, cutoff=4):
+        computed = dict(self._discount(df))
+        high = max(computed.values())
+
+        for (i, j) in computed.items():
+            weight = j / high
+            if weight > 1 / 10 ** cutoff:
+                yield (i, j / high)
+
     def combine(self, df, weights):
         for row in df.itertuples():
             if row.Index in weights:
-                yield '{0:.10f} {1}'.format(weights[row.Index], row.term)
+                yield '{0} {1}'.format(weights[row.Index], row.term)
+
+    def regionalize(self, region):
+        raise NotImplementedError()
 
 class TotalWeight(Weighted):
-    def __init__(self, path, alpha=0.5):
-        super().__init__(path, alpha)
+    def __init__(self, doc, alpha=0.5):
+        super().__init__(doc, alpha)
 
         by = [ 'length', 'start', 'end' ]
         df = self.doc.df.sort_values(by=by, ascending=False)
@@ -108,8 +117,8 @@ class LongestWeight(Weighted):
         yield from itertools.chain(['#wsyn('], body, [')'])
 
 class ShortestPath(Query):
-    def __init__(self, path, partials=True):
-        super().__init__(path)
+    def __init__(self, doc, partials=True):
+        super().__init__(doc)
         self.partials = partials
 
     def regionalize(self, region):
