@@ -10,9 +10,18 @@ import networkx as nx
 from zrtlib.indri import IndriQuery
 from zrtlib.document import Region
 
-Node_ = namedtuple('Node', 'term, offset')
-Node = lambda x: Node_(x.term, x.start)
 OptimalPath = namedtuple('OptimalPath', 'deviation, path')
+
+class Node:
+    def __init__(self, node):
+        self.term = node.term
+        self.offset = node.start
+
+    def __hash__(self):
+        return hash((self.term, self.offset))
+
+    def __eq__(self, other):
+        return self.term == other.term and self.offset == other.offset
 
 def QueryBuilder(terms, model='ua'):
     return {
@@ -57,8 +66,7 @@ class Synonym(BagOfWords):
         self.n = n_longest
 
     def regionalize(self, region):
-        n = len(region.df) if self.n is None else self.n
-        df = self.descending(region.df, n)
+        df = self.descending(region.df, self.n)
         r = Region(*region[:3], df)
 
         yield from itertools.chain(['#syn('], super().regionalize(r), [')'])
