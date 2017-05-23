@@ -32,26 +32,27 @@ def func(args):
     df = df.assign(ngrams=args.ngrams, topic=args.topic)
 
     if args.baseline:
-        factor = args.baseline[args.topic]
-        if factor == 0:
-            return
-        df[args.metric] /= factor
+        df[args.metric] /= args.baseline[args.topic]
 
     return df
 
 def jobs(args):
+    log = logger.getlogger()
+
     if args.baseline is None:
         norms = None
     else:
         norms = dict(zutils.read_baseline(args.baseline, args.metric))
-        for i in norms.items():
-            log.debug('{0} {1}'.format(*i))
 
     for ngram in args.zrt.iterdir():
         n = int(ngram.stem)
         if args.min_ngrams <= n <= args.max_ngrams:
             for topic in ngram.iterdir():
-                yield Argument(topic, args.metric, norms)
+                argument = Argument(topic, args.metric, norms)
+                if norms and norms[argument.topic] == 0:
+                    log.warning('Skipping {0}'.format(argument.topic))
+                else:
+                    yield argument
 
 def aquire(args):
     with Pool() as pool:
@@ -66,7 +67,6 @@ arguments.add_argument('--min-ngrams', type=int, default=0)
 arguments.add_argument('--max-ngrams', type=float, default=np.inf)
 arguments.add_argument('--output', type=Path)
 arguments.add_argument('--common', action='store_true')
-arguments.add_argument('--non-zero', action='store_true')
 args = arguments.parse_args()
 
 log = logger.getlogger()
@@ -103,7 +103,9 @@ if args.common:
             common = common.intersection(topics)
     log.debug(common)
     df = df[df['topic'].isin(common)]
-log.info('Topics {0}'.format(len(df['topic'].unique())))
+
+topics = df['topic'].unique()
+log.info('Topics ({0}): {1}'.format(len(topics), ','.join(map(str, topics))))
 
 #
 # Plot
