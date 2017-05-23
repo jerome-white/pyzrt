@@ -51,17 +51,20 @@ class TrecMetric:
     class acts a shield between knowing the difference.
     '''
     def __init__(self, metric):
-        '''A metric as it would be specified the trec_eval command.
+        '''A metric as it would be specified to the trec_eval command.
+
         '''
         self.metric = metric
 
     def __str__(self):
         '''Suitable for supplying directly to the trec_eval command
+
         '''
         return '-m' + self.metric
 
     def __repr__(self):
         '''The key in trec_eval results
+
         '''
         return '_'.join(self.metric.split('.', 1))
 
