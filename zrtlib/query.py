@@ -34,6 +34,12 @@ class Query:
 
         return str(query)
 
+    def descending(self, docs, limit=None):
+        by = [ 'length', 'start', 'end' ]
+        df = docs.sort_values(by=by, ascending=False)
+
+        return df if limit is None else df.head(limit)
+
     def compose(self):
         terms = map(self.regionalize, self.doc.regions())
         return ' '.join(itertools.chain.from_iterable(terms))
@@ -52,7 +58,7 @@ class Synonym(BagOfWords):
 
     def regionalize(self, region):
         n = len(region.df) if self.n is None else self.n
-        df = region.df.nlargest(n, 'length')
+        df = self.descending(region.df, n)
         r = Region(*region[:3], df)
 
         yield from itertools.chain(['#syn('], super().regionalize(r), [')'])
@@ -75,8 +81,7 @@ class Weighted(Query):
             previous.append(1 - w)
 
     def get_weights(self, docs):
-        by = [ 'length', 'start', 'end' ]
-        return dict(self.discount(docs.sort_values(by=by, ascending=False)))
+        return dict(self.discount(self.descending(docs)))
 
     def combine(self, df, weights, precision=10):
         for row in df.itertuples():
