@@ -21,6 +21,8 @@ class Node:
         return hash((self.term, self.offset))
 
     def __eq__(self, other):
+        if not isinstance(other, type(self)):
+            return False
         return self.term == other.term and self.offset == other.offset
 
 def QueryBuilder(terms, model='ua'):
