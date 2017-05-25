@@ -60,7 +60,7 @@ class FromFeedback(SelectionStrategy):
         if improvement > 0:
             # get the last term that was guessed
             last = documents['selected'].argmax()
-            term = documents.iloc[last]['term']
+            term = documents.ix[last]['term']
 
             # find documents to explore based on that term
             relevant = self.sieve.like(term, documents)
