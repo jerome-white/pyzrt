@@ -110,7 +110,8 @@ class CoOccurrence(FromFeedback):
         for (_, df) in documents.groupby('document', sort=False):
             rows = df[df['term'] == term]
             for i in rows.itertuples():
-                for (neighbor, distance) in self._proximity(i, df):
+                position = df.index.get_loc(i.Index)
+                for (neighbor, distance) in self._proximity(position, df):
                     occurrence[neighbor['term']] += 1 / distance
 
         yield from map(op.itemgetter(0), occurrence.most_common())
@@ -119,39 +120,44 @@ class CoOccurrence(FromFeedback):
         raise NotImplementedError()
 
 class DirectNeighbor(CoOccurrence):
-    def _proximity(self, row, documents):
-        start = max(0, row.Index - self.radius)
-        stop = min(len(documents), row.Index + self.radius + 1)
+    def _proximity(self, position, documents):
+        start = max(0, position - self.radius)
+        stop = min(len(documents), position + self.radius + 1)
 
         for i in range(start, stop):
-            distance = abs(row.Index - i)
+            distance = abs(position - i)
             if distance != 0:
                 yield (documents.iloc[i], distance)
 
 class NearestNeighbor(CoOccurrence):
-    def _proximity(self, row, documents):
+    def _proximity(self, position, documents):
         for step in (1, -1):
-            yield from self.navigate(row, documents, self.radius, step)
+            yield from self.navigate(position, documents, self.radius, step)
 
-    def navigate(self, row, documents, depth, step):
-        if depth < 1:
+    @staticmethod
+    def window(position, documents):
+        row = documents.iloc[position]
+        return set(range(row['start'], row['end'] + 1))
+
+    def navigate(self, position, documents, depth, step):
+        if depth < 1 or position < 0 or position >= len(documents):
             return
 
-        reference = set(zutils.count(row.start, row.end))
+        reference = NearestNeighbor.window(position, documents)
 
-        for i in itertools.count(row.Index + step, step):
+        for i in itertools.count(position + step, step):
             if i < 0 or i >= len(documents):
                 break
 
-            current = documents.iloc[i]
-            coverage = set(zutils.count(current['start'], current['end']))
-            if reference.isdisjoint(coverage):
-                yield (current, self.radius - depth + 1)
-                yield from self.navigate(current, documents, depth - 1, step)
+            current = NearestNeighbor.window(i, documents)
+            if reference.isdisjoint(current):
+                yield (documents.iloc[i], self.radius - depth + 1)
+                yield from self.navigate(i, documents, depth - 1, step)
                 break
 
 class RegionNeighbor(CoOccurrence):
-    def _proximity(self, row, documents):
+    def _proximity(self, position, documents):
+        row = documents.iloc[position]
         regions = documents.groupby('region')
 
         for step in (1, -1):
