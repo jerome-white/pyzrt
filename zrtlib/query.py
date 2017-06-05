@@ -10,7 +10,7 @@ import igraph as ig
 from zrtlib.indri import IndriQuery
 from zrtlib.document import Region
 
-OptimalPath = namedtuple('OptimalPath', 'deviation, path')
+GraphPath = namedtuple('GraphPath', 'path, weight, variance')
 
 class Node:
     def __init__(self, node):
@@ -45,7 +45,8 @@ class Query:
 
         return str(query)
 
-    def descending(self, docs, limit=None):
+    @staticmethod
+    def descending(docs, limit=None):
         by = [ 'length', 'start', 'end' ]
         df = docs.sort_values(by=by, ascending=False)
 
@@ -68,7 +69,7 @@ class Synonym(BagOfWords):
         self.n = n_longest
 
     def regionalize(self, region):
-        df = self.descending(region.df, self.n)
+        df = Query.descending(region.df, self.n)
         r = Region(*region[:3], df)
 
         yield from itertools.chain(['#syn('], super().regionalize(r), [')'])
@@ -91,9 +92,10 @@ class Weighted(Query):
             previous.append(1 - w)
 
     def get_weights(self, docs):
-        return dict(self.discount(self.descending(docs)))
+        return dict(self.discount(Query.descending(docs)))
 
-    def combine(self, df, weights, precision=10):
+    @staticmethod
+    def combine(df, weights, precision=10):
         for row in df.itertuples():
             if row.Index in weights:
                 kg = '{1:.{0}f}'.format(precision, weights[row.Index])
@@ -110,7 +112,7 @@ class TotalWeight(Weighted):
         if region.first:
             yield '#weight('
 
-        yield from self.combine(region.df, self.weights)
+        yield from Weighted.combine(region.df, self.weights)
 
         if region.last:
             yield ')'
@@ -118,7 +120,7 @@ class TotalWeight(Weighted):
 class LongestWeight(Weighted):
     def regionalize(self, region):
         weights = self.get_weights(region.df)
-        body = self.combine(region.df, weights)
+        body = Weighted.combine(region.df, weights)
 
         yield from itertools.chain(['#wsyn('], body, [')'])
 
@@ -148,20 +150,22 @@ class ShortestPath(Query):
 
         if graph.ecount() > 0:
             best = None
-            for path in g.get_all_shortest_paths(0, g.vcount() - 1):
+            for path in graph.get_all_shortest_paths(0, graph.vcount() - 1):
                 weights = []
                 for (u, v) in zip(path, path[1:]):
-                    edge = g.es.select(_source=u, _target=v)
-                    weights.append(edge['weight'][0])
+                    edge = graph.es.select(_source=u, _target=v)
+                    w = edge['weight'][0] # XXX why is this a list?
+                    weights.append(w)
                 properties = [ f(weights) for f in (np.sum, np.std) ]
 
                 current = GraphPath(path, *properties)
+
                 if best is None:
                     best = current
                 else:
-                    if current.length < best.length:
+                    if current.weight < best.weight:
                         best = current
-                    elif current.length == best.length:
+                    elif current.weight == best.weight:
                         if current.variance < best.variance:
                             best = current
             indices = best.path
