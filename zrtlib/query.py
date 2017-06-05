@@ -4,14 +4,12 @@ import operator as op
 from collections import namedtuple
 
 import numpy as np
-import graph_tool.all as gt
+import igraph as ig
 
 from zrtlib.indri import IndriQuery
 from zrtlib.document import Region
 
-Node_ = namedtuple('Node', 'term, offset')
-Node = lambda x: Node_(x.term, x.start)
-OptimalPath = namedtuple('OptimalPath', 'deviation, path')
+GraphPath = namedtuple('GraphPath', 'edges, weight, variance')
 
 def QueryBuilder(terms, model='ua'):
     return {
@@ -120,35 +118,39 @@ class ShortestPath(Query):
             if len(df) == 0:
                 return ''
 
-        graph = gt.Graph(directed=True)
-        nodes = graph.new_vertex_property('object')
-        weights = graph.new_edge_property('int')
+        graph = ig.Graph(n=len(df), directed=True)
 
         for source in df.itertuples():
-            u = graph.add_vertex()
-            nodes[u] = source
+            u = df.index.get_loc(source.Index)
             dest = df[(df.start > source.start) & (df.start <= source.end)]
             for target in dest.itertuples():
-                v = graph.add_vertex()
-                nodes[v] = target
-                edge = graph.add_edge(u, v)
-                weights[edge] = source.end - target.start
+                v = df.index.get_loc(target.Index)
+                w = source.end - target.start
 
-        if len(graph) == 0:
-            return u.term
-        # assert(nx.is_directed_acyclic_graph(graph))
+                graph.add_edge(u, v, weight=w)
 
-        (source, target) = [ nodes[x] for x in (0, -1) ]
-        optimal = OptimalPath(np.inf, None)
+        if graph.ecount() > 0:
+            best = None
+            for path in g.get_all_shortest_paths(0, g.vcount() - 1):
+                weights = []
+                for (u, v) in zip(path, path[1:]):
+                    edge = g.es.select(_source=u, _target=v)
+                    weights.append(edge['weight'][0])
+                properties = [ f(weights) for f in (np.sum, np.std) ]
 
-        for i in gt.all_shortest_paths(graph, source, target, weights):
-            path = []
-            for (u, v) in zip(i, i[1:]):
-                edge = graph.edge(u, v)
-                path.append(weights[edge])
+                current = GraphPath(path, *properties)
+                if best is None:
+                    best = current
+                else:
+                    if current.length < best.length:
+                        best = current
+                    elif current.length == best.length:
+                        if current.variance < best.variance:
+                            best = current
+            indices = best.path
+        else:
+            indices = [0]
 
-            deviation = np.std(path)
-            if deviation < optimal.deviation:
-                optimal = OptimalPath(deviation, i)
-
-        yield from map(op.attrgetter('term'), optimal.path)
+        for i in indices:
+            row = df.iloc[i]
+            yield row['term']
