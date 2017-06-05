@@ -18,27 +18,39 @@
 # $ZR_HOME/qsub/suffix.sh)
 #
 
-ngrams=`printf "%02d" ${1}`
+ngrams=`printf "%02.f" ${1}`
 
 #
 # Convert the suffix trees to term files
 #
 
-pseudoterms=${2}/pseudoterms/$ngrams
-rm --recursive --force $pseudoterms
-mkdir --parents $pseudoterms
+terms=`mktemp --directory`
 
 python3 $ZR_HOME/src/create/suffix2terms.py \
   --suffix-tree ${2}/trees/${ngrams}.csv \
-  --output $pseudoterms
+  --output $terms
+
+#
+# Archive the term files
+#
+
+pseudoterms=${2}/pseudoterms
+mkdir --parents $pseudoterms
+
+tar \
+    --create \
+    --bzip2 \
+    --file=$pseudoterms/$ngrams.tar.bz \
+    --directory=`dirname $terms` \
+    `basename $terms`
 
 #
 # Generate TREC formatted documents
 #
 
-documents=`mktemp --directory --tmpdir=$SLURM_JOBTMP`
+documents=`mktemp --directory`
 
-find $pseudoterms -name 'WSJ*' -not -name 'WSJQ*' | \
+find $terms -name 'WSJ*' -not -name 'WSJQ*' | \
   python3 $ZR_HOME/src/create/parse.py \
     --output $documents \
     --parser pt \
@@ -46,8 +58,9 @@ find $pseudoterms -name 'WSJ*' -not -name 'WSJQ*' | \
     --consolidate
 
 #
-# Generate Indri indexes from term files
+# Generate Indri indexes from the documents
 #
+
 index=${2}/index/$ngrams
 rm --recursive --force $index
 mkdir --parents $index

@@ -3,7 +3,6 @@ import itertools
 import functools as ft
 from pathlib import Path
 from argparse import ArgumentParser
-from tempfile import NamedTemporaryFile
 from multiprocessing import Pool
 
 import zrtlib.selector.technique as tq
@@ -11,6 +10,7 @@ import zrtlib.selector.strategy as st
 import zrtlib.selector.sieve as sv
 from zrtlib import logger
 from zrtlib import zutils
+from zrtlib import commenter
 from zrtlib.indri import QueryDoc, QueryExecutor, TrecMetric
 from zrtlib.document import TermDocument
 from zrtlib.selector.picker import ProgressiveQuery
@@ -22,17 +22,16 @@ from zrtlib.selector.management import TermSelector
 #
 
 arguments = ArgumentParser()
-
+arguments.add_argument('--sieve')
 arguments.add_argument('--strategy')
 arguments.add_argument('--technique')
-arguments.add_argument('--sieve')
-arguments.add_argument('--feedback-level', type=int, default=2)
 arguments.add_argument('--feedback-metric')
+arguments.add_argument('--feedback-history', type=int, default=2)
 
 arguments.add_argument('--index', type=Path)
 arguments.add_argument('--documents', type=Path)
 arguments.add_argument('--qrels', type=Path)
-arguments.add_argument('--output-directory', type=Path)
+arguments.add_argument('--output', type=Path)
 arguments.add_argument('--clusters', type=Path)
 
 arguments.add_argument('--seed', action='append', default=[])
@@ -96,19 +95,25 @@ with Pool() as pool:
 #
 # Metric
 #
-eval_metric = TrecMetric(args.feedback_metric)
+
+eval_metric = TrecMetric(args.feedback_history)
 
 #
 # Begin the game!
 #
-with NamedTemporaryFile(mode='w',
-                        buffering=1,
-                        dir=str(args.output_directory),
-                        delete=False) as fp:
-    writer = None
-    query = ProgressiveQuery()
+with args.output.open('w') as fp:
+    commenter.save(fp, args)
 
     with QueryExecutor(args.index, args.qrels) as engine:
+        writer = None
+        query = ProgressiveQuery()
+        info = {
+            'strategy': args.strategy,
+            'technique': args.technique,
+            'sieve': args.sieve,
+            'topic': args.qrels.stem, # assumption!
+        }
+
         for (i, term) in enumerate(manager, 1):
             if args.guesses is not None and i > args.guesses:
                 log.error('Maximum guesses reached')
@@ -140,8 +145,10 @@ with NamedTemporaryFile(mode='w',
                 'guess': i,
                 'term': term,
                 'progress': float(query),
-                **evaluation,
             }
+            assert(not any([ x in evaluation for x in results.keys() ]))
+            results.update(**evaluation)
+
             if writer is None:
                 writer = csv.DictWriter(fp, fieldnames=results.keys())
                 writer.writeheader()

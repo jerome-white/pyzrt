@@ -3,7 +3,9 @@
 n=4
 seed_size=1
 zrt=$SCRATCH/zrt
+metric=ndcg_cut.10
 root=$zrt/wsj/2017_0118_020518
+clusters=kmeans-mini.csv
 
 unset ntopics
 strategies=(
@@ -17,11 +19,11 @@ sieves=(
 )
 techniques=( entropy )
 
-ngrams=`printf "%02d" $n`
+ngrams=`printf "%02.f" $n`
 
 for i in $root/evals/single/$ngrams/*; do
     seed=( `python3 $ZR_HOME/src/support/top-terms.py \
-            --metric ndcg.cut_10 \
+            --metric $metric \
             --results $i \
             --non-zero | \
             head --lines=$seed_size` )
@@ -35,40 +37,50 @@ for i in $root/evals/single/$ngrams/*; do
     for strategy in ${strategies[@]}; do
         for technique in ${techniques[@]}; do
             for sieve in ${sieves[@]}; do
-
-                output=$root/picker/$ngrams/$strategy/$sieve/$topic
-                mkdir --parents $output
+                path=$root/picker/$ngrams
+                mkdir --parents $path
+		output=`mktemp --tmpdir=$path $topic.XXXXX`
 
                 job=`mktemp`
                 cat <<EOF >> $job
+#!/bin/bash
+
 python3 -u $ZR_HOME/src/support/qrels.py \
     --input $zrt/qrels.251-300.parts1-5.tar.gz \
     --output \$SLURM_JOBTMP \
     --topic $topic \
     --document-class WSJ \
-    --count 1000
+    --count 1000 &
+
+tar \
+    --extract \
+    --bzip \
+    --directory=\$SLURM_JOBTMP \
+    --file=$root/pseudoterms/$ngrams &
+
+wait
 
 python3 -u $ZR_HOME/src/select/pick.py \
     --index $root/indri/$ngrams \
-    --documents $root/pseudoterms/$ngrams \
-    --output-directory $output \
     --qrels \$SLURM_JOBTMP/$topic \
+    --documents \$SLURM_JOBTMP/$ngrams \
+    --output $output \
     --strategy $strategy \
     --technique $technique \
     --sieve $sieve \
-    --feedback-metric ndcg.cut_10 \
-    --clusters $root/cluster/04/kmeans-mini.csv \
+    --feedback-metric $metric \
+    --clusters $root/cluster/$ngrams/$clusters \
     --seed $seed
 EOF
 
                 sbatch \
                     --mem=150G \
                     --time=12:00:00 \
-                    --mail-type=ALL \
+                    --mail-type=END,FAIL \
                     --mail-user=jsw7@nyu.edu \
                     --nodes=1 \
                     --cpus-per-task=2 \
-                    --job-name=pick_$strategy-$sieve-$topic \
+                    --job-name=pick-${strategy}_${sieve}_${topic} \
                     $job
             done
         done

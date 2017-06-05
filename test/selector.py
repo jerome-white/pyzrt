@@ -7,7 +7,7 @@ from zrtlib.document import TermDocument, HiddenDocument
 from zrtlib.selector.feedback import RecentWeighted
 from zrtlib.selector.strategy import BlindHomogenous
 from zrtlib.selector.management import TermSelector
-import zrtlib.selector.technique as tech
+import zrtlib.selector.technique as tq
 
 location = sys.argv[1] if len(sys.argv) > 1 else '.'
 
@@ -15,9 +15,10 @@ WSJ = 'WSJ'
 docs = []
 for p in Path(location).iterdir():
     if p.stem[:len(WSJ)] == WSJ:
+        print(p)
         docs.append(p)
 
-ts = TermSelector(BlindHomogenous(tech.Entropy), RecentWeighted())
+ts = TermSelector(BlindHomogenous(tq.Entropy), RecentWeighted())
 for i in docs:
     ts.add(TermDocument(i))
 

@@ -3,6 +3,7 @@ import itertools
 import collections
 
 from zrtlib import zutils
+from zrtlib import logger
 
 class IterableStack(list):
     def __init__(self, descending=True):
@@ -23,7 +24,14 @@ class IterableStack(list):
         return item
 
     def push(self, iterable):
-        self.append(list(iterable))
+        attachment = list(iterable)
+        if not attachment:
+            raise ValueError()
+        self.append(attachment)
+
+    def peel(self):
+        if self:
+            self.pop()
 
 class SelectionStrategy:
     def pick(self, documents, feedback):
@@ -40,13 +48,6 @@ class BlindHomogenous(SelectionStrategy):
             self.technique = self.technique(documents)
             return self.pick(documents)
 
-    def stream(self, documents):
-        while True:
-            choice = self.pick(documents)
-            if choice is None:
-                break
-            yield choice
-
 class FromFeedback(SelectionStrategy):
     def __init__(self, sieve, technique):
         self.sieve = sieve
@@ -57,15 +58,27 @@ class FromFeedback(SelectionStrategy):
         improvement = int(feedback)
 
         if improvement > 0:
+            # get the last term that was guessed
             last = documents['selected'].argmax()
-            term = documents.iloc[last]['term']
+            term = documents.ix[last]['term']
+
+            # find documents to explore based on that term
             relevant = self.sieve.like(term, documents)
-            self.stack.push(self.proximity(term, relevant))
+
+            # find terms to explore based on those documents
+            potentials = self.proximity(term, relevant)
+
+            # add those terms to the stack
+            try:
+                self.stack.push(potentials)
+            except ValueError:
+                log = logger.getlogger()
+                log.warning('Unable to add potential values')
         elif improvement < 0:
-            self.stack.pop()
+            self.stack.peel()
 
         eligible = documents[documents['selected'] == 0]
-        iterable = (self.stack, self.blind.stream(eligible))
+        iterable = (self.stack, zutils.stream(eligible, self.blind.pick))
         for i in itertools.chain.from_iterable(iterable):
             matches = documents[documents['term'] == i]
             if not matches['selected'].any():
@@ -83,7 +96,7 @@ class BlindRelevance(FromFeedback):
         self.technique = technique
 
     def proximity(self, term, documents):
-        yield from self.technique(documents)
+        yield from zutils.stream(self.technique(documents))
 
 class CoOccurrence(FromFeedback):
     def __init__(self, sieve, technique, radius=1):
@@ -94,10 +107,11 @@ class CoOccurrence(FromFeedback):
     def proximity(self, term, documents):
         occurrence = collections.Counter()
 
-        for df in documents:
+        for (_, df) in documents.groupby('document', sort=False):
             rows = df[df['term'] == term]
             for i in rows.itertuples():
-                for (neighbor, distance) in self._proximity(i, df):
+                position = df.index.get_loc(i.Index)
+                for (neighbor, distance) in self._proximity(position, df):
                     occurrence[neighbor['term']] += 1 / distance
 
         yield from map(op.itemgetter(0), occurrence.most_common())
@@ -106,39 +120,44 @@ class CoOccurrence(FromFeedback):
         raise NotImplementedError()
 
 class DirectNeighbor(CoOccurrence):
-    def _proximity(self, row, documents):
-        start = max(0, row.Index - self.radius)
-        stop = min(len(documents), row.Index + self.radius + 1)
+    def _proximity(self, position, documents):
+        start = max(0, position - self.radius)
+        stop = min(len(documents), position + self.radius + 1)
 
         for i in range(start, stop):
-            distance = abs(row.Index - i)
+            distance = abs(position - i)
             if distance != 0:
                 yield (documents.iloc[i], distance)
 
 class NearestNeighbor(CoOccurrence):
-    def _proximity(self, row, documents):
+    def _proximity(self, position, documents):
         for step in (1, -1):
-            yield from self.navigate(row, documents, self.radius, step)
+            yield from self.navigate(position, documents, self.radius, step)
 
-    def navigate(self, row, documents, depth, step):
-        if depth < 1:
+    @staticmethod
+    def window(position, documents):
+        row = documents.iloc[position]
+        return set(range(row['start'], row['end'] + 1))
+
+    def navigate(self, position, documents, depth, step):
+        if depth < 1 or position < 0 or position >= len(documents):
             return
 
-        reference = set(zutils.count(row.start, row.end))
+        reference = NearestNeighbor.window(position, documents)
 
-        for i in itertools.count(row.Index + step, step):
+        for i in itertools.count(position + step, step):
             if i < 0 or i >= len(documents):
                 break
 
-            current = documents.iloc[i]
-            coverage = set(zutils.count(current['start'], current['end']))
-            if reference.isdisjoint(coverage):
-                yield (current, self.radius - depth + 1)
-                yield from self.navigate(current, documents, depth - 1, step)
+            current = NearestNeighbor.window(i, documents)
+            if reference.isdisjoint(current):
+                yield (documents.iloc[i], self.radius - depth + 1)
+                yield from self.navigate(i, documents, depth - 1, step)
                 break
 
 class RegionNeighbor(CoOccurrence):
-    def _proximity(self, row, documents):
+    def _proximity(self, position, documents):
+        row = documents.iloc[position]
         regions = documents.groupby('region')
 
         for step in (1, -1):

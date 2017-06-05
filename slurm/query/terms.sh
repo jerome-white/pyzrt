@@ -20,7 +20,7 @@ else
 fi
 
 root=$SCRATCH/zrt/wsj/${2}
-ngrams=`printf "%02d" ${3}`
+ngrams=`printf "%02.f" ${3}`
 
 #
 # Make QRELS
@@ -35,12 +35,12 @@ python3 $ZR_HOME/src/support/qrels.py \
 #
 # Run the queries
 #
-output=$root/evals/single/$ngrams
+output=$root/evals/terms/$ngrams
 rm --force --recursive $output
 mkdir --parents $output
 
 find $root/pseudoterms/$ngrams -name 'WSJQ*' | \
-    python $ZR_HOME/src/query/single-term-queries.py \
+    python $ZR_HOME/src/query/terms.py \
            --index $root/indri/$ngrams \
            --qrels $judgements \
            --output $output

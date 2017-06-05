@@ -1,4 +1,5 @@
-from zrtlib.indri import QueryBuilder, IndriQuery
+from zrtlib.indri import IndriQuery
+from zrtlib.query import QueryBuilder
 
 class Picker:
     def __float__(self):

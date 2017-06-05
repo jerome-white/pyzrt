@@ -20,6 +20,9 @@ class FeedbackHandler(collections.deque):
     def __float__(self):
         raise NotImplementedError()
 
+    def __int__(self):
+        raise NotImplementedError()
+
     def __str__(self):
         return str(self[-1] if self else None)
 
@@ -28,7 +31,7 @@ class RecentWeighted(FeedbackHandler):
         return float(average(self))
 
     def __int__(self):
-        if not self:
+        if len(self) < self.maxlen:
             return 0
 
         last = self[-1]

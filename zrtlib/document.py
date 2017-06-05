@@ -1,3 +1,4 @@
+import operator as op
 from collections import namedtuple
 
 import pandas as pd
@@ -10,23 +11,19 @@ class TermDocument:
         self.df = pd.read_csv(document)
         self.df.sort_values(by=[ 'start', 'end' ], inplace=True)
 
-        if include_lengths:
-            self.df['length'] = self.df['end'] - self.df['start']
-
-        region = 0
-        updates = {}
-        last = None
-
-        self.df['region'] = region
+        regions = []
         for row in self.df.itertuples():
-            if last is not None:
-                region += row.start > last.end
-                updates[row.Index] = region
-            last = row
-        groups = pd.DataFrame(list(updates.values()),
-                              index=updates.keys(),
-                              columns=[ 'region' ])
-        self.df.update(groups)
+            if regions:
+                (region, end) = regions[-1]
+                region += int(row.start > end)
+            else:
+                region = 0
+            regions.append((region, row.end))
+
+        kwargs = { 'region': list(map(op.itemgetter(0), regions)) }
+        if include_lengths:
+            kwargs['length'] = lambda x: x.end - x.start
+        self.df = self.df.assign(**kwargs)
 
     def __str__(self):
         return self.df.to_csv(columns=[ 'term' ],

@@ -1,68 +1,72 @@
-import multiprocessing as mp
 from pathlib import Path
 from argparse import ArgumentParser
+from multiprocessing import Pool
 
 import numpy as np
 import pandas as pd
 import seaborn as sns
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
+from matplotlib.ticker import FuncFormatter
 
 from zrtlib import logger
 from zrtlib import zutils
-from zrtlib.indri import QueryDoc
-from zrtlib.jobqueue import SentinalJobQueue
+from zrtlib.indri import QueryDoc, TrecMetric
 
-def func(incoming, outgoing):
-    while True:
-        (ngram, model, metric, norms) = incoming.get()
+class Argument:
+    def __init__(self, path, metric, baseline=None):
+        self.path = path
+        self.metric = repr(metric)
+        self.baseline = baseline
 
-        for i in model.iterdir():
-            qid = QueryDoc.components(i)
-            with i.open() as fp:
-                for (_, values) in zutils.read_trec(fp):
-                    v = values[metric]
-                    if norms is not None:
-                        n = norms[qid.topic]
-                        if n != 0:
-                            v /= n
-                        else:
-                            assert(v == 0)
-                    entry = [ ngram, model.stem, qid.topic, v ]
-                    log.info(' '.join(map(str, entry[:-1])))
+        self.ngrams = int(self.path.parts[-2])
+        self.topic = QueryDoc.components(self.path).topic
 
-                    outgoing.put(entry)
+    def __str__(self):
+        return ' '.join(map(str, (self.metric, self.ngrams, self.topic)))
 
-        outgoing.put(None)
+def func(args):
+    log = logger.getlogger()
+    log.info(args)
 
-def mkjobs(args):
-    if args.baseline is not None:
-        norms = dict(zutils.read_baseline(args.baseline, args.metric))
-    else:
+    df = pd.read_csv(args.path, usecols=[ args.metric, 'model' ])
+    df = df.assign(ngrams=args.ngrams, topic=args.topic)
+
+    if args.baseline:
+        df[args.metric] /= args.baseline[args.topic]
+
+    return df
+
+def jobs(args):
+    log = logger.getlogger()
+
+    if args.baseline is None:
         norms = None
+    else:
+        norms = dict(zutils.read_baseline(args.baseline, args.metric))
 
     for ngram in args.zrt.iterdir():
         n = int(ngram.stem)
         if args.min_ngrams <= n <= args.max_ngrams:
-            for model in ngram.iterdir():
-                yield (n, model, args.metric, norms)
+            for topic in ngram.iterdir():
+                argument = Argument(topic, args.metric, norms)
+                if norms and norms[argument.topic] == 0:
+                    log.warning('Skipping {0}'.format(argument.topic))
+                else:
+                    yield argument
 
-def aquire(args, metric):
-    keys = [ 'n-grams', 'model', 'topic', metric ]
-    incoming = mp.Queue()
-    outgoing = mp.Queue()
-
-    with mp.Pool(initializer=func, initargs=(outgoing, incoming)):
-        for i in SentinalJobQueue(incoming, outgoing, mkjobs(args)):
-            if i is not None:
-                yield dict(zip(keys, i))
+def aquire(args):
+    with Pool() as pool:
+        yield from pool.imap_unordered(func, jobs(args))
 
 arguments = ArgumentParser()
-arguments.add_argument('--metric')
+arguments.add_argument('--metric', type=TrecMetric)
 arguments.add_argument('--kind')
 arguments.add_argument('--zrt', type=Path)
 arguments.add_argument('--baseline', type=Path)
 arguments.add_argument('--min-ngrams', type=int, default=0)
 arguments.add_argument('--max-ngrams', type=float, default=np.inf)
+arguments.add_argument('--output', type=Path)
+arguments.add_argument('--common', action='store_true')
 args = arguments.parse_args()
 
 log = logger.getlogger()
@@ -71,10 +75,12 @@ log = logger.getlogger()
 # Get the plotter options together first so that if they're wrong we
 # haven't wasted any time mucking with data.
 #
-metric = {
+metric_label = {
     'map': 'Mean Average Precision',
     'recip_rank': 'Mean Reciprocal Rank',
-}[args.metric]
+}[repr(args.metric)]
+if args.baseline:
+    metric_label = 'Relative ' + metric_label
 
 (plotter, kwargs) = {
     'bar': (sns.barplot, { 'errwidth': 0.1 }),
@@ -84,26 +90,41 @@ metric = {
 #
 # Aquire the data
 #
-df = pd.DataFrame(aquire(args, metric))
-# http://stackoverflow.com/a/42014251 ???
+df = pd.concat(aquire(args))
+df.to_csv('a.csv')
 
-hues = df.model.unique()
+if args.common:
+    common = set()
+    for (_, i) in df.groupby('ngrams', sort=False):
+        topics = i['topic']
+        if not common:
+            common.update(topics)
+        else:
+            common = common.intersection(topics)
+    log.debug(common)
+    df = df[df['topic'].isin(common)]
+
+topics = df['topic'].unique()
+log.info('Topics ({0}): {1}'.format(len(topics), ','.join(map(str, topics))))
 
 #
 # Plot
 #
+hues = df['model'].unique()
+
 # plt.figure(figsize=(24, 6))
 sns.set_context('paper')
 sns.set(font_scale=1.7)
-ax = plotter(x='n-grams',
-             y=metric,
+ax = plotter(x='ngrams',
+             y=repr(args.metric),
              hue='model',
              hue_order=sorted(hues),
              data=df,
              **kwargs)
 ax.legend(ncol=round(len(hues) / 2), loc='upper center')
 ax.set(ylim=(0, None),
-       ylabel=metric)
+       ylabel=metric_label)
+if args.baseline:
+    ax.yaxis.set_major_formatter(FuncFormatter('{0:.0%}'.format))
 
-fname = 'evals-{1}-{0}.png'.format(args.kind, args.metric)
-ax.figure.savefig(fname, bbox_inches='tight')
+ax.figure.savefig(str(args.output), bbox_inches='tight')

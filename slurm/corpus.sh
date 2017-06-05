@@ -44,7 +44,7 @@ rm --force --recursive $o3
 mkdir --parents $o3
 
 python3 $ZR_HOME/src/create/parse.py \
-    --input $o2 \
+    --documents $o2 \
     --output $o3 \
     --parser wsj \
     --strainer space:lower:alpha

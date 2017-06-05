@@ -35,6 +35,9 @@ class IndriQuery:
         self.query = element('parameter')
         self.keys = ('type', 'number', 'text')
 
+    def __str__(self):
+        return et.tostring(self.query, encoding='unicode')
+
     def add(self, text):
         q = element('query', self.query)
         for (i, j) in zip(self.keys, ('indri', str(self.i), text)):
@@ -42,21 +45,31 @@ class IndriQuery:
 
         self.i += 1
 
-    def __str__(self):
-        return et.tostring(self.query, encoding='unicode')
-
 class TrecMetric:
+    '''The trec_eval program uses different formats for the way metrics
+    are specified and how they are presented in their results; this
+    class acts a shield between knowing the difference.
+    '''
     def __init__(self, metric):
+        '''A metric as it would be specified to the trec_eval command.
+
+        '''
         self.metric = metric
 
     def __str__(self):
+        '''Suitable for supplying directly to the trec_eval command
+
+        '''
         return '-m' + self.metric
 
     def __repr__(self):
+        '''The key in trec_eval results
+
+        '''
         return '_'.join(self.metric.split('.', 1))
 
 class QueryExecutor:
-    def __init__(self, index, qrels, keep=False):
+    def __init__(self, index, qrels):
         self.index = index
         self.indri = shutil.which('IndriRunQuery')
         self.trec = shutil.which('trec_eval')
@@ -70,16 +83,9 @@ class QueryExecutor:
 
         self.qrels = qrels
 
-        delete = not keep
         f = lambda x: NamedTemporaryFile(mode='w',
-                                         delete=delete,
                                          prefix='{0}{1}-'.format(x,qrels.stem))
         (self.query_fp, self.results_fp) = map(f, 'qr')
-
-        if keep:
-            log = logger.getlogger()
-            log.debug(self.query_fp.name)
-            log.debug(self.results_fp.name)
 
     def __enter__(self):
         return self
@@ -113,6 +119,9 @@ class QueryExecutor:
 
         return result
 
+    def saveq(self, dest):
+        shutil.copy(self.query_fp.name, dest)
+
     def relevant(self, judgements=None, limit=None):
         if judgements is None:
             judgements = relevant_documents(self.qrels)
@@ -127,10 +136,7 @@ class QueryExecutor:
 
     def evaluate(self, *metrics, all_metrics=True):
         if os.stat(self.results_fp.name).st_size == 0:
-            log = logger.getlogger()
-            log.warning('No results')
-
-            return
+            raise ValueError()
 
         cmd = [
             self.trec,
@@ -175,7 +181,7 @@ class QueryDoc:
         (name, number) = doc.stem.split(QueryDoc.separator)
         topic = name[len(QueryDoc.prefix):]
 
-        return QueryID(topic, number)
+        return QueryID(topic, int(number))
 
     def add(self, query):
         attrs = collections.OrderedDict()

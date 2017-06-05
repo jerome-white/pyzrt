@@ -8,7 +8,25 @@ from functools import singledispatch
 
 TrecMeasurement = collections.namedtuple('Measurement', 'run, results')
 
+def stream(items, move=next, stop=None, compare=op.eq):
+    '''Iterate through a sequence that doesn't strictly conform to
+    Python's iterable semantics.
+
+    '''
+
+    while True:
+        i = move(items)
+        if compare(i, stop):
+            break
+        yield i
+
 def read_baseline(baseline, metric, single_topics=True):
+    '''Read the file created by baseline.py
+    baseline (Path): path to baseline file
+    metric (TrecMetric): metric of choice
+    single_topics (Bool): whether to ensure topics are listed once
+
+    '''
     seen = set()
 
     with baseline.open() as fp:
@@ -18,7 +36,7 @@ def read_baseline(baseline, metric, single_topics=True):
             if single_topics:
                 assert(topic not in seen)
                 seen.add(topic)
-            yield (topic, float(line[metric]))
+            yield (topic, float(line[repr(metric)]))
 
 def read_trec(fp, summary=False):
     previous = None

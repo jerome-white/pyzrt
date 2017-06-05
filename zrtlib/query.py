@@ -6,10 +6,24 @@ from collections import namedtuple
 import numpy as np
 import igraph as ig
 
+# from zrtlib import logger
 from zrtlib.indri import IndriQuery
 from zrtlib.document import Region
 
-GraphPath = namedtuple('GraphPath', 'edges, weight, variance')
+OptimalPath = namedtuple('OptimalPath', 'deviation, path')
+
+class Node:
+    def __init__(self, node):
+        self.term = node.term
+        self.offset = node.start
+
+    def __hash__(self):
+        return hash((self.term, self.offset))
+
+    def __eq__(self, other):
+        if not isinstance(other, type(self)):
+            return False
+        return self.term == other.term and self.offset == other.offset
 
 def QueryBuilder(terms, model='ua'):
     return {
@@ -31,9 +45,14 @@ class Query:
 
         return str(query)
 
+    def descending(self, docs, limit=None):
+        by = [ 'length', 'start', 'end' ]
+        df = docs.sort_values(by=by, ascending=False)
+
+        return df if limit is None else df.head(limit)
+
     def compose(self):
         terms = map(self.regionalize, self.doc.regions())
-
         return ' '.join(itertools.chain.from_iterable(terms))
 
     def regionalize(self, region):
@@ -44,70 +63,68 @@ class BagOfWords(Query):
         yield from map(op.attrgetter('term'), region.df.itertuples())
 
 class Synonym(BagOfWords):
-    def __init__(self, path, n_longest=None):
-        super().__init__(path)
+    def __init__(self, doc, n_longest=None):
+        super().__init__(doc)
         self.n = n_longest
 
     def regionalize(self, region):
-        n = len(region.df) if self.n is None else self.n
-        df = region.df.nlargest(n, 'length')
+        df = self.descending(region.df, self.n)
         r = Region(*region[:3], df)
 
         yield from itertools.chain(['#syn('], super().regionalize(r), [')'])
 
 class Weighted(Query):
-    def __init__(self, path, alpha=0.5):
-        super().__init__(path)
+    def __init__(self, doc, alpha=0.5):
+        super().__init__(doc)
         self.alpha = alpha
-
-    def regionalize(self, region):
-        raise NotImplementedError()
 
     def discount(self, df):
         previous = []
 
         for row in df.itertuples():
-            w = self.alpha * (row.end - row.start)
-            i = w / (1 + w)
-            j = np.prod(previous) if previous else 1
+            a = self.alpha * row.length
+            w = a / (1 + a)
+            p = np.prod(previous) if previous else 1
 
-            yield (row.Index, i * j)
+            yield (row.Index, w * p)
+            
+            previous.append(1 - w)
 
-            previous.append(1 - i)
+    def get_weights(self, docs):
+        return dict(self.discount(self.descending(docs)))
 
-    def combine(self, df, weights):
+    def combine(self, df, weights, precision=10):
         for row in df.itertuples():
             if row.Index in weights:
-                yield '{0:.10f} {1}'.format(weights[row.Index], row.term)
+                kg = '{1:.{0}f}'.format(precision, weights[row.Index])
+                if float(kg) != 0:
+                    yield kg + ' ' + row.term
 
 class TotalWeight(Weighted):
-    def __init__(self, path, alpha=0.5):
-        super().__init__(path, alpha)
+    def __init__(self, doc, alpha=0.5):
+        super().__init__(doc, alpha)
 
-        by = [ 'length', 'start', 'end' ]
-        df = self.doc.df.sort_values(by=by, ascending=False)
-        self.computed = dict(self.discount(df))
+        self.weights = self.get_weights(self.doc.df)
 
     def regionalize(self, region):
         if region.first:
             yield '#weight('
 
-        yield from self.combine(region.df, self.computed)
+        yield from self.combine(region.df, self.weights)
 
         if region.last:
             yield ')'
 
 class LongestWeight(Weighted):
     def regionalize(self, region):
-        df = region.df.nlargest(len(region.df), 'length')
-        weights = dict(self.discount(df))
-        body = super().combine(df, weights)
+        weights = self.get_weights(region.df)
+        body = self.combine(region.df, weights)
 
         yield from itertools.chain(['#wsyn('], body, [')'])
 
 class ShortestPath(Query):
-    def __init__(self, path, partials=True):
-        super().__init__(path)
+    def __init__(self, doc, partials=True):
+        super().__init__(doc)
         self.partials = partials
 
     def regionalize(self, region):
