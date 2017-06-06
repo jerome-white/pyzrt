@@ -123,7 +123,7 @@ class ShortestPath(Query):
         terms = len(df)
         if terms == 0:
             return ''
-        if terms == 1:
+        elif terms == 1:
             return df.iloc[0]['term']
 
         graph = nx.DiGraph()
@@ -139,17 +139,14 @@ class ShortestPath(Query):
 
         best = None
         (source, target) = df.index[::len(df.index) - 1]
-
         for i in nx.all_shortest_paths(graph, source, target, weight='weight'):
             weights = []
-            for (u, v) in zip(i, i[1:]):
-                d = graph.get_edge_data(u, v)
+            for edge in zip(i, i[1:]):
+                d = graph.get_edge_data(*edge)
                 weights.append(d['weight'])
-
             deviation = np.std(weights)
+
             if best is None or deviation < best.deviation:
                 best = GraphPath(i, deviation)
 
-        for i in best.path:
-            row = df.iloc[i]
-            yield row['term']
+        yield from map(lambda x: df.ix[x]['term'], best.path)
