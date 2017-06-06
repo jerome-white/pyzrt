@@ -10,7 +10,7 @@ import networkx as nx
 from zrtlib.indri import IndriQuery
 from zrtlib.document import Region
 
-GraphPath = namedtuple('GraphPath', 'path, variance')
+GraphPath = namedtuple('GraphPath', 'path, deviation')
 
 def QueryBuilder(terms, model='ua'):
     return {
