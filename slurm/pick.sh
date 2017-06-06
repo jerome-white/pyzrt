@@ -46,7 +46,7 @@ for i in $root/evals/single/$ngrams/*; do
 #!/bin/bash
 
 python3 -u $ZR_HOME/src/support/qrels.py \
-    --input $zrt/qrels.251-300.parts1-5.tar.gz \
+    --input $HOME/etc/wsj/qrels.251-300.parts1-5.tar.gz \
     --output \$SLURM_JOBTMP \
     --topic $topic \
     --document-class WSJ \

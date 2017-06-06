@@ -27,7 +27,7 @@ for i in ${queries[@]}; do
 	    echo -n "$i $j $k "
 	    $ZR_HOME/slurm/reveal.sh \
 		-q $root/pseudoterms/$n/WSJQ00${i}-0000 \
-		-r $ZR_HOME/data/qrels.251-300.parts1-5.tar.gz \
+		-r $HOME/etc/wsj/qrels.251-300.parts1-5.tar.gz \
 		-s $j \
 		-c 1000 \
 		-x ndcg_cut.10 \
