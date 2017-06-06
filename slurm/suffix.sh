@@ -24,15 +24,18 @@ if [ ${4} ]; then
     existing="--existing ${4}"
 fi
 
-python3 -u $ZR_HOME/src/create/stree.py $existing \
+# compress=--no-compress
+
+python3 -u $ZR_HOME/src/create/stree.py $existing $compress \
     --input $corpus \
     --output $output \
     --min-gram ${1} \
     --max-gram ${2} \
     --prune 1 \
     --workers $SLURM_CPUS_PER_TASK \
-    --incremental
+    --incremental \
+    --document-boundaries
 
-for i in $output/*.csv; do
-    echo bzip2 $i
-done | parallel --no-notice
+# for i in $output/*.csv; do
+#     echo bzip2 $i
+# done | parallel --no-notice
