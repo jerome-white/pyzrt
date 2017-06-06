@@ -1,53 +1,38 @@
 #!/bin/bash
 
-n=4
-m=12
-cpus=10
+#SBATCH --mem=492G
+#SBATCH --time=2-0
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=jsw7@nyu.edu
+#SBATCH --nodes=1
+#SBATCH --cpus-per-task=10
+#SBATCH --job-name=reveal-suffix
 
-while getopts "c:m:n:h" OPTION; do
-    case $OPTION in
-        c) corpus=$OPTARG ;;
-        m) m=$OPTARG ;;
-        n) n=$OPTARG ;;
-        h)
-            cat <<EOF
-$0 -c corpus (\$o3 in $ZR_HOME/qsub/corpus.sh)
-   -m maximum n-gram length (default $m)
-   -n minimum n-gram length (default $n)
-EOF
-            exit
-            ;;
-        *) exit 1 ;;
-    esac
-done
+#
+# Usage:
+#
+#  $> sbatch $0 m n path/to/toplevel existing
+#
+# where m and n are the n-gram range (minimum and maximum,
+# respectively), and path/to/toplevel is the path to the directory
+# containing the corpus directory.
+#
 
-output=`dirname $corpus`/trees
-if [ -e $output ]; then
-    existing="--existing $output/`ls --sort=time $output | head --lines=1`"
-else
-    mkdir --parents $output
+output=${3}/trees
+mkdir --parents $output
+if [ ${4} ]; then
+    existing="--existing ${4}"
 fi
 
-job=`mktemp`
-cat <<EOF > $job
 python3 -u $ZR_HOME/src/create/stree.py $existing \
     --input $corpus \
     --output $output \
-    --min-gram $n \
-    --max-gram $m \
+    --min-gram ${1} \
+    --max-gram ${2} \
     --prune 1 \
-    --workers $cpus \
+    --workers $SLURM_CPUS_PER_TASK \
     --incremental
-EOF
 
-sbatch \
-    --mem=492G \
-    --time=2-0 \
-    --mail-type=ALL \
-    --mail-user=jsw7@nyu.edu \
-    --nodes=1 \
-    --cpus-per-task=$cpus \
-    --job-name=reveal-suffix \
-    $job
-
-# leave a blank line at the end
+for i in $output/*.csv; do
+    echo bzip2 $i
+done | parallel --no-notice
