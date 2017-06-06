@@ -10,20 +10,7 @@ import networkx as nx
 from zrtlib.indri import IndriQuery
 from zrtlib.document import Region
 
-OptimalPath = namedtuple('OptimalPath', 'deviation, path')
-
-class Node:
-    def __init__(self, node):
-        self.term = node.term
-        self.offset = node.start
-
-    def __hash__(self):
-        return hash((self.term, self.offset))
-
-    def __eq__(self, other):
-        if not isinstance(other, type(self)):
-            return False
-        return self.term == other.term and self.offset == other.offset
+GraphPath = namedtuple('GraphPath', 'path, variance')
 
 def QueryBuilder(terms, model='ua'):
     return {
@@ -87,7 +74,7 @@ class Weighted(Query):
             p = np.prod(previous) if previous else 1
 
             yield (row.Index, w * p)
-            
+
             previous.append(1 - w)
 
     def get_weights(self, docs):
@@ -132,25 +119,26 @@ class ShortestPath(Query):
         if not self.partials:
             condition = df['ngram'].str.len() == df['length']
             df = df[condition]
-            if len(df) == 0:
-                return ''
+
+        terms = len(df)
+        if terms == 0:
+            return ''
+        if terms == 1:
+            return df.iloc[0]['term']
 
         graph = nx.DiGraph()
 
         for source in df.itertuples():
-            u = Node(source)
             dest = df[(df.start > source.start) & (df.start <= source.end)]
             for target in dest.itertuples():
-                v = Node(target)
                 weight = source.end - target.start
-                graph.add_edge(u, v, weight=weight)
+                graph.add_edge(source.Index, target.Index, weight=weight)
 
-        if len(graph) == 0:
-            return u.term
+        # assert(graph.size() > 0)
         # assert(nx.is_directed_acyclic_graph(graph))
 
-        (source, target) = [ Node(df.iloc[x]) for x in (0, -1) ]
-        optimal = OptimalPath(np.inf, None)
+        best = None
+        (source, target) = df.index[::len(df.index) - 1]
 
         for i in nx.all_shortest_paths(graph, source, target, weight='weight'):
             weights = []
@@ -159,7 +147,9 @@ class ShortestPath(Query):
                 weights.append(d['weight'])
 
             deviation = np.std(weights)
-            if deviation < optimal.deviation:
-                optimal = OptimalPath(deviation, i)
+            if best is None or deviation < best.deviation:
+                best = GraphPath(i, deviation)
 
-        yield from map(op.attrgetter('term'), optimal.path)
+        for i in best.path:
+            row = df.iloc[i]
+            yield row['term']
