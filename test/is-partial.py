@@ -3,6 +3,7 @@ from argparse import ArgumentParser
 from multiprocessing import Pool
 
 from zrtlib import logger
+from zrtlib.document import TermDocument
 
 def ispartial(path):
     df = TermDocument(path).df
