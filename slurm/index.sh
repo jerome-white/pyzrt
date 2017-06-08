@@ -61,7 +61,7 @@ find $terms -name 'WSJ*' -not -name 'WSJQ*' | \
 # Generate Indri indexes from the documents
 #
 
-index=${2}/index/$ngrams
+index=${2}/indri/$ngrams
 rm --recursive --force $index
 mkdir --parents $index
 
