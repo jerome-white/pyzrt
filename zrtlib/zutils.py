@@ -120,4 +120,5 @@ def _(path):
 
 @walk.register(type(None))
 def _(path):
-    yield from map(lambda x: Path(x.strip()), sys.stdin)
+    for i in sys.stdin:
+        yield from walk(Path(i.strip()))
