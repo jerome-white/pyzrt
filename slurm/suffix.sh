@@ -11,24 +11,27 @@
 #
 # Usage:
 #
-#  $> sbatch $0 m n path/to/toplevel existing
+#  $> sbatch $0 m n corpus output existing
 #
-# where m and n are the n-gram range (minimum and maximum,
-# respectively), and path/to/toplevel is the path to the directory
-# containing the corpus directory.
+#  1 m minimum n-gram
+#  2 n maximum n-gram
+#  3 path/to/corpus
+#  4 output output directory (usually path/to/trees)
+#  5 existing use most recent file in path/to/trees as "existing"
 #
 
-output=${3}/trees
-mkdir --parents $output
-if [ ${4} ]; then
-    existing="--existing ${4}"
+if [ ${5} ]; then
+    recent=${4}/`ls --sort=time ${4} | head --lines=1`
+    if [ $recent ]; then
+        existing="--existing $recent"
+    fi
 fi
 
 # compress=--no-compress
 
 python3 -u $ZR_HOME/src/create/stree.py $existing $compress \
-    --input $corpus \
-    --output $output \
+    --input ${3} \
+    --output ${4} \
     --min-gram ${1} \
     --max-gram ${2} \
     --prune 1 \
