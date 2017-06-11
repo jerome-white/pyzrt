@@ -24,7 +24,8 @@ ngrams=`printf "%02.f" ${1}`
 # Convert the suffix trees to term files
 #
 
-terms=`mktemp --directory`
+terms=$SLURM_JOBTMP/$ngrams
+mkdir $terms
 
 python3 $ZR_HOME/src/create/suffix2terms.py \
   --suffix-tree ${2}/trees/${ngrams}.csv \
