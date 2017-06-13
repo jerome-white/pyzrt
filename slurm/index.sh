@@ -21,37 +21,22 @@
 ngrams=`printf "%02.f" ${1}`
 
 #
-# Convert the suffix trees to term files
+# Extract the term files
 #
-
-terms=$SLURM_JOBTMP/$ngrams
-mkdir $terms
-
-python3 $ZR_HOME/src/create/suffix2terms.py \
-  --suffix-tree ${2}/trees/${ngrams}.csv \
-  --output $terms
-
-#
-# Archive the term files
-#
-
-pseudoterms=${2}/pseudoterms
-mkdir --parents $pseudoterms
 
 tar \
-    --create \
-    --bzip2 \
-    --file=$pseudoterms/$ngrams.tar.bz \
-    --directory=`dirname $terms` \
-    `basename $terms`
+    --extract \
+    --bzip \
+    --directory=$SLURM_JOBTMP \
+    --file=${2}/pseudoterms/${ngrams}.tar.bz
 
 #
 # Generate TREC formatted documents
 #
 
-documents=`mktemp --directory`
+documents=`mktemp --directory --tmpdir=$SLURM_JOBTMP`
 
-find $terms -name 'WSJ*' -not -name 'WSJQ*' | \
+find $SLURM_JOBTMP/$ngrams -name 'WSJ*' -not -name 'WSJQ*' | \
   python3 $ZR_HOME/src/create/parse.py \
     --output $documents \
     --parser pt \

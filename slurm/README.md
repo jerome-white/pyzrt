@@ -9,8 +9,8 @@ from raw data to results.
    2. Put queries into TREC format.
    3. Build corpus from TREC formatted data.
 2. `suffix.sh` Build the suffix tree.
-3. `index.sh` Build the Indri index:
-   1. Convert suffix trees to term files.
+3. `mkterms.sh` Convert suffix trees to term files.
+4. `index.sh` Build the Indri index:
    2. Put term files into TREC format.
    3. Generate Indri indexes based on TREC formatted documents.
 
