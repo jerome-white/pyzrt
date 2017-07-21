@@ -108,11 +108,11 @@ def count(start=0, stop=None, inclusive=True):
 
 @singledispatch
 def walk(path):
-    for p in path.iterdir():
-        if p.is_dir():
-            yield from walk(p)
-        else:
-            yield p
+    if path.is_dir():
+        for i in path.iterdir():
+            yield from walk(i)
+    else:
+        yield path
 
 @walk.register(str)
 def _(path):
@@ -120,4 +120,5 @@ def _(path):
 
 @walk.register(type(None))
 def _(path):
-    yield from map(lambda x: Path(x.strip()), sys.stdin)
+    for i in sys.stdin:
+        yield from walk(Path(i.strip()))
