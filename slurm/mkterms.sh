@@ -11,14 +11,18 @@
 #
 # Usage:
 #
-#  $> sbatch $0 n path/to/toplevel
+#  $> sbatch $0 n path/to/toplevel version
 #
-# where n are the number of n-grams to work with and path/to/toplevel
-# is the path to the directory containing the trees ($output in
-# $ZR_HOME/qsub/suffix.sh)
+# {1} n                 number of n-grams to work with
+# {2} path/to/toplevel  path to the directory containing the trees
+#                       ($output in $ZR_HOME/qsub/suffix.sh)
+# {3} version           Tree format version (optional)
 #
 
 ngrams=`printf "%02.f" ${1}`
+if [ ${3} ]; then
+    version="--version ${3}"
+fi
 
 #
 # Convert the suffix trees to term files
@@ -27,7 +31,7 @@ ngrams=`printf "%02.f" ${1}`
 terms=$SLURM_JOBTMP/$ngrams
 mkdir $terms
 
-python3 $ZR_HOME/src/create/suffix2terms.py \
+python3 $ZR_HOME/src/create/suffix2terms.py $version \
   --suffix-tree ${2}/trees/${ngrams}.csv \
   --output $terms
 
