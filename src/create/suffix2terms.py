@@ -47,6 +47,7 @@ class JavaTermReader(TermReader):
     def parse(self, prefix, row):
         (docno, ngram, start) = row
 
+        start = int(start)
         term = Term(prefix, ngram, start, start + len(ngram))
 
         yield (docno, term)
