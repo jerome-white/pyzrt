@@ -31,7 +31,7 @@ class TermReader:
     def parse(self, prefix, row):
         raise NotImplementedError()
 
-class PythonTermReader:
+class PythonTermReader(TermReader):
     def parse(self, prefix, row):
         (ngram, *tokens) = row
 
@@ -43,7 +43,7 @@ class PythonTermReader:
 
                 yield (char.docno, term)
 
-class JavaTermReader:
+class JavaTermReader(TermReader):
     def parse(self, prefix, row):
         (docno, ngram, start) = row
 
