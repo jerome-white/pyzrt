@@ -72,7 +72,7 @@ arguments = ArgumentParser()
 arguments.add_argument('--suffix-tree', type=Path)
 arguments.add_argument('--output', type=Path)
 arguments.add_argument('--term-prefix', default='pt')
-arguments.add_argument('--version', type=int, default=0)
+arguments.add_argument('--version', type=int, default=1)
 args = arguments.parse_args()
 
 log = logger.getlogger(True)
@@ -80,10 +80,11 @@ jobs = mp.JoinableQueue()
 
 log.info('>| begin')
 with mp.Pool(initializer=func, initargs=(jobs, args.output)):
+    version = max(0, args.version - 1)
     terms = [
         PythonTermReader,
         JavaTermReader,
-        ][args.version](args.suffix_tree, args.term_prefix)
+        ][version](args.suffix_tree, args.term_prefix)
 
     for i in terms.postings.items():
         jobs.put(i)
