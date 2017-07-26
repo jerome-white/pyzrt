@@ -31,7 +31,7 @@ fi
 terms=$SLURM_JOBTMP/$ngrams
 mkdir $terms
 
-python3 $ZR_HOME/src/create/suffix2terms.py $version \
+python3 -u $ZR_HOME/src/create/suffix2terms.py $version \
   --suffix-tree ${2}/trees/${ngrams}.csv \
   --output $terms
 
