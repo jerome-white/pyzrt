@@ -50,7 +50,7 @@ class JavaTermReader(TermReader):
         start = int(start)
         term = Term(prefix, ngram, start, start + len(ngram))
 
-        yield (docno, term)
+        yield (Path(docno), term)
 
 def func(jobs, path):
     log = logger.getlogger()
