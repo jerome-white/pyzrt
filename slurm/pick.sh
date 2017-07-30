@@ -45,6 +45,8 @@ for i in $root/evals/single/$ngrams/*; do
                 cat <<EOF >> $job
 #!/bin/bash
 
+module load pbzip2/intel/1.1.13
+
 python3 -u $ZR_HOME/src/support/qrels.py \
     --input $HOME/etc/wsj/qrels.251-300.parts1-5.tar.gz \
     --output \$SLURM_JOBTMP \
@@ -54,7 +56,7 @@ python3 -u $ZR_HOME/src/support/qrels.py \
 
 tar \
     --extract \
-    --bzip \
+    --use-compress-prog=pbzip2 \
     --directory=\$SLURM_JOBTMP \
     --file=$root/pseudoterms/$ngrams &
 

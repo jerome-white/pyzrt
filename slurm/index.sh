@@ -18,6 +18,8 @@
 # $ZR_HOME/qsub/suffix.sh)
 #
 
+module load pbzip2/intel/1.1.13
+
 ngrams=`printf "%02.f" ${1}`
 
 #
@@ -26,7 +28,7 @@ ngrams=`printf "%02.f" ${1}`
 
 tar \
     --extract \
-    --bzip \
+    --use-compress-prog=pbzip2 \
     --directory=$SLURM_JOBTMP \
     --file=${2}/pseudoterms/${ngrams}.tar.bz
 

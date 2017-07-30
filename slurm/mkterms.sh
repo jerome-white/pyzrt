@@ -19,6 +19,8 @@
 # {3} version           Tree format version (optional)
 #
 
+module load pbzip2/intel/1.1.13
+
 ngrams=`printf "%02.f" ${1}`
 if [ ${3} ]; then
     version="--version ${3}"
@@ -44,7 +46,7 @@ mkdir --parents $pseudoterms
 
 tar \
     --create \
-    --bzip2 \
+    --use-compress-prog=pbzip2 \
     --file=$pseudoterms/$ngrams.tar.bz \
     --directory=`dirname $terms` \
     `basename $terms`
