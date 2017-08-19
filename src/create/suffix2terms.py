@@ -1,35 +1,36 @@
 import csv
-import multiprocessing as mp
 from pathlib import Path
 from argparse import ArgumentParser
-from collections import namedtuple, defaultdict
+from collections import namedtuple
+from multiprocessing import Pool
 
 from zrtlib import logger
 from zrtlib.corpus import Character
 
 Term = namedtuple('Term', 'term, ngram, start, end')
+Entry = namedtuple('Entry', 'docno, term')
 
 class TermReader:
-    def __init__(self, path, prefix):
-        self.postings = defaultdict(list)
+    def __init__(self, path, prefix, fill):
+        self.path = path
+        self.prefix = lambda x: prefix + str(x).zfill(fill)
 
-        with path.open() as fp:
-            # count the number of terms
-            for (i, _) in enumerate(fp):
-                pass
-            log.info('terms {0}'.format(i))
-            digits = len(str(i))
-            fp.seek(0)
-
-            # read each term
+    def __iter__(self):
+        with self.path.open() as fp:
             reader = csv.reader(fp)
             for row in reader:
-                p = prefix + str(reader.line_num).zfill(digits)
-                for (docno, term) in self.parse(p, row):
-                    self.postings[docno].append(term)
+                p = self.prefix(reader.line_num)
+                yield from map(lambda x: Entry(*x), self.parse(p, row))
 
     def parse(self, prefix, row):
         raise NotImplementedError()
+
+    @staticmethod
+    def builder(version, path, prefix='pt', fill=0):
+        return [
+            PythonTermReader,
+            JavaTermReader,
+        ][version](path, prefix, fill)
 
 class PythonTermReader(TermReader):
     def parse(self, prefix, row):
@@ -52,21 +53,22 @@ class JavaTermReader(TermReader):
 
         yield (Path(docno), term)
 
-def func(jobs, path):
-    log = logger.getlogger()
+def func(args):
+    (document, fill, cli) = args
 
-    while True:
-        (document, terms) = jobs.get()
-        log.info('{0} {1}'.format(document.stem, len(terms)))
+    with cli.output.joinpath(document.stem).open('w') as fp:
+        writer = csv.DictWriter(fp, fieldnames=Term._fields)
+        writer.writeheader()
 
-        p = path.joinpath(document.stem)
-        with p.open('w') as fp:
-            writer = csv.DictWriter(fp, fieldnames=Term._fields)
-            writer.writeheader()
-            for i in terms:
-                writer.writerow(i._asdict())
+        reader = TermReader.builder(cli.version,
+                                    cli.suffix_tree,
+                                    cli.term_prefix,
+                                    fill)
+        for entry in reader:
+            if entry.docno == document:
+                writer.writerow(entry.term._asdict())
 
-        jobs.task_done()
+    return document
 
 arguments = ArgumentParser()
 arguments.add_argument('--suffix-tree', type=Path)
@@ -76,17 +78,20 @@ arguments.add_argument('--version', type=int, default=1)
 args = arguments.parse_args()
 
 log = logger.getlogger(True)
-jobs = mp.JoinableQueue()
 
 log.info('>| begin')
-with mp.Pool(initializer=func, initargs=(jobs, args.output)):
+with Pool() as pool:
     version = max(0, args.version - 1)
-    terms = [
-        PythonTermReader,
-        JavaTermReader,
-        ][version](args.suffix_tree, args.term_prefix)
+    reader = TermReader.builder(version, args.suffix_tree, args.term_prefix)
 
-    for i in terms.postings.items():
-        jobs.put(i)
-    jobs.join()
+    terms = set()
+    documents = set()
+    for entry in reader:
+        documents.add(entry.docno)
+        terms.add(entry.term)
+    digits = len(str(len(terms)))
+
+    iterable = map(lambda x: (x, digits, args), documents)
+    for i in pool.imap_unordered(func, iterable):
+        log.info(i)
 log.info('<| complete')
