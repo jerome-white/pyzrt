@@ -25,6 +25,15 @@ class TermReader:
     def parse(self, prefix, row):
         raise NotImplementedError()
 
+    def documents(self):
+        seen = set()
+
+        for i in self:
+            if i.docno not in seen:
+                yield i.docno
+
+                seen.add(i.docno)
+
     @staticmethod
     def builder(version, path, prefix='', padding=0):
         return [
@@ -84,6 +93,7 @@ log = logger.getlogger(True)
 log.info('>| begin')
 with Pool() as pool:
     reader = TermReader.builder(args.version, args.suffix_tree)
-    for i in pool.imap_unordered(func, map(lambda x: (x, args), reader)):
+    iterable = map(lambda x: (x, args), reader.documents())
+    for i in pool.imap_unordered(func, iterable):
         log.info(i)
 log.info('<| complete')
