@@ -22,8 +22,23 @@
 module load pbzip2/intel/1.1.13
 
 ngrams=`printf "%02.f" ${1}`
+tree=${2}/trees/${ngrams}.csv
 if [ ${3} ]; then
     version="--version ${3}"
+
+    case ${3} in
+	1) ;; # find padding for Python-based suffix tree
+	2)
+	    padding=`cut --delimiter=',' --fields=2 $tree | \
+		sort --parallel=$SLURM_CPUS_ON_NODE |
+		uniq |
+		wc --lines`
+	    padding="--padding ${#padding}"
+	    ;;
+	*)
+	    exit 1
+	    ;;
+    esac
 fi
 
 #
@@ -33,8 +48,8 @@ fi
 terms=$SLURM_JOBTMP/$ngrams
 mkdir $terms
 
-python3 -u $ZR_HOME/src/create/suffix2terms.py $version \
-  --suffix-tree ${2}/trees/${ngrams}.csv \
+python3 -u $ZR_HOME/src/create/suffix2terms.py $version $padding \
+  --suffix-tree $tree \
   --output $terms
 
 #

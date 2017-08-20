@@ -11,9 +11,9 @@ Term = namedtuple('Term', 'term, ngram, start, end')
 Entry = namedtuple('Entry', 'docno, term')
 
 class TermReader:
-    def __init__(self, path, prefix, fill):
+    def __init__(self, path, prefix, padding):
         self.path = path
-        self.prefix = lambda x: prefix + str(x).zfill(fill)
+        self.prefix = lambda x: prefix + str(x).zfill(padding)
 
     def __iter__(self):
         with self.path.open() as fp:
@@ -26,11 +26,11 @@ class TermReader:
         raise NotImplementedError()
 
     @staticmethod
-    def builder(version, path, prefix='pt', fill=0):
+    def builder(version, path, prefix='', padding=0):
         return [
             PythonTermReader,
             JavaTermReader,
-        ][version](path, prefix, fill)
+        ][version](path, prefix, padding)
 
 class PythonTermReader(TermReader):
     def parse(self, prefix, row):
@@ -54,16 +54,17 @@ class JavaTermReader(TermReader):
         yield (Path(docno), term)
 
 def func(args):
-    (document, fill, cli) = args
+    (document, cli) = args
 
-    with cli.output.joinpath(document.stem).open('w') as fp:
-        writer = csv.DictWriter(fp, fieldnames=Term._fields)
-        writer.writeheader()
-
+    with cli.output.joinpath(document.stem).open('w', buffering=1) as fp:
         reader = TermReader.builder(cli.version,
                                     cli.suffix_tree,
                                     cli.term_prefix,
-                                    fill)
+                                    cli.padding)
+
+        writer = csv.DictWriter(fp, fieldnames=Term._fields)
+        writer.writeheader()
+
         for entry in reader:
             if entry.docno == document:
                 writer.writerow(entry.term._asdict())
@@ -74,24 +75,15 @@ arguments = ArgumentParser()
 arguments.add_argument('--suffix-tree', type=Path)
 arguments.add_argument('--output', type=Path)
 arguments.add_argument('--term-prefix', default='pt')
-arguments.add_argument('--version', type=int, default=1)
+arguments.add_argument('--version', type=int, default=0)
+arguments.add_argument('--padding', type=int, default=0)
 args = arguments.parse_args()
 
 log = logger.getlogger(True)
 
 log.info('>| begin')
 with Pool() as pool:
-    version = max(0, args.version - 1)
-    reader = TermReader.builder(version, args.suffix_tree, args.term_prefix)
-
-    terms = set()
-    documents = set()
-    for entry in reader:
-        documents.add(entry.docno)
-        terms.add(entry.term)
-    digits = len(str(len(terms)))
-
-    iterable = map(lambda x: (x, digits, args), documents)
-    for i in pool.imap_unordered(func, iterable):
+    reader = TermReader.builder(args.version, args.suffix_tree)
+    for i in pool.imap_unordered(func, map(lambda x: (x, args), reader)):
         log.info(i)
 log.info('<| complete')
