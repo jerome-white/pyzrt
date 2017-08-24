@@ -36,7 +36,7 @@ tar \
 # Generate TREC formatted documents
 #
 
-documents=`mktemp --directory --tmpdir=$SLURM_JOBTMP`
+documents=`mktemp --directory --tmpdir=$BEEGFS`
 
 find $SLURM_JOBTMP/$ngrams -name 'WSJ*' -not -name 'WSJQ*' | \
   python3 $ZR_HOME/src/create/parse.py \
@@ -57,3 +57,5 @@ IndriBuildIndex \
   -corpus.path=$documents \
   -corpus.class=trectext \
   -index=$index
+
+rm --recursive --force $documents
