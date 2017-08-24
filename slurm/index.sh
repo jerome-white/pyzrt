@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #SBATCH --mem=60G
-#SBATCH --time=30
+#SBATCH --time=4:00:00
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=jsw7@nyu.edu
 #SBATCH --nodes=1
