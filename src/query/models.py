@@ -18,14 +18,25 @@ def func(args):
 
     model_key = 'model'
     rows = []
-    fieldnames = set()
+    completed = set()
 
     document = TermDocument(terms)
     metrics = map(TrecMetric, options.feedback_metric)
     qrels = options.qrels.joinpath(QueryDoc.components(terms).topic)
 
+    output = options.output.joinpath(terms.stem).with_suffix('.csv')
+    if output.exists():
+        with output.open() as fp:
+            reader = csv.DictReader(fp)
+            fieldnames = reader.fieldnames
+            for line in reader:
+                rows.append(line)
+                completed.add(line[model_key])
+    else:
+        fieldnames = set()
+
     with QueryExecutor(options.index, qrels) as engine:
-        for i in options.model:
+        for i in completed.symmetric_difference(options.model):
             log.info('{0} {1}'.format(terms.stem, i))
 
             engine.query(QueryBuilder(document, i))
@@ -52,11 +63,11 @@ def func(args):
                 continue
 
             assert(model_key not in evaluation)
+
             results = { model_key: i, **evaluation }
             fieldnames.update(results.keys())
             rows.append(results)
 
-    output = options.output.joinpath(terms.stem).with_suffix('.csv')
     with output.open('w', buffering=1) as fp:
         writer = csv.DictWriter(fp, fieldnames=fieldnames)
         writer.writeheader()
