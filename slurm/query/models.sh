@@ -55,8 +55,8 @@ models=(
     un # Hardest last!
 )
 
-output=$root/evals/models/$ngrams
-rm --force --recursive $output
+output=$BEEGFS/evals/$ngrams
+# rm --force --recursive $output
 mkdir --parents $output
 
 python3 $ZR_HOME/src/query/models.py \
