@@ -25,7 +25,7 @@ ngrams=`printf "%02.f" ${3}`
 #
 # Make QRELS
 #
-judgements=`mktemp --directory --tmpdir=$SLURM_JOBTMP`
+judgements=`mktemp --directory --tmpdir=$BEEGFS`
 python3 -u $ZR_HOME/src/support/qrels.py \
         --input ${1} \
         --output $judgements \
