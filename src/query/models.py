@@ -29,6 +29,7 @@ def func(feedback, qrels, index, output, queue):
 
     while True:
         (terms, model) = queue.get()
+        log.info('{0} {1}'.format(terms.stem, model))
 
         document = TermDocument(terms)
         relevance = qrels.joinpath(QueryDoc.components(terms).topic)
