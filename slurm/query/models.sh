@@ -65,3 +65,5 @@ python3 $ZR_HOME/src/query/models.py \
         --output $output \
         --term-files $SLURM_JOBTMP/$ngrams \
         --model `sed -e's/ / --model /g' <<< ${models[@]}`
+
+rm --recursive --force $judgements
