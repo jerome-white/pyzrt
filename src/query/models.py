@@ -88,7 +88,7 @@ log = logger.getlogger()
 
 queue = mp.JoinableQueue()
 initargs = [
-    args.feedback,
+    args.feedback_metric,
     args.qrels,
     args.index,
     args.output,
