@@ -12,7 +12,7 @@ from zrtlib.query import QueryBuilder
 from zrtlib.indri import QueryExecutor, QueryDoc, TrecMetric
 from zrtlib.document import TermDocument
 
-def log_error(errdir, engine):
+def log_error(engine, errdir):
     p = Path(errdir, '.pyzrt', 'errors')
     p.mkdir(parents=True, exist_ok=True)
 
