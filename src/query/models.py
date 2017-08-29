@@ -59,6 +59,8 @@ def func(feedback, qrels, index, output, queue):
 
                 log.error(msg)
 
+        queue.task_done()
+
 def each(args):
     seen = defaultdict(set)
 
