@@ -68,7 +68,8 @@ def each(args):
         with i.open() as fp:
             reader = csv.DictReader(fp)
             for line in reader:
-                seen['query'].add(line['model'])
+                (m, q) = [ line[x] for x in ('model', 'query') ]
+                seen[q].add(m)
 
     for model in args.model:
         for query in filter(QueryDoc.isquery, zutils.walk(args.term_files)):
