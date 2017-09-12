@@ -24,6 +24,7 @@ class JobQueue:
     def decrement(self, item):
         return True
 
+# XXX Not completely tested!
 class SentinalJobQueue(JobQueue):
     def __init__(self, incoming, outgoing, jobs, sentinal=None):
         super().__init__(incoming, outgoing, jobs)
