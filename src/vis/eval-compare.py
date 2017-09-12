@@ -1,6 +1,6 @@
+import multiprocessing as mp
 from pathlib import Path
 from argparse import ArgumentParser
-from multiprocessing import Pool
 
 import numpy as np
 import pandas as pd
@@ -11,65 +11,69 @@ from matplotlib.ticker import FuncFormatter
 from zrtlib import logger
 from zrtlib import zutils
 from zrtlib.indri import QueryDoc, TrecMetric
+from zrtlib.jobqueue import JobQueue
 
-class Argument:
-    def __init__(self, path, metric, baseline=None):
-        self.path = path
-        self.metric = repr(metric)
-        self.baseline = baseline
-
-        self.ngrams = int(self.path.parts[-2])
-        self.topic = QueryDoc.components(self.path).topic
-
-    def __str__(self):
-        return ' '.join(map(str, (self.metric, self.ngrams, self.topic)))
-
-def func(args):
+def func(incoming, outgoing, args):
     log = logger.getlogger()
-    log.info(args)
 
-    df = pd.read_csv(args.path, usecols=[ args.metric, 'model' ])
-    df = df.assign(ngrams=args.ngrams, topic=args.topic)
-
-    if args.baseline:
-        df[args.metric] /= args.baseline[args.topic]
-
-    return df
-
-def jobs(args):
-    log = logger.getlogger()
+    metric = repr(args.metric)
+    usecols=[ metric, 'model', 'query' ] # see query/models.py
 
     if args.baseline is None:
         norms = None
     else:
         norms = dict(zutils.read_baseline(args.baseline, args.metric))
 
+    while True:
+        (result, ngrams) = incoming.get()
+        log.info('{0} {1} {2}'.format(metric, ngrams, result.stem))
+
+        query = pd.read_csv(result, usecols=usecols)
+        topic = QueryDoc.components(query).topic
+
+        if norms and norms[topic] == 0:
+            log.warning('Skipping {0}'.format(topic))
+            df = None
+        else:
+            df.drop('query', axis=1, inplace=True)
+            df = df.assign(ngrams=args.ngrams, topic=topic)
+            if args.baseline:
+                df[metric] /= norms[topic]
+
+        outgoing.put(df)
+
+def jobs(args):
     for ngram in args.zrt.iterdir():
-        n = int(ngram.stem)
-        if args.min_ngrams <= n <= args.max_ngrams:
-            for topic in ngram.iterdir():
-                argument = Argument(topic, args.metric, norms)
-                if norms and norms[argument.topic] == 0:
-                    log.warning('Skipping {0}'.format(argument.topic))
-                else:
-                    yield argument
+        assert(ngram.is_dir())
+
+        ngram = int(ngram.stem)
+        if args.min_ngrams <= ngram <= args.max_ngrams:
+            for result in ngram.iterdir():
+                yield (result, ngram)
 
 def aquire(args):
-    with Pool() as pool:
-        yield from pool.imap_unordered(func, jobs(args))
+    incoming = mp.Queue()
+    outgoing = mp.Queue()
+
+    initargs = (outgoing, incoming, args)
+
+    with mp.Pool(processes=args.workers, initializer=func, initargs=initargs):
+        queue = JobQueue(incoming, outgoing, jobs(args))
+        yield from filter(None, queue)
 
 arguments = ArgumentParser()
-arguments.add_argument('--metric', type=TrecMetric)
 arguments.add_argument('--kind')
+arguments.add_argument('--common', action='store_true')
 arguments.add_argument('--zrt', type=Path)
+arguments.add_argument('--output', type=Path)
+arguments.add_argument('--metric', type=TrecMetric)
 arguments.add_argument('--baseline', type=Path)
 arguments.add_argument('--min-ngrams', type=int, default=0)
 arguments.add_argument('--max-ngrams', type=float, default=np.inf)
-arguments.add_argument('--output', type=Path)
-arguments.add_argument('--common', action='store_true')
+arguments.add_argument('--workers', type=int, default=mp.cpu_count())
 args = arguments.parse_args()
 
-log = logger.getlogger()
+log = logger.getlogger(True)
 
 #
 # Get the plotter options together first so that if they're wrong we
