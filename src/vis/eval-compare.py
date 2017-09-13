@@ -28,7 +28,8 @@ def func(incoming, outgoing, args):
         (result, ngrams) = incoming.get()
         log.info('{0} {1} {2}'.format(metric, ngrams, result.stem))
 
-        query = pd.read_csv(result, usecols=usecols)
+        df = pd.read_csv(result, usecols=usecols)
+        query = Path(df.get_value(0, 'query'))
         topic = QueryDoc.components(query).topic
 
         if norms and norms[topic] == 0:
@@ -36,7 +37,7 @@ def func(incoming, outgoing, args):
             df = None
         else:
             df.drop('query', axis=1, inplace=True)
-            df = df.assign(ngrams=args.ngrams, topic=topic)
+            df = df.assign(ngrams=ngrams, topic=topic)
             if args.baseline:
                 df[metric] /= norms[topic]
 
@@ -46,10 +47,10 @@ def jobs(args):
     for ngram in args.zrt.iterdir():
         assert(ngram.is_dir())
 
-        ngram = int(ngram.stem)
-        if args.min_ngrams <= ngram <= args.max_ngrams:
+        n = int(ngram.stem)
+        if args.min_ngrams <= n <= args.max_ngrams:
             for result in ngram.iterdir():
-                yield (result, ngram)
+                yield (result, n)
 
 def aquire(args):
     incoming = mp.Queue()
@@ -59,7 +60,9 @@ def aquire(args):
 
     with mp.Pool(processes=args.workers, initializer=func, initargs=initargs):
         queue = JobQueue(incoming, outgoing, jobs(args))
-        yield from filter(None, queue)
+        for i in queue:
+            if i is not None:
+                yield i
 
 arguments = ArgumentParser()
 arguments.add_argument('--kind')
@@ -108,7 +111,7 @@ if args.common:
     log.debug(common)
     df = df[df['topic'].isin(common)]
 
-topics = df['topic'].unique()
+topics = np.sort(df['topic'].unique())
 log.info('Topics ({0}): {1}'.format(len(topics), ','.join(map(str, topics))))
 
 #
