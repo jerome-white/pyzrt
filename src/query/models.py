@@ -77,7 +77,7 @@ def each(args):
         for query in filter(QueryDoc.isquery, zutils.walk(args.term_files)):
             q = query.stem
             if q in seen and model in seen[q]:
-                log.warning('* {0} {1}'.format(q, model)
+                log.warning('* {0} {1}'.format(q, model))
             else:
                 yield (query, model)
 
