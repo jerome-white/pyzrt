@@ -62,6 +62,8 @@ def func(feedback, qrels, index, output, queue):
         queue.task_done()
 
 def each(args):
+    log = logger.getlogger()
+
     seen = defaultdict(set)
 
     for i in args.output.iterdir():
@@ -74,7 +76,9 @@ def each(args):
     for model in args.model:
         for query in filter(QueryDoc.isquery, zutils.walk(args.term_files)):
             q = query.stem
-            if q not in seen or model not in seen[q]:
+            if q in seen and model in seen[q]:
+                log.warning('* {0} {1}'.format(q, model))
+            else:
                 yield (query, model)
 
 arguments = ArgumentParser()
@@ -88,7 +92,7 @@ args = arguments.parse_args()
 
 assert(args.model)
 
-log = logger.getlogger()
+log = logger.getlogger(True)
 
 queue = mp.JoinableQueue()
 initargs = [
