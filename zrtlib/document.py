@@ -25,12 +25,15 @@ class TermDocument:
             kwargs['length'] = lambda x: x.end - x.start
         self.df = self.df.assign(**kwargs)
 
-    def __str__(self):
-        return self.df.to_csv(columns=[ 'term' ],
+    def tocsv(self, column):
+        return self.df.to_csv(columns=[column],
                               header=False,
                               index=False,
                               line_terminator=' ',
                               sep=' ')
+
+    def __str__(self):
+        return tocsv('term')
 
     def regions(self):
         groups = self.df.groupby(by=['region'], sort=False)

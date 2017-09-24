@@ -49,8 +49,19 @@ class WSJParser(Parser):
 
             yield Document(docno, text)
 
-class PseudoTermParser(Parser):
+class TermDocumentParser(Parser):
     def _parse(self, doc):
         document = TermDocument(doc, False)
 
-        yield Document(doc.stem, str(document))
+        yield Document(doc.stem, self.tostring(document))
+
+    def tostring(self, document):
+        raise NotImplementedError()
+
+class PseudoTermParser(TermDocumentParser):
+    def tostring(self, document):
+        return str(document)
+
+class NGramParser(TermDocumentParser):
+    def tostring(self, document):
+        return document.tocsv('ngram')

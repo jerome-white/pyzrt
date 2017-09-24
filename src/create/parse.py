@@ -35,6 +35,7 @@ def func(args, document_queue):
 
     Parser = {
         'pt': zparser.PseudoTermParser,
+        'ngram': zparser.NGramParser,
         'wsj': zparser.WSJParser,
         'test': zparser.TestParser,
     }[args.parser.lower()]
