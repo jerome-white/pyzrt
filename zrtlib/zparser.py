@@ -23,6 +23,15 @@ class Parser():
     def _parse(self, doc):
         raise NotImplementedError()
 
+    @staticmethod
+    def builder(parser_type, *args):
+        return {
+            'pt': PseudoTermParser,
+            'wsj': WSJParser,
+            'test': TestParser,
+            'ngram': NGramParser,
+        }[parser_type](*args)
+
 class TestParser(Parser):
     def _parse(self, doc):
         with doc.open() as fp:
