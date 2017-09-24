@@ -11,24 +11,20 @@
 #
 # Usage:
 #
-#  $> sbatch $0 n path/to/toplevel parser
+#  $> sbatch $0 n path/to/toplevel
 #
 # where
 #    - n is the number of n-grams with which to work
 #    - path/to/toplevel is the path to the directory containing the
 #      trees ($output in $ZR_HOME/slurm/suffix.sh)
-#    - parser is the type of parsing desired. Default is 'pt'. See
-#      zrtlib/zparser.Paserer for details
 #
 
 module load pbzip2/intel/1.1.13
 
 ngrams=`printf "%02.f" ${1}`
-if [ ${3} ]; then
-    parser=${3}    
-else
-    parser=pt    
-fi
+
+parser_strainer="--parser pt --strainer trec" # for most cases
+# parser_strainer="--parser pass --strainer under" # for English n-gram only
 
 #
 # Extract the term files
@@ -47,10 +43,8 @@ tar \
 documents=`mktemp --directory --tmpdir=$BEEGFS`
 
 find $SLURM_JOBTMP/$ngrams -name 'WSJ*' -not -name 'WSJQ*' | \
-  python3 $ZR_HOME/src/create/parse.py \
+  python3 $ZR_HOME/src/create/parse.py $parser_strainer \
     --output $documents \
-    --parser $parser \
-    --strainer trec \
     --consolidate
 
 #
