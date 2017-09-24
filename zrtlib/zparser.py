@@ -29,6 +29,7 @@ class Parser():
             'pt': PseudoTermParser,
             'wsj': WSJParser,
             'test': TestParser,
+            'pass': PassThroughParser,
             'ngram': NGramParser,
         }[parser_type](*args)
 
@@ -74,3 +75,7 @@ class PseudoTermParser(TermDocumentParser):
 class NGramParser(TermDocumentParser):
     def tostring(self, document):
         return document.tocsv('ngram')
+
+class PassThroughParser(Parser):
+    def _parse(self, doc):
+        yield Document(doc.stem, doc.read_text())
