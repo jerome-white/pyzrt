@@ -23,6 +23,16 @@ class Parser():
     def _parse(self, doc):
         raise NotImplementedError()
 
+    @staticmethod
+    def builder(parser_type, *args):
+        return {
+            'pt': PseudoTermParser,
+            'wsj': WSJParser,
+            'test': TestParser,
+            'pass': PassThroughParser,
+            'ngram': NGramParser,
+        }[parser_type](*args)
+
 class TestParser(Parser):
     def _parse(self, doc):
         with doc.open() as fp:
@@ -49,8 +59,23 @@ class WSJParser(Parser):
 
             yield Document(docno, text)
 
-class PseudoTermParser(Parser):
+class TermDocumentParser(Parser):
     def _parse(self, doc):
         document = TermDocument(doc, False)
 
-        yield Document(doc.stem, str(document))
+        yield Document(doc.stem, self.tostring(document))
+
+    def tostring(self, document):
+        raise NotImplementedError()
+
+class PseudoTermParser(TermDocumentParser):
+    def tostring(self, document):
+        return str(document)
+
+class NGramParser(TermDocumentParser):
+    def tostring(self, document):
+        return document.tocsv('ngram')
+
+class PassThroughParser(Parser):
+    def _parse(self, doc):
+        yield Document(doc.stem, doc.read_text())

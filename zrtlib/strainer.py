@@ -14,7 +14,8 @@ class Strainer:
         strain_selector = {
             'trec': TRECStrainer,
             'lower': CaseStrainer,
-            'space': DelimitStrainer,
+            'space': SpaceStrainer,
+            'under': UnderscoreStrainer,
             'alpha': AlphaNumericStrainer,
         }
 
@@ -28,23 +29,38 @@ class Strainer:
 class CaseStrainer(Strainer):
     def __init__(self, strainer, casing='lower'):
         super().__init__(strainer)
+
         self.casing = op.methodcaller(casing)
 
     def strain(self, document):
         document.text = self.casing(document.text)
         return self.strainer.strain(document)
 
-class DelimitStrainer(Strainer):
-    def __init__(self, strainer, delimiter=' ', split_on=None):
+#
+# Replace characters with "delimiter". Uses split so that multiple
+# split_on's in-a-row are also replace; its primary purpose is to
+# ensure there are single spaces between words.
+#
+class ReplacementStrainer(Strainer):
+    def __init__(self, strainer, new, old=' '):
         super().__init__(strainer)
-        self.split_on = split_on
-        self.delimit = delimiter
+
+        self.new = new
+        self.old = old
 
     def strain(self, document):
-        pieces = document.text.split(self.split_on)
-        document.text = self.delimit.join(pieces)
+        pieces = document.text.split(self.old)
+        document.text = self.new.join(pieces)
 
         return self.strainer.strain(document)
+
+class SpaceStrainer(ReplacementStrainer):
+    def __init__(self, strainer):
+        super().__init__(strainer, ' ')
+
+class UnderscoreStrainer(ReplacementStrainer):
+    def __init__(self, strainer):
+        super().__init__(strainer, '_')
 
 class AlphaNumericStrainer(Strainer):
     def __init__(self, strainer, extended=False):

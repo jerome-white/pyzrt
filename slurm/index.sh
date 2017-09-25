@@ -13,14 +13,18 @@
 #
 #  $> sbatch $0 n path/to/toplevel
 #
-# where n are the number of n-grams to work with and path/to/toplevel
-# is the path to the directory containing the trees ($output in
-# $ZR_HOME/qsub/suffix.sh)
+# where
+#    - n is the number of n-grams with which to work
+#    - path/to/toplevel is the path to the directory containing the
+#      trees ($output in $ZR_HOME/slurm/suffix.sh)
 #
 
 module load pbzip2/intel/1.1.13
 
 ngrams=`printf "%02.f" ${1}`
+
+parser_strainer="--parser pt --strainer trec" # for most cases
+# parser_strainer="--parser pass --strainer under" # for English n-gram only
 
 #
 # Extract the term files
@@ -39,10 +43,8 @@ tar \
 documents=`mktemp --directory --tmpdir=$BEEGFS`
 
 find $SLURM_JOBTMP/$ngrams -name 'WSJ*' -not -name 'WSJQ*' | \
-  python3 $ZR_HOME/src/create/parse.py \
+  python3 $ZR_HOME/src/create/parse.py $parser_strainer \
     --output $documents \
-    --parser pt \
-    --strainer trec \
     --consolidate
 
 #

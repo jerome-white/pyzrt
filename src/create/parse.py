@@ -5,7 +5,7 @@ from tempfile import NamedTemporaryFile
 
 from zrtlib import logger
 from zrtlib import zutils
-from zrtlib import zparser
+from zrtlib.zparser import Parser
 from zrtlib.strainer import Strainer
 
 class Recorder:
@@ -33,14 +33,8 @@ class Recorder:
 def func(args, document_queue):
     log = logger.getlogger()
 
-    Parser = {
-        'pt': zparser.PseudoTermParser,
-        'wsj': zparser.WSJParser,
-        'test': zparser.TestParser,
-    }[args.parser.lower()]
-
     s = args.strainer.split(':') if args.strainer else []
-    parser = Parser(Strainer.builder(s))
+    parser = Parser.builder(args.parser.lower(), Strainer.builder(s))
 
     recorder = Recorder(args.output, args.consolidate)
 
