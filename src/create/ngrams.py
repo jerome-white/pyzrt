@@ -12,6 +12,7 @@ from pathlib import Path
 from argparse import ArgumentParser
 
 from zrtlib import logger
+from zrtlib import zutils
 
 def func(incoming, output, n, m=None):
     log = logger.getlogger()
@@ -52,17 +53,22 @@ def func(incoming, output, n, m=None):
         incoming.task_done()
 
 arguments = ArgumentParser()
-arguments.add_argument('--input', type=Path)
+arguments.add_argument('--documents', type=Path)
 arguments.add_argument('--output', type=Path)
 arguments.add_argument('--min-gram', type=int)
 arguments.add_argument('--max-gram', type=int, default=None)
 arguments.add_argument('--workers', type=int, default=mp.cpu_count())
 args = arguments.parse_args()
 
-outgoing = mp.JoinableQueue()
+log = logger.getlogger(True)
+log.info('>| begin')
+
+document_queue = mp.JoinableQueue()
 initargs = (args.output, args.min_gram, args.max_gram)
 
 with mp.Pool(processes=args.workers, initializer=func, initargs=initargs):
-    for i in args.input.iterdir():
-        outgoing.put(i)
-    outgoing.join()
+    for i in zutils.walk(args.documents):
+        document_queue.put(i)
+    document_queue.join()
+
+log.info('<| complete')
