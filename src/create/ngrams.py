@@ -14,7 +14,7 @@ from argparse import ArgumentParser
 from zrtlib import logger
 from zrtlib import zutils
 
-def func(incoming, output, n, m=None):
+def func(incoming, output_directory, n, m=None):
     log = logger.getlogger()
     collection = []
 
@@ -45,7 +45,8 @@ def func(incoming, output, n, m=None):
                     collection.append(ngram)
 
         if collection:
-            with output.joinpath(document.stem).open('w') as fp:
+            o = output_directory.joinpath(document.stem)
+            with o.open('w') as fp:
                 print(*collection, file=fp)
         else:
             log.warning(document.stem)
@@ -56,7 +57,7 @@ arguments = ArgumentParser()
 arguments.add_argument('--documents', type=Path)
 arguments.add_argument('--output', type=Path)
 arguments.add_argument('--min-gram', type=int)
-arguments.add_argument('--max-gram', type=int, default=None)
+arguments.add_argument('--max-gram', type=int)
 arguments.add_argument('--workers', type=int, default=mp.cpu_count())
 args = arguments.parse_args()
 
@@ -64,7 +65,7 @@ log = logger.getlogger(True)
 log.info('>| begin')
 
 document_queue = mp.JoinableQueue()
-initargs = (args.output, args.min_gram, args.max_gram)
+initargs = (document_queue, args.output, args.min_gram, args.max_gram)
 
 with mp.Pool(processes=args.workers, initializer=func, initargs=initargs):
     for i in zutils.walk(args.documents):
