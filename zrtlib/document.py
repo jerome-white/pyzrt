@@ -3,7 +3,28 @@ from collections import namedtuple
 
 import pandas as pd
 
-Region = namedtuple('Region', 'n, first, last, df')
+class Region:
+    def __init__(self, n, first, last, df):
+        self.n = n
+        self.first = first
+        self.last = last
+        self.df = df
+
+    def sequential(self):
+        previous = None
+
+        for row in self.df.itertuples():
+            current = (row.start, row.end)
+            if previous is not None:
+                print(current, previous)
+                if any([ op.sub(*x) != 1 for x in zip(current, previous) ]):
+                    return False
+            previous = current
+
+        return True
+
+    def homogenous(self):
+        return self.df['length'].unique().size == 1
 
 class TermDocument:
     def __init__(self, document, include_lengths=True):
