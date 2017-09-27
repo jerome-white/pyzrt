@@ -7,52 +7,53 @@
 # specifically, that is, not in the TREC format.
 #
 
+import string
+import itertools as it
 import multiprocessing as mp
+import collections as cl
 from pathlib import Path
 from argparse import ArgumentParser
-from collections import deque
 
 from zrtlib import logger
 from zrtlib import zutils
 
-def func(incoming, output_directory, n, m=None):
-    log = logger.getlogger()
-    collection = []
+def func(args):
+    (document, output_directory, n, m) = args
 
     if m is None:
         m = n
     assert(0 < n <= m)
-    window = deque(maxlen=m)
 
-    while True:
-        document = incoming.get()
-        log.info(document.stem)
+    window = cl.deque(maxlen=m)
+    collection = []
 
-        for i in (window, collection):
-            i.clear()
+    log = logger.getlogger()
+    log.info(document.stem)
 
-        with document.open() as fp:
-            while True:
-                c = fp.read(1)
-                if c:
-                    window.append(c)
-                else:
-                    window.popleft()
-                    if len(window) < n:
-                        break
+    with document.open() as fp:
+        while True:
+            c = fp.read(1)
+            if not c:
+                break
+            if c == ' ':
+                c = '_'
+            elif c in string.whitespace:
+                continue
 
-                if len(window) >= n:
-                    ngram = ''.join(window).replace(' ', '_')
-                    collection.append(ngram)
+            window.append(c)
+            if len(window) == window.maxlen:
+                for i in range(n, m + 1):
+                    for j in range(m - i + 1):
+                        segment = it.islice(window, j, j + i)
+                        ngram = ''.join(segment)
+                        collection.append(ngram)
 
-        if collection:
-            o = output_directory.joinpath(document.stem)
-            with o.open('w') as fp:
-                print(*collection, file=fp)
-        else:
-            log.warning(document.stem)
-
-        incoming.task_done()
+    if collection:
+        o = output_directory.joinpath(document.stem)
+        with o.open('w') as fp:
+            print(*collection, file=fp)
+    else:
+        log.warning(document.stem)
 
 arguments = ArgumentParser()
 arguments.add_argument('--documents', type=Path)
@@ -63,14 +64,10 @@ arguments.add_argument('--workers', type=int, default=mp.cpu_count())
 args = arguments.parse_args()
 
 log = logger.getlogger(True)
+
 log.info('>| begin')
-
-document_queue = mp.JoinableQueue()
-initargs = (document_queue, args.output, args.min_gram, args.max_gram)
-
-with mp.Pool(processes=args.workers, initializer=func, initargs=initargs):
-    for i in zutils.walk(args.documents):
-        document_queue.put(i)
-    document_queue.join()
-
+with mp.Pool(args.workers) as pool:
+    f = lambda x: (x, args.output, args.min_gram, args.max_gram)
+    for _ in pool.imap_unordered(func, map(f, zutils.walk(args.documents))):
+        pass
 log.info('<| complete')
