@@ -38,7 +38,7 @@ mkdir --parents $output
 
 python3 $ZR_HOME/src/query/baseline.py \
 	--index $root/indri/$ngrams \
-	--queries $root/queries \
+	--queries $root/queries/$ngrams \
 	--qrels $judgements \
 	--output $output
 
