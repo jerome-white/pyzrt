@@ -18,8 +18,7 @@ def func(incoming, outgoing, args):
         results = { 'topic': QueryDoc.components(query).topic }
         judgements = args.qrels.joinpath(results['topic'])
         with QueryExecutor(args.index, judgements, True) as engine:
-            with query.open() as fp:
-                engine.query(fp.read())
+            engine.query(query.read_text())
             (_, evaluation) = next(engine.evaluate(*metrics))
         results.update(evaluation)
 
