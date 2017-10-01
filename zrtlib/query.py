@@ -20,6 +20,7 @@ def QueryBuilder(terms, model='ua'):
         'un': functools.partial(ShortestPath, partials=False),
         'uaw': TotalWeight,
         'saw': LongestWeight,
+        'baseline': Standard,
     }[model](terms)
 
 class Query:
@@ -44,6 +45,10 @@ class Query:
 
     def regionalize(self, region):
         raise NotImplementedError()
+
+class Standard(Query):
+    def compose(self):
+        return self.doc.regions()
 
 class BagOfWords(Query):
     def regionalize(self, region):

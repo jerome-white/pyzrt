@@ -117,3 +117,10 @@ class HiddenDocument(TermDocument):
         col = 'visible'
         for i in self.df[self.columns[col]].unique():
             self.flip(i, col)
+
+class StandardDocument(TermDocument):
+    def __init__(self, document):
+        self.document = document
+
+    def regions(self):
+        return self.document.read_text()
