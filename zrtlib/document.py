@@ -54,7 +54,7 @@ class TermDocument:
                               sep=' ')
 
     def __str__(self):
-        return tocsv('term')
+        return self.tocsv('term')
 
     def regions(self):
         groups = self.df.groupby(by=['region'], sort=False)
