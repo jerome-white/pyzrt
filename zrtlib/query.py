@@ -61,7 +61,7 @@ class Synonym(BagOfWords):
 
     def regionalize(self, region):
         df = self.descending(region.df, self.n)
-        r = Region(*region[:3], df)
+        r = Region(region.n, region.first, region.last, df)
 
         yield from itertools.chain(['#syn('], super().regionalize(r), [')'])
 
