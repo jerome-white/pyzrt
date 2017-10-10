@@ -20,6 +20,7 @@ def QueryBuilder(terms, model='ua'):
         'un': functools.partial(ShortestPath, partials=False),
         'uaw': TotalWeight,
         'saw': LongestWeight,
+        'baseline': Standard,
     }[model](terms)
 
 class Query:
@@ -45,6 +46,10 @@ class Query:
     def regionalize(self, region):
         raise NotImplementedError()
 
+class Standard(Query):
+    def compose(self):
+        return self.doc.regions()
+
 class BagOfWords(Query):
     def regionalize(self, region):
         yield from map(op.attrgetter('term'), region.df.itertuples())
@@ -56,7 +61,7 @@ class Synonym(BagOfWords):
 
     def regionalize(self, region):
         df = self.descending(region.df, self.n)
-        r = Region(*region[:3], df)
+        r = Region(region.n, region.first, region.last, df)
 
         yield from itertools.chain(['#syn('], super().regionalize(r), [')'])
 

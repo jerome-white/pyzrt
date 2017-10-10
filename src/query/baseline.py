@@ -26,7 +26,7 @@ def func(incoming, outgoing, args):
 
 arguments = ArgumentParser()
 arguments.add_argument('--index', type=Path)
-arguments.add_argument('--query', type=Path)
+arguments.add_argument('--queries', type=Path)
 arguments.add_argument('--qrels', type=Path)
 arguments.add_argument('--output', type=Path)
 arguments.add_argument('--feedback-metric', action='append', default=[])
@@ -40,7 +40,7 @@ outgoing = mp.Queue()
 with mp.Pool(initializer=func, initargs=(outgoing, incoming, args)):
     results = []
     fieldnames = set()
-    queue = JobQueue(incoming, outgoing, args.query.iterdir())
+    queue = JobQueue(incoming, outgoing, args.queries.iterdir())
 
     for i in queue:
         fieldnames.update(i.keys())

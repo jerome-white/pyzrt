@@ -54,7 +54,7 @@ class TermDocument:
                               sep=' ')
 
     def __str__(self):
-        return tocsv('term')
+        return self.tocsv('term')
 
     def regions(self):
         groups = self.df.groupby(by=['region'], sort=False)
@@ -117,3 +117,10 @@ class HiddenDocument(TermDocument):
         col = 'visible'
         for i in self.df[self.columns[col]].unique():
             self.flip(i, col)
+
+class StandardDocument(TermDocument):
+    def __init__(self, document):
+        self.document = document
+
+    def regions(self):
+        return self.document.read_text()

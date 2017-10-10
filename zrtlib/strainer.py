@@ -63,7 +63,7 @@ class UnderscoreStrainer(ReplacementStrainer):
         super().__init__(strainer, '_')
 
 class AlphaNumericStrainer(Strainer):
-    def __init__(self, strainer, extended=False):
+    def __init__(self, strainer, extended=False, stops=True):
         super().__init__(strainer)
 
         replacements = {
@@ -71,6 +71,8 @@ class AlphaNumericStrainer(Strainer):
             '%': ' percent ',
             '-': ' ',
         }
+        if stops:
+            replacements.update({ x: '.' for x in '.?!' })
 
         self.table = {}
 
