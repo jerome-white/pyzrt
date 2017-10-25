@@ -154,4 +154,4 @@ class ShortestPath(Query):
             if best is None or deviation < best.deviation:
                 best = GraphPath(i, deviation)
 
-        yield from map(lambda x: df.ix[x]['term'], best.path)
+        yield from map(lambda x: df.iloc[x]['term'], best.path)
