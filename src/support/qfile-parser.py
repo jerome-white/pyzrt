@@ -17,7 +17,7 @@ class Entry:
             '2017_0829': 'n-i',
             '2017_0905': 'n-0',
             '2017_0906': 'n-1',
-            '2017_1003': 'n-0',
+            '2017_0924': 'TREC',
         }[self.query.parts[0]]
 
         if terms is not None:
