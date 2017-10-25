@@ -73,7 +73,7 @@ def each(args):
     seen = defaultdict(set)
 
     for i in args.output.iterdir():
-        if not i.suffix('.csv'):
+        if i.suffix != '.csv':
             continue
 
         with i.open() as fp:
@@ -109,7 +109,7 @@ initargs = [
     args.index,
     args.output,
     queue,
-    ]
+]
 
 log.info('++ begin {0}'.format(args.term_files))
 with mp.Pool(initializer=func, initargs=initargs) as pool:
