@@ -11,15 +11,15 @@ from zrtlib.indri import IndriQuery
 from zrtlib.document import Region
 
 class GraphPath:
-    def __init__(self, path, deviation=None):
+    def __init__(self, path, deviation=np.inf):
         self.path = path
         self.deviation = deviation
 
-    def __bool__(self):
-        return self.deviation is not None
-
     def __iter__(self):
         yield from self.path
+
+    def __lt__(self, other):
+        return self.deviation < other.deviation
 
 def QueryBuilder(terms, model='ua'):
     return {
@@ -157,9 +157,10 @@ class ShortestPath(Query):
                 for edge in zip(i, i[1:]):
                     d = graph.get_edge_data(*edge)
                     weights.append(d['weight'])
-                deviation = np.std(weights)
+                current = GraphPath(i, np.std(weights))
 
-                if not best or deviation < best.deviation:
-                    best = GraphPath(i, deviation)
+                if current < best:
+                    best = current
 
-        yield from map(lambda x: df.iloc[x]['term'], best)
+        for i in best:
+            yield df.loc[i]['term']
