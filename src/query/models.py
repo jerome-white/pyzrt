@@ -71,9 +71,11 @@ def each(args):
     seen = defaultdict(set)
 
     for i in args.output.iterdir():
+        if not i.suffix('.csv'):
+            continue
+
         with i.open() as fp:
-            reader = csv.DictReader(fp)
-            for line in reader:
+            for line in csv.DictReader(fp):
                 (m, q) = [ line[x] for x in ('model', 'query') ]
                 seen[q].add(m)
 
