@@ -1,13 +1,15 @@
 import csv
-import pandas as pd
 from pathlib import Path
+from argparse import ArgumentParser
 from multiprocessing import Pool
+
+import pandas as pd
 
 from zrtlib.indri import QueryDoc
 
 class Entry:
-    def __init__(self, path, line):
-        self.path = path.relative_to('data/models').with_name(path.stem)
+    def __init__(self, query, line, toc, terms=None):
+        self.query = query
         self.topic = QueryDoc.components(Path(line['query'])).topic
         self.model = line['model']
 
@@ -16,33 +18,40 @@ class Entry:
             '2017_0905': 'n-0',
             '2017_0906': 'n-1',
             '2017_0924': 'TREC',
-        }[self.path.parts[0]]
+        }[self.query.parts[0]]
 
-        terms = path.with_suffix('.terms')
-        if terms.exists():
+        if terms is not None:
             df = pd.read_csv(terms)
             self.terms = len(df)
-        else:
-            self.terms = None
 
     def __str__(self):
         components = [ self.ngrams,
-                       *self.path.parts,
+                       str(self.query),
+                       self.terms,
                        self.topic,
                        self.model
         ]
-        if self.terms:
-            components.append(self.terms)
-        
-        return ','.join(map(str, components))
+
+        return ' '.join(map(str, components))
 
 def func(args):
-    with args.open() as fp:
-        reader = csv.DictReader(fp)
-        for line in reader:
-            return Entry(args, line)
+    (query, toc, root) = args
+
+    with query.open() as fp:
+        for line in csv.DictReader(fp):
+            path = query.relative_to(root).with_name(query.stem)
+            terms = query.with_suffix('.terms')
+            if not terms.exists():
+                terms = None
+
+            return Entry(path, line, toc, terms)
+
+arguments = ArgumentParser()
+arguments.add_argument('--queries', type=Path)
+arguments.add_argument('--toc', type=Path)
+args = arguments.parse_args()
 
 with Pool() as pool:
-    path = Path('data/models')
-    for i in pool.imap_unordered(func, path.glob('**/*.csv')):
+    f = lambda x: (x, args.toc, args.queries)
+    for i in pool.imap_unordered(func, map(f, args.queries.glob('**/*.csv'))):
         print(i)
