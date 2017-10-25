@@ -54,6 +54,8 @@ def func(feedback, qrels, index, output, queue):
                     writer = csv.DictWriter(fp, fieldnames=record.keys())
                     writer.writeheader()
                     writer.writerow(record)
+                    path = Path(fp.name)
+                engine.saveq(path.with_suffix('.query'))
             except ValueError:
                 msg = '{0} {1}'.format(terms.stem, model)
 
