@@ -50,7 +50,8 @@ def jobs(args):
         n = int(ngram.stem)
         if args.min_ngrams <= n <= args.max_ngrams:
             for result in ngram.iterdir():
-                yield (result, n)
+                if result.suffix == '.csv':
+                    yield (result, n)
 
 def aquire(args):
     incoming = mp.Queue()
@@ -65,7 +66,8 @@ def aquire(args):
                 yield i
 
 arguments = ArgumentParser()
-arguments.add_argument('--kind')
+arguments.add_argument('--kind', default='point')
+arguments.add_argument('--y-max', type=float, default=None)
 arguments.add_argument('--common', action='store_true')
 arguments.add_argument('--zrt', type=Path)
 arguments.add_argument('--output', type=Path)
@@ -98,7 +100,6 @@ if args.baseline:
 # Aquire the data
 #
 df = pd.concat(aquire(args))
-df.to_csv('a.csv')
 
 if args.common:
     common = set()
@@ -121,7 +122,8 @@ hues = df['model'].unique()
 
 # plt.figure(figsize=(24, 6))
 sns.set_context('paper')
-sns.set(font_scale=1.7)
+#sns.set(font_scale=1.7)
+sns.set_style("whitegrid")
 ax = plotter(x='ngrams',
              y=repr(args.metric),
              hue='model',
@@ -129,7 +131,7 @@ ax = plotter(x='ngrams',
              data=df,
              **kwargs)
 ax.legend(ncol=round(len(hues) / 2), loc='upper center')
-ax.set(ylim=(0, None),
+ax.set(ylim=(0, args.y_max),
        ylabel=metric_label)
 if args.baseline:
     ax.yaxis.set_major_formatter(FuncFormatter('{0:.0%}'.format))
