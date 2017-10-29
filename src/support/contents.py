@@ -8,24 +8,16 @@ import pandas as pd
 from zrtlib.indri import QueryDoc
 
 class Entry:
-    def __init__(self, query, line, toc, terms=None):
-        self.query = query
-        self.topic = QueryDoc.components(Path(line['query'])).topic
-        self.model = line['model']
+    def __init__(self, query, entry, terms, description=None):
+        self.query = query.stem
+        self.topic = QueryDoc.components(Path(entry['query'])).topic
+        self.model = entry['model']
+        self.description = description
 
-        self.ngrams = {
-            '2017_0829': 'n-i',
-            '2017_0905': 'n-0',
-            '2017_0906': 'n-1',
-            '2017_0924': 'TREC',
-        }[self.query.parts[0]]
-
-        if terms is not None:
-            df = pd.read_csv(terms)
-            self.terms = len(df)
+        self.terms = None if terms is None else len(pd.read_csv(terms))
 
     def __str__(self):
-        components = [ self.ngrams,
+        components = [ self.description,
                        str(self.query),
                        self.terms,
                        self.topic,
@@ -37,14 +29,19 @@ class Entry:
 def func(args):
     (query, toc, root) = args
 
-    with query.open() as fp:
-        for line in csv.DictReader(fp):
-            path = query.relative_to(root).with_name(query.stem)
-            terms = query.with_suffix('.terms')
-            if not terms.exists():
-                terms = None
+    # with toc.open() as fp:
+    #     for (name, description) in csv.reader(fp):
+    #         if name == family:
+    #             self.ngrams = description
+    #             break
 
-            return Entry(path, line, toc, terms)
+    with query.open() as fp:
+        terms = query.with_suffix('.terms')
+        if not terms.exists():
+            terms = None
+
+        for line in csv.DictReader(fp):
+            return Entry(query, line, terms)
 
 arguments = ArgumentParser()
 arguments.add_argument('--queries', type=Path)
