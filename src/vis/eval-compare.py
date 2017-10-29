@@ -78,6 +78,7 @@ arguments.add_argument('--min-ngrams', type=int, default=0)
 arguments.add_argument('--max-ngrams', type=float, default=np.inf)
 arguments.add_argument('--workers', type=int, default=mp.cpu_count())
 arguments.add_argument('--model', action='append')
+arguments.add_argument('--save-data', type=Path)
 args = arguments.parse_args()
 
 log = logger.getlogger(True)
@@ -145,3 +146,6 @@ if args.baseline:
     ax.yaxis.set_major_formatter(FuncFormatter('{0:.0%}'.format))
 
 ax.figure.savefig(str(args.output), bbox_inches='tight')
+
+if args.save_data:
+    df.to_csv(args.save_data)
