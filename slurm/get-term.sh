@@ -26,6 +26,8 @@ output=$BEEGFS/`basename --suffix='.sh' ${0}`/${2}
 for i in ${1}/*.bz; do
     ngrams=`basename --suffix='.tar.bz' $i`
     echo $ngrams
+
+    mkdir --parents $output
     tar \
 	--extract \
 	--use-compress-prog=pbzip2 \
