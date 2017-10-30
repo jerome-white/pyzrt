@@ -27,11 +27,12 @@ for i in ${1}/*.bz; do
     ngrams=`basename --suffix='.tar.bz' $i`
     echo $ngrams
 
-    mkdir --parents $output
+    directory=$output/$ngrams
+    mkdir --parents $directory
     tar \
 	--extract \
 	--use-compress-prog=pbzip2 \
-	--directory=$output/$ngrams \
+	--directory=$directory \
 	--file=$i \
 	$ngrams/${2}
 done
