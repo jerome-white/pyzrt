@@ -38,6 +38,7 @@ def read_baseline(baseline, metric, single_topics=True):
                 seen.add(topic)
             yield (topic, float(line[repr(metric)]))
 
+@singledispatch
 def read_trec(fp, summary=False):
     previous = None
     summarised = False
@@ -69,6 +70,15 @@ def read_trec(fp, summary=False):
 
     if results and (summary or run >= 0):
         yield TrecMeasurement(run, results)
+
+@read_trec.register(Path)
+def _(fp, summary=False):
+    with fp.open() as ptr:
+        yield from read_trec(ptr, summary)
+
+@read_trec.register(str)
+def _(fp, summary=False):
+    yield from read_trec(Path(fp), summary)
 
 def cut(word, pos=1):
     return (word[0:pos], word[pos:])

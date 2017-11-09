@@ -10,7 +10,16 @@ import networkx as nx
 from zrtlib.indri import IndriQuery
 from zrtlib.document import Region
 
-GraphPath = namedtuple('GraphPath', 'path, deviation')
+class GraphPath:
+    def __init__(self, path, deviation=np.inf):
+        self.path = path
+        self.deviation = deviation
+
+    def __iter__(self):
+        yield from self.path
+
+    def __lt__(self, other):
+        return self.deviation < other.deviation
 
 def QueryBuilder(terms, model='ua'):
     return {
@@ -125,11 +134,8 @@ class ShortestPath(Query):
             condition = df['ngram'].str.len() == df['length']
             df = df[condition]
 
-        terms = len(df)
-        if terms == 0:
+        if df.empty:
             return ''
-        elif terms == 1:
-            return df.iloc[0]['term']
 
         graph = nx.DiGraph()
 
@@ -139,19 +145,22 @@ class ShortestPath(Query):
                 weight = source.end - target.start
                 graph.add_edge(source.Index, target.Index, weight=weight)
 
-        # assert(graph.size() > 0)
-        # assert(nx.is_directed_acyclic_graph(graph))
-
-        best = None
         (source, target) = df.index[::len(df.index) - 1]
-        for i in nx.all_shortest_paths(graph, source, target, weight='weight'):
-            weights = []
-            for edge in zip(i, i[1:]):
-                d = graph.get_edge_data(*edge)
-                weights.append(d['weight'])
-            deviation = np.std(weights)
+        best = GraphPath([ source ])
 
-            if best is None or deviation < best.deviation:
-                best = GraphPath(i, deviation)
+        if len(graph):
+            for i in nx.all_shortest_paths(graph,
+                                           source,
+                                           target,
+                                           weight='weight'):
+                weights = []
+                for edge in zip(i, i[1:]):
+                    d = graph.get_edge_data(*edge)
+                    weights.append(d['weight'])
+                current = GraphPath(i, np.std(weights))
 
-        yield from map(lambda x: df.ix[x]['term'], best.path)
+                if current < best:
+                    best = current
+
+        for i in best:
+            yield df.loc[i]['term']

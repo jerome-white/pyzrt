@@ -50,6 +50,6 @@ with Pool() as pool:
         log.error('Number of topics differ')
         sys.exit()
 
-    iterable = map(lambda x: (x, args.english, args.pseudoterms), en)
+    iterable = map(lambda x: (x.stem, args.english, args.pseudoterms), en)
     for i in pool.imap_unordered(func, iterable):
         log.info(i)

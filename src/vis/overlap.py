@@ -28,12 +28,12 @@ arguments = ArgumentParser()
 arguments.add_argument('--term-file', type=Path)
 arguments.add_argument('--start', type=int, default=0)
 arguments.add_argument('--end', type=float, default=np.inf)
+arguments.add_argument('--save-data', type=Path)
 args = arguments.parse_args()
 
 log = logger.getlogger()
 
 df = pd.DataFrame(aquire(args))
-
 
 log.info('Plotting')
 
@@ -56,3 +56,6 @@ plt.xlabel('Location')
 fname = '{0}-overlap.png'.format(args.term_file.stem)
 log.info(fname)
 plt.savefig(fname, bbox_inches='tight')
+
+if args.save_data:
+    df.to_csv(args.save_data)

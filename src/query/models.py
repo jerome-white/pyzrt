@@ -54,6 +54,8 @@ def func(feedback, qrels, index, output, queue):
                     writer = csv.DictWriter(fp, fieldnames=record.keys())
                     writer.writeheader()
                     writer.writerow(record)
+                    path = Path(fp.name)
+                engine.saveq(path.with_suffix('.query'))
             except ValueError:
                 msg = '{0} {1}'.format(terms.stem, model)
 
@@ -71,9 +73,11 @@ def each(args):
     seen = defaultdict(set)
 
     for i in args.output.iterdir():
+        if i.suffix != '.csv':
+            continue
+
         with i.open() as fp:
-            reader = csv.DictReader(fp)
-            for line in reader:
+            for line in csv.DictReader(fp):
                 (m, q) = [ line[x] for x in ('model', 'query') ]
                 seen[q].add(m)
 
@@ -105,7 +109,7 @@ initargs = [
     args.index,
     args.output,
     queue,
-    ]
+]
 
 log.info('++ begin {0}'.format(args.term_files))
 with mp.Pool(initializer=func, initargs=initargs) as pool:

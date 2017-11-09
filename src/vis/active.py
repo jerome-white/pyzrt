@@ -39,6 +39,7 @@ arguments = ArgumentParser()
 arguments.add_argument('--term-file', type=Path, action='append')
 arguments.add_argument('--start', type=int, default=0)
 arguments.add_argument('--end', type=float, default=np.inf)
+arguments.add_argument('--save-data', type=Path)
 args = arguments.parse_args()
 
 log = logger.getlogger()
@@ -79,3 +80,6 @@ grid.set(xticks=np.linspace(args.start, args.end, 4),
 
 grid.fig.tight_layout(w_pad=1)
 grid.savefig(fname + '-active.png', bbox_inches='tight')
+
+if args.save_data:
+    df.to_csv(args.save_data)
