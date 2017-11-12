@@ -9,7 +9,6 @@
 # ${1} run (directory inside wsj)
 # ${2} ngrams
 
-root=$SCRATCH/zrt/wsj/${1}
 ngrams=`printf "%02.f" ${2}`
 
 #
@@ -20,9 +19,9 @@ tar \
     --extract \
     --bzip \
     --directory=$tmp \
-    --file=$root/pseudoterms/${ngrams}.tar.bz
+    --file=${1}/pseudoterms/${ngrams}.tar.bz
 
-output=$root/embeddings/$ngrams
+output=${1}/embeddings/$ngrams
 mkdir --parents $output
 
 python3 $ZR_HOME/src/misc/term2vec.py \
