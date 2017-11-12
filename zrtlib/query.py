@@ -1,6 +1,6 @@
-import itertools
 import functools
 import operator as op
+import itertools as it
 from collections import namedtuple
 
 import numpy as np
@@ -8,7 +8,125 @@ import networkx as nx
 
 # from zrtlib import logger
 from zrtlib.indri import IndriQuery
-from zrtlib.document import Region
+
+def QueryBuilder(terms, model='ua'):
+    return {
+        'ua': BagOfWords,
+        'sa': Synonym,
+        'u1': functools.partial(Synonym, n_longest=1),
+        'un': ShortestPath,
+        'uaw': TotalWeight,
+        'saw': LongestWeight,
+        'baseline': Standard,
+    }[model](terms)
+
+class Regionalize:
+    def __init__(self, document):
+        self.document = document
+
+    def __iter__(self):
+        raise NotImplementedError()
+
+class PerRegion(Regionalize):
+    def __iter__(self):
+        yield from self.document.regions()
+
+class CollectionAtOnce(Regionalize):
+    def __iter__(self):
+        yield self.document
+
+class Query:
+    def __init__(self, doc):
+        self.doc = doc
+        self.regionalize = None
+
+    def __str__(self):
+        query = IndriQuery()
+        query.add(self.compose())
+
+        return str(query)
+
+    def compose(self):
+        terms = map(self.make, self.regionalize)
+        return ' '.join(map(str, it.chain.from_iterable(terms)))
+
+    def make(self, region):
+        raise NotImplementedError()
+
+class Standard(Query):
+    def compose(self):
+        return self.doc.read_text()
+
+class BagOfWords(Query):
+    def __init__(self, doc):
+        super().__init__(doc)
+        self.regionalize = CollectionAtOnce(self.doc)
+
+    def make(self, collection):
+        yield from collection
+
+class Synonym(Query):
+    def __init__(self, doc, n_longest=None):
+        super().__init__(doc)
+        self.n = n_longest
+        self.regionalize = PerRegion(self.doc)
+
+    def make(self, collection):
+        collection.bylength()
+        terms = it.islice(collection, 0, self.n)
+
+        yield from it.chain(['#syn('], terms, [')'])
+
+class WeightedTerm:
+    def __init__(self, term, weight):
+        self.term = term
+        self.weight = weight
+
+    def __str__(self):
+        return '{0} {1}'.format(self.weight, self.term)
+
+class Weighted(Query):
+    def __init__(self, doc, alpha):
+        super().__init__(doc)
+        self.alpha = alpha
+        self.operator = None
+
+    def discount(self, collection):
+        previous = []
+
+        for term in collection:
+            a = self.alpha * len(term)
+            w = a / (1 + a)
+            p = np.prod(previous) if previous else 1
+
+            yield (term, w * p)
+
+            previous.append(1 - w)
+
+    def combine(self, region, threshold=1e-4):
+        region.bylength()
+
+        for (term, weight) in self.discount(region):
+            if weight < threshold:
+                break
+            yield WeightedTerm(weight, term)
+
+    def make(self, collection):
+        operator = '#{0}('.format(self.operator)
+
+        yield from it.chain([operator], self.combine(collection), [')'])
+
+class TotalWeight(Weighted):
+    def __init__(self, doc, alpha=0.5):
+        super().__init__(doc, alpha)
+        self.operator = 'weight'
+        self.regionalize = CollectionAtOnce(self.doc)
+
+class LongestWeight(Weighted):
+    def __init__(self, doc, alpha=0.5):
+        super().__init__(doc, alpha)
+        self.operator = 'wsyn'
+        self.regionalize = PerRegion(self.doc)
 
 class GraphPath:
     def __init__(self, path, deviation=np.inf):
@@ -21,131 +139,23 @@ class GraphPath:
     def __lt__(self, other):
         return self.deviation < other.deviation
 
-def QueryBuilder(terms, model='ua'):
-    return {
-        'ua': BagOfWords,
-        'sa': Synonym,
-        'u1': functools.partial(Synonym, n_longest=1),
-        'un': functools.partial(ShortestPath, partials=False),
-        'uaw': TotalWeight,
-        'saw': LongestWeight,
-        'baseline': Standard,
-    }[model](terms)
-
-class Query:
-    def __init__(self, doc):
-        self.doc = doc
-
-    def __str__(self):
-        query = IndriQuery()
-        query.add(self.compose())
-
-        return str(query)
-
-    def descending(self, docs, limit=None):
-        by = [ 'length', 'start', 'end' ]
-        df = docs.sort_values(by=by, ascending=False)
-
-        return df if limit is None else df.head(limit)
-
-    def compose(self):
-        terms = map(self.regionalize, self.doc.regions())
-        return ' '.join(itertools.chain.from_iterable(terms))
-
-    def regionalize(self, region):
-        raise NotImplementedError()
-
-class Standard(Query):
-    def compose(self):
-        return self.doc.regions()
-
-class BagOfWords(Query):
-    def regionalize(self, region):
-        yield from map(op.attrgetter('term'), region.df.itertuples())
-
-class Synonym(BagOfWords):
-    def __init__(self, doc, n_longest=None):
-        super().__init__(doc)
-        self.n = n_longest
-
-    def regionalize(self, region):
-        df = self.descending(region.df, self.n)
-        r = Region(region.n, region.first, region.last, df)
-
-        yield from itertools.chain(['#syn('], super().regionalize(r), [')'])
-
-class Weighted(Query):
-    def __init__(self, doc, alpha=0.5):
-        super().__init__(doc)
-        self.alpha = alpha
-
-    def discount(self, df):
-        previous = []
-
-        for row in df.itertuples():
-            a = self.alpha * row.length
-            w = a / (1 + a)
-            p = np.prod(previous) if previous else 1
-
-            yield (row.Index, w * p)
-
-            previous.append(1 - w)
-
-    def get_weights(self, docs):
-        return dict(self.discount(self.descending(docs)))
-
-    def combine(self, df, weights, precision=10):
-        for row in df.itertuples():
-            if row.Index in weights:
-                kg = '{1:.{0}f}'.format(precision, weights[row.Index])
-                if float(kg) != 0:
-                    yield kg + ' ' + row.term
-
-class TotalWeight(Weighted):
-    def __init__(self, doc, alpha=0.5):
-        super().__init__(doc, alpha)
-
-        self.weights = self.get_weights(self.doc.df)
-
-    def regionalize(self, region):
-        if region.first:
-            yield '#weight('
-
-        yield from self.combine(region.df, self.weights)
-
-        if region.last:
-            yield ')'
-
-class LongestWeight(Weighted):
-    def regionalize(self, region):
-        weights = self.get_weights(region.df)
-        body = self.combine(region.df, weights)
-
-        yield from itertools.chain(['#wsyn('], body, [')'])
-
 class ShortestPath(Query):
-    def __init__(self, doc, partials=True):
+    def __init__(self, doc):
         super().__init__(doc)
-        self.partials = partials
+        self.regionalize = PerRegion(self.doc)
 
-    def regionalize(self, region):
-        df = region.df
-        if not self.partials:
-            condition = df['ngram'].str.len() == df['length']
-            df = df[condition]
-
-        if df.empty:
-            return ''
-
+    def make(self, collection):
         graph = nx.DiGraph()
 
-        for source in df.itertuples():
-            dest = df[(df.start > source.start) & (df.start <= source.end)]
-            for target in dest.itertuples():
-                weight = source.end - target.start
-                graph.add_edge(source.Index, target.Index, weight=weight)
+        for source in collection:
+            u = collection.index(source)
+            for target in collection.immediates(u):
+                v = collection.index(target)
+                weight = source.end() - target.end()
+                graph.add_edge(u, v, weight=weight)
 
-        (source, target) = df.index[::len(df.index) - 1]
+
+        (source, target) = (0, len(collection) - 1)
         best = GraphPath([ source ])
 
         if len(graph):
@@ -162,5 +172,4 @@ class ShortestPath(Query):
                 if current < best:
                     best = current
 
-        for i in best:
-            yield df.loc[i]['term']
+        yield from map(lambda x: collection[x], best)
