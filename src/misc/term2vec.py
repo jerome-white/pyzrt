@@ -1,7 +1,7 @@
 from pathlib import Path
 from argparse import ArgumentParser
 
-from gensim import Word2Vec
+from gensim.models import Word2Vec
 
 from zrtlib import logger
 from zrtlib.terms import TermCollection
