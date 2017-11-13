@@ -25,7 +25,7 @@ output=${1}/embeddings/$ngrams
 mkdir --parents $output
 
 python3 $ZR_HOME/src/misc/term2vec.py \
-        --corpus $tmp \
+        --corpus $tmp/$ngrams \
         --output $output \
         --workers 20
 
