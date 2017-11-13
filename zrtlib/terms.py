@@ -28,12 +28,12 @@ class Term(TermAttributes):
         return self.offset + len(self)
 
 class TermCollection(list):
-    def __init__(self, path=None):
-        self.path = path
+    def __init__(self, collection=None):
+        self.collection = collection
         self.inorder = True
 
-        if self.path:
-            with self.path.open() as fp:
+        if self.collection:
+            with self.collection.open() as fp:
                 for line in csv.DictReader(fp):
                     offset = int(int(line['start']))
                     term = Term(line['term'], line['ngram'], offset)
@@ -41,7 +41,7 @@ class TermCollection(list):
             self.sort()
 
     def __repr__(self):
-        return self.path.stem if self.path else ''
+        return self.collection.stem if self.collection else ''
 
     def __str__(self):
         return ' '.join(map(op.attrgetter('ngram'), self))
