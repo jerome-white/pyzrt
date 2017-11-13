@@ -35,7 +35,7 @@ class TermCollection(list):
         if self.collection:
             with self.collection.open() as fp:
                 for line in csv.DictReader(fp):
-                    offset = int(int(line['start']))
+                    offset = int(line['start'])
                     term = Term(line['term'], line['ngram'], offset)
                     self.append(term)
             self.sort()
