@@ -21,12 +21,12 @@ tar \
     --directory=$tmp \
     --file=${1}/pseudoterms/${ngrams}.tar.bz
 
-output=${1}/embeddings/$ngrams
+output=${1}/embeddings
 mkdir --parents $output
 
 python3 $ZR_HOME/src/misc/term2vec.py \
         --corpus $tmp/$ngrams \
-        --output $output \
+        --output $output/$ngrams \
         --workers 20
 
 rm --recursive --force $tmp
