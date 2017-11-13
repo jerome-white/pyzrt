@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #SBATCH --mem=60G
-#SBATCH --time=12:00:00
+#SBATCH --time=24:00:00
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=20
 #SBATCH --job-name=term2vec
