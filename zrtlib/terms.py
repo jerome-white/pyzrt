@@ -3,11 +3,11 @@ import operator as op
 import itertools as it
 import collections as clc
 
-BasicTerm = clc.namedtuple('TermAttributes', 'pseudoterm, ngram, position')
+BasicTerm = clc.namedtuple('TermAttributes', 'name, ngram, position')
 
 class Term(BasicTerm):
-    def __new__(cls, pseudoterm, ngram, position):
-        self = super(Term, cls).__new__(cls, pseudoterm, ngram, position)
+    def __new__(cls, name, ngram, position):
+        self = super(Term, cls).__new__(cls, name, ngram, position)
         return self
 
     def __len__(self):
@@ -22,7 +22,10 @@ class Term(BasicTerm):
         return other.position - self.end()
 
     def __str__(self):
-        return self.pseudoterm
+        return self.name
+
+    def __repr__(self):
+        return self.ngram
 
     def end(self):
         return self.position + len(self)
@@ -36,7 +39,7 @@ class TermCollection(list):
             with self.collection.open() as fp:
                 for line in csv.DictReader(fp):
                     position = int(line['position'])
-                    term = Term(line['term'], line['ngram'], position)
+                    term = Term(line['name'], line['ngram'], position)
                     self.append(term)
             self.sort()
 
