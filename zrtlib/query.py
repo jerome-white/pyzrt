@@ -17,7 +17,6 @@ def QueryBuilder(terms, model='ua'):
         'un': ShortestPath,
         'uaw': TotalWeight,
         'saw': LongestWeight,
-        'baseline': Standard,
     }[model](terms)
 
 class Regionalize:
@@ -53,10 +52,6 @@ class Query:
     def make(self, region):
         raise NotImplementedError()
 
-class Standard(Query):
-    def compose(self):
-        return self.doc.read_text()
-
 class BagOfWords(Query):
     def __init__(self, doc):
         super().__init__(doc)
@@ -73,9 +68,13 @@ class Synonym(Query):
 
     def make(self, collection):
         collection.bylength()
-        terms = it.islice(collection, 0, self.n)
 
-        yield from it.chain(['#syn('], terms, [')'])
+        iterable = [ it.islice(collection, 0, self.n) ]
+        if self.n is None or self.n > 1:
+            iterable.insert(0, [ '#syn(' ])
+            iterable.append([ ')' ])
+
+        yield from it.chain.from_iterable(iterable)
 
 class WeightedTerm:
     def __init__(self, term, weight):
