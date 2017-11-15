@@ -19,37 +19,67 @@ from zrtlib import logger
 from zrtlib import zutils
 from zrtlib.terms import Term, TermCollection
 
+class FileParser:
+    def __init__(self, document):
+        self.document = document
+
+    def __iter__(self):
+        with self.document.open() as fp:
+            for i in it.count():
+                c = fp.read(1)
+                if not c:
+                    break
+                for chars in self.get(c):
+                    word = ''.join(chars)
+                    yield Term(word, word, i - len(word))
+
+class WordParser(FileParser):
+    def __init__(self, document):
+        super().__init__(document)
+        self.word = []
+
+    def get(self, character):
+        if character in string.whitespace:
+            if word:
+                yield word
+                self.word.clear()
+        else:
+            self.word.append(character)
+
+class NgramParser(FileParser):
+    def __init__(self, document, minlen, maxlen=None):
+        super().__init__(document)
+
+        self.minlen = minlen
+        if maxlen is None:
+            maxlen = self.minlen
+        assert(0 < self.minlen <= maxlen)
+
+        self.window = cl.deque(maxlen=maxlen)
+
+    def get(self, character):
+        if character in string.whitespace:
+            character = '_'
+
+        window.append(character)
+
+        if len(window) == window.maxlen:
+            for i in range(minlen, window.maxlen + 1):
+                for j in range(window.maxlen - i + 1):
+                    yield it.islice(window, j, j + i)
+
 def func(args):
-    (document, output_directory, n, m) = args
-
-    if m is None:
-        m = n
-    assert(0 < n <= m)
-
-    window = cl.deque(maxlen=m)
-    collection = TermCollection()
+    (document, output_directory, minlen, maxlen) = args
 
     log = logger.getlogger()
     log.info(document.stem)
 
-    with document.open() as fp:
-        for position in it.count():
-            c = fp.read(1)
-            if not c:
-                break
-            if c == ' ':
-                c = '_'
-            elif c in string.whitespace:
-                continue
-
-            window.append(c)
-
-            if len(window) == window.maxlen:
-                for i in range(n, m + 1):
-                    for j in range(m - i + 1):
-                        ngram = ''.join(it.islice(window, j, j + i))
-                        term = Term(ngram, ngram, position - len(ngram))
-                        collection.append(term)
+    collection = TermCollection()
+    if minlen is None:
+        parser = WordParser(document)
+    else:
+        parser = NgramParser(document, minlen, maxlen)
+    collection.extend(parser)
 
     if collection:
         o = output_directory.joinpath(document.stem)
