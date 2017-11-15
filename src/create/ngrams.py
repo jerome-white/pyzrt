@@ -1,10 +1,11 @@
 #
-# Parses a directory of files into n-grams. If max-gram's are
-# specified, then the set will be of variable length (between min-gram
-# and max-gram); it will be of constant size otherwise.
+# Parses a directory of files into term collection files. If
+# max-gram's are specified, then the set will be of variable length
+# (between min-gram and max-gram); it will be of constant size
+# otherwise.
 #
 # Generally, files are assumed to have already been parsed;
-# specifically, that is, not in the TREC format.
+# specifically, they are not in the TREC format.
 #
 
 import string
@@ -16,6 +17,7 @@ from argparse import ArgumentParser
 
 from zrtlib import logger
 from zrtlib import zutils
+from zrtlib.terms import Term, TermCollection
 
 def func(args):
     (document, output_directory, n, m) = args
@@ -25,13 +27,13 @@ def func(args):
     assert(0 < n <= m)
 
     window = cl.deque(maxlen=m)
-    collection = []
+    collection = TermCollection()
 
     log = logger.getlogger()
     log.info(document.stem)
 
     with document.open() as fp:
-        while True:
+        for position in it.count():
             c = fp.read(1)
             if not c:
                 break
@@ -41,17 +43,18 @@ def func(args):
                 continue
 
             window.append(c)
+
             if len(window) == window.maxlen:
                 for i in range(n, m + 1):
                     for j in range(m - i + 1):
-                        segment = it.islice(window, j, j + i)
-                        ngram = ''.join(segment)
-                        collection.append(ngram)
+                        ngram = ''.join(it.islice(window, j, j + i))
+                        term = Term(ngram, ngram, position - len(ngram))
+                        collection.append(term)
 
     if collection:
         o = output_directory.joinpath(document.stem)
         with o.open('w') as fp:
-            print(*collection, file=fp)
+            collection.tocsv(fp)
     else:
         log.warning(document.stem)
 
