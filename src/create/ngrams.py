@@ -29,9 +29,11 @@ class FileParser:
                 c = fp.read(1)
                 if not c:
                     break
-                for chars in self.get(c):
-                    word = ''.join(chars)
-                    yield Term(word, word, i - len(word))
+                yield from it.starmap(self.mkterm, self.get(c, i))
+
+    def mkterm(self, chars, offset):
+        ngram = ''.join(chars)
+        return Term(ngram, ngram, offset - len(ngram))
 
     def get(self, character):
         raise NotImplementedError()
@@ -41,10 +43,10 @@ class WordParser(FileParser):
         super().__init__(document)
         self.word = []
 
-    def get(self, character):
+    def get(self, character, position):
         if character in string.whitespace:
             if self.word:
-                yield self.word
+                yield (self.word, position)
                 self.word.clear()
         else:
             self.word.append(character)
@@ -60,7 +62,7 @@ class NgramParser(FileParser):
 
         self.window = cl.deque(maxlen=maxlen)
 
-    def get(self, character):
+    def get(self, character, position):
         if character in string.whitespace:
             character = '_'
 
@@ -69,7 +71,8 @@ class NgramParser(FileParser):
         if len(self.window) == self.window.maxlen:
             for i in range(self.minlen, self.window.maxlen + 1):
                 for j in range(self.window.maxlen - i + 1):
-                    yield it.islice(self.window, j, j + i)
+                    chars = it.islice(self.window, j, j + i)
+                    yield (chars, position + 1)
 
 def func(args):
     (document, output_directory, minlen, maxlen) = args
