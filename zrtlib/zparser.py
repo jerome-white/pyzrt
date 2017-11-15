@@ -6,7 +6,8 @@ from functools import singledispatch
 
 from zrtlib import logger
 from zrtlib.strainer import Strainer
-from zrtlib.document import TermDocument
+# from zrtlib.document import TermDocument
+from zrtlib.terms import TermCollection
 
 class Document:
     def __init__(self, docno, text):
@@ -61,20 +62,19 @@ class WSJParser(Parser):
 
 class TermDocumentParser(Parser):
     def _parse(self, doc):
-        document = TermDocument(doc, False)
+        text = map(self.tostring, TermCollection(doc))
+        yield Document(doc.stem, text)
 
-        yield Document(doc.stem, self.tostring(document))
-
-    def tostring(self, document):
+    def tostring(self, term):
         raise NotImplementedError()
 
 class PseudoTermParser(TermDocumentParser):
-    def tostring(self, document):
-        return str(document)
+    def tostring(self, term):
+        return str(term)
 
 class NGramParser(TermDocumentParser):
-    def tostring(self, document):
-        return document.tocsv('ngram')
+    def tostring(self, term):
+        return term.ngram
 
 class PassThroughParser(Parser):
     def _parse(self, doc):
