@@ -23,9 +23,6 @@ module load pbzip2/intel/1.1.13
 
 ngrams=`printf "%02.f" ${1}`
 
-parser_strainer="--parser pt --strainer trec" # for most cases
-# parser_strainer="--parser pass --strainer under" # for English n-gram only
-
 #
 # Extract the term files
 #
@@ -43,8 +40,10 @@ tar \
 documents=`mktemp --directory --tmpdir=$BEEGFS`
 
 find $SLURM_JOBTMP/$ngrams -name 'WSJ*' -not -name 'WSJQ*' | \
-  python3 $ZR_HOME/src/create/parse.py $parser_strainer \
+  python3 $ZR_HOME/src/create/parse.py \
     --output $documents \
+    --parser pt \
+    --strainer trec \
     --consolidate
 
 #
