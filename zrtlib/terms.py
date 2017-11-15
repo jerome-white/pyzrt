@@ -55,7 +55,7 @@ class TermCollection(list):
             if term.ngram == ngram:
                 yield (i, term)
 
-    def subset(self, difference, start=0, limit=0):
+    def subset(self, difference, start=0):
         assert(self.inorder)
 
         region = TermCollection()
@@ -64,13 +64,9 @@ class TermCollection(list):
             if region and difference(region[-1], term) > 0:
                 yield region
                 region = TermCollection()
-
-                limit -= 1
-                if not limit:
-                    break
             region.append(term)
 
-        if limit and region:
+        if region:
             yield region
 
     def regions(self):
@@ -79,4 +75,10 @@ class TermCollection(list):
     def immediates(self, index):
         difference = lambda x, y: self[index] - y
 
-        yield from next(self.subset(difference, index + 1, 1))
+        yield from next(self.subset(difference, index + 1))
+
+    def tocsv(self, fp, header=True):
+        writer = csv.DictWriter(fp, fieldnames=Term._fields)
+        if header:
+            writer.writeheader()
+        writer.writerows(map(op.methodcaller('_asdict'), self))
