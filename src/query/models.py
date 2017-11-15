@@ -10,7 +10,8 @@ from zrtlib import zutils
 from zrtlib import logger
 from zrtlib.query import QueryBuilder
 from zrtlib.indri import QueryExecutor, QueryDoc, TrecMetric
-from zrtlib.document import TermDocument, StandardDocument
+# from zrtlib.document import TermDocument, StandardDocument
+from zrtlib.terms import Term, TermCollection
 
 def log_error(engine, errdir):
     p = Path(errdir, '.pyzrt', 'errors')
@@ -31,11 +32,7 @@ def func(feedback, qrels, index, output, queue):
         (terms, model) = queue.get()
         log.info('{0} {1}'.format(terms.stem, model))
 
-        if model == 'baseline':
-            document = StandardDocument(terms)
-        else:
-            document = TermDocument(terms)
-
+        document = TermCollection(terms)
         relevance = qrels.joinpath(QueryDoc.components(terms).topic)
 
         with QueryExecutor(index, relevance) as engine:
