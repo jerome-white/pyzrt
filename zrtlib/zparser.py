@@ -38,7 +38,7 @@ class TestParser(Parser):
     def _parse(self, doc):
         with doc.open() as fp:
             yield Document(doc.name, fp.read())
-    
+
 class WSJParser(Parser):
     def _parse(self, doc):
         xml = doc.read_text().replace('&', ' ')
@@ -46,14 +46,14 @@ class WSJParser(Parser):
         # overcome poorly formed XML (http://stackoverflow.com/a/23891895)
         combos = itertools.chain('<root>', xml, '</root>')
         root = et.fromstringlist(combos)
-        
+
         for i in root.findall('DOC'):
             docno = i.findall('DOCNO')
             assert(len(docno) == 1)
             docno = docno.pop().text.strip()
 
             text = []
-            for j in [ 'LP', 'TEXT' ]:
+            for j in ('LP', 'TEXT'):
                 for k in i.findall(j):
                     text.append(k.text)
             text = ' '.join(text)
@@ -61,20 +61,24 @@ class WSJParser(Parser):
             yield Document(docno, text)
 
 class TermDocumentParser(Parser):
+    def __init__(self, tostring, strainer=None):
+        super().__init__(strainer)
+        self.tostring = tostring
+
     def _parse(self, doc):
-        text = map(self.tostring, TermCollection(doc))
+        text = ' '.join(map(self.tostring, TermCollection(doc)))
         yield Document(doc.stem, text)
 
     def tostring(self, term):
         raise NotImplementedError()
 
 class PseudoTermParser(TermDocumentParser):
-    def tostring(self, term):
-        return str(term)
+    def __init__(self, strainer=None):
+        super().__init__(str, strainer)
 
 class NGramParser(TermDocumentParser):
-    def tostring(self, term):
-        return term.ngram
+    def __init__(self, strainer=None):
+        super().__init__(repr, strainer)
 
 class PassThroughParser(Parser):
     def _parse(self, doc):
