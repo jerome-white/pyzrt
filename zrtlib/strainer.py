@@ -38,7 +38,7 @@ class CaseStrainer(Strainer):
 
 #
 # Replace characters with "delimiter". Uses split so that multiple
-# split_on's in-a-row are also replace; its primary purpose is to
+# split_on's in-a-row are also replaced; its primary purpose is to
 # ensure there are single spaces between words.
 #
 class ReplacementStrainer(Strainer):
@@ -72,7 +72,9 @@ class AlphaNumericStrainer(Strainer):
             '-': ' ',
         }
         if stops:
-            replacements.update({ x: '.' for x in '.?!' })
+            endings = '.?!'
+            pauses = ',;:'
+            replacements.update({ x: '.' for x in endings + pauses })
 
         self.table = {}
 
@@ -99,9 +101,9 @@ class TRECStrainer(Strainer):
         top = et.Element('DOC')
         top.text = '\n'
 
-        for i in [ 'docno', 'text' ]:
+        for i in ('docno', 'text'):
             e = et.SubElement(top, i.upper())
-            e.text = op.attrgetter(i)(document)
+            e.text = getattr(document, i)
             if i == 'text':
                 e.text = '\n' + e.text + '\n'
             e.tail = '\n'
