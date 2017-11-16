@@ -2,8 +2,19 @@ import operator as op
 import itertools
 import collections
 
-from zrtlib import zutils
 from zrtlib import logger
+
+def stream(items, move=next, stop=None, compare=op.eq):
+    '''Iterate through a sequence that doesn't strictly conform to
+    Python's iterable semantics.
+
+    '''
+
+    while True:
+        i = move(items)
+        if compare(i, stop):
+            break
+        yield i
 
 class IterableStack(list):
     def __init__(self, descending=True):
@@ -78,7 +89,7 @@ class FromFeedback(SelectionStrategy):
             self.stack.peel()
 
         eligible = documents[documents['selected'] == 0]
-        iterable = (self.stack, zutils.stream(eligible, self.blind.pick))
+        iterable = (self.stack, stream(eligible, self.blind.pick))
         for i in itertools.chain.from_iterable(iterable):
             matches = documents[documents['term'] == i]
             if not matches['selected'].any():
@@ -96,7 +107,7 @@ class BlindRelevance(FromFeedback):
         self.technique = technique
 
     def proximity(self, term, documents):
-        yield from zutils.stream(self.technique(documents))
+        yield from stream(self.technique(documents))
 
 class CoOccurrence(FromFeedback):
     def __init__(self, sieve, technique, radius=1):
