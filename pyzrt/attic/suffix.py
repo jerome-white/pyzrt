@@ -2,7 +2,37 @@ import csv
 import operator as op
 import collections
 
-from zrtlib import zutils
+def cut(word, pos=1):
+    return (word[0:pos], word[pos:])
+
+def minval(iterable, item=0):
+    return min(map(len, map(op.itemgetter(item), iterable)))
+
+def minmax(iterable):
+    (x, y) = (None, None)
+
+    for i in iterable:
+        if x is None or i < x:
+            x = i
+        if y is None or i > y:
+            y = i
+
+    return (x, y)
+
+def count(start=0, stop=None, inclusive=True):
+    rel = op.gt if inclusive else op.ge
+
+    for i in itertools.count(start):
+        if stop is not None and rel(i, stop):
+            break
+        yield i
+
+def substrings(word, length=None):
+    if length is None:
+        length = len(word) - 1
+
+    for i in range(len(word) - length + 1):
+        yield word[i:i+length]
 
 class NGramDict(collections.defaultdict):
     def __init__(self, default_factory, *args):
@@ -67,7 +97,7 @@ class SuffixTree:
     # Add an n-gram and corresponding token to the tree.
     #
     def add(self, ngram, token, root_key_length=1):
-        (head, tail) = zutils.cut(ngram, root_key_length)
+        (head, tail) = cut(ngram, root_key_length)
 
         suffix = self.suffixes[head]
         if tail:
@@ -79,7 +109,7 @@ class SuffixTree:
     # Find the root suffix branch associated with this n-gram
     #
     def lookup(self, ngram):
-        (head, tail) = zutils.cut(ngram, self.suffixes.key_length)
+        (head, tail) = cut(ngram, self.suffixes.key_length)
 
         if head in self.suffixes:
             suffix = self.suffixes[head]
@@ -134,7 +164,7 @@ class SuffixTree:
     #
     def read(self, fp, token_parser):
         reader = csv.reader(fp)
-        min_key = zutils.minval(reader)
+        min_key = minval(reader)
 
         fp.seek(0)
         for (ngram, *tokens) in reader:
@@ -166,10 +196,10 @@ class SuffixTree:
     # in the tree (no-prefix condition).
     #
     def fold(self, min_gram, max_gram):
-        for i in zutils.count(min_gram, max_gram):
+        for i in count(min_gram, max_gram):
             for j in self.ngrams(i):
                 sr = None
-                for k in zutils.substrings(j):
+                for k in substrings(j):
                     jr = self.lookup(k)
                     if jr:
                         if sr is None:
@@ -184,7 +214,7 @@ class SuffixTree:
         c = self.lf()
         if len(c) > 1:
             if length is None:
-                (x, y) = zutils.minmax(c.keys())
+                (x, y) = minmax(c.keys())
                 self.fold(x + 1, y)
             else:
                 self.fold(length, length)
