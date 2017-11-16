@@ -1,3 +1,7 @@
+__all__ = [
+    'JobQueue'
+]
+
 class JobQueue:
     def __init__(self, incoming, outgoing, jobs):
         self.incoming = incoming

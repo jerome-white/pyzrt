@@ -4,6 +4,11 @@ import time
 import logging
 import platform
 
+__all__ = [
+    'get_logger',
+    'PeriodicLogger'
+]
+
 # Level    Numeric value
 # CRITICAL 50
 # ERROR    40
@@ -49,7 +54,7 @@ class LogConfigure:
 
         return cls.logname
 
-def getlogger(root=False):
+def get_logger(root=False):
     elements = [ LogConfigure() ]
     if not root:
         elements.append(str(os.getpid()))
