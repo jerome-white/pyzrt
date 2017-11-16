@@ -1,9 +1,5 @@
 import csv
 
-__all__ = [
-    'read_baseline'
-]
-
 def read_baseline(baseline, metric, single_topics=True):
     '''Read the file created by baseline.py
     baseline (Path): path to baseline file

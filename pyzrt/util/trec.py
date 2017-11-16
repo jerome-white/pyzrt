@@ -2,10 +2,6 @@ import collections as cl
 from pathlib import Path
 from functools import singledispatch
 
-__all__ = [
-    'read_trec'
-]
-
 TrecMeasurement = cl.namedtuple('TrecMeasurement', 'run, results')
 
 @singledispatch

@@ -1,10 +1,6 @@
 import sys
 from functools import singledispatch
 
-__all__ = [
-    'walk'
-]
-
 @singledispatch
 def walk(path):
     if path.is_dir():

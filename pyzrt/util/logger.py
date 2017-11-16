@@ -4,11 +4,6 @@ import time
 import logging
 import platform
 
-__all__ = [
-    'get_logger',
-    'PeriodicLogger'
-]
-
 # Level    Numeric value
 # CRITICAL 50
 # ERROR    40

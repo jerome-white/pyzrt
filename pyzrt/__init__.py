@@ -1,5 +1,4 @@
-from pyzrt.util import *
-from pyzrt.core import *
-from pyzrt.parsing import *
-from pyzrt.retrieval import *
-from pyzrt.selection import *
+import pyzrt.util
+
+from pyzrt.core.term import Term
+from pyzrt.core.collection import TermCollection

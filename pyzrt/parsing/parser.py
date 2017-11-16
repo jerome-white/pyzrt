@@ -6,7 +6,7 @@ from functools import singledispatch
 
 from .strainer import Strainer
 from pyzrt.util import logger
-from pyzrt.types.collection import TermCollection
+from pyzrt.core.collection import TermCollection
 
 class Document:
     def __init__(self, docno, text):

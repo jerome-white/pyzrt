@@ -2,11 +2,7 @@ import csv
 import operator as op
 import itertools as it
 
-from . import Term
-
-__all__ = [
-    'TermCollection',
-]
+from pyzrt.core.term import Term
 
 class TermCollection(list):
     def __init__(self, collection=None):
