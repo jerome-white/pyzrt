@@ -4,18 +4,7 @@ import itertools as it
 import numpy as np
 import networkx as nx
 
-# from zrtlib import logger
 from .indri import IndriQuery
-
-def QueryBuilder(terms, model='ua'):
-    return {
-        'ua': BagOfWords,
-        'sa': Synonym,
-        'u1': ft.partial(Synonym, n_longest=1),
-        'un': ShortestPath,
-        'uaw': TotalWeight,
-        'saw': LongestWeight,
-    }[model](terms)
 
 class Regionalize:
     def __init__(self, document):
@@ -49,6 +38,17 @@ class Query:
 
     def make(self, region):
         raise NotImplementedError()
+
+    @staticmethod
+    def builder(terms, model='ua', **kwargs):
+        return {
+            'ua': BagOfWords,
+            'sa': Synonym,
+            'u1': ft.partial(Synonym, n_longest=1),
+            'un': ShortestPath,
+            'uaw': TotalWeight,
+            'saw': LongestWeight,
+        }[model](terms, **kwargs)
 
 class BagOfWords(Query):
     def __init__(self, doc):
