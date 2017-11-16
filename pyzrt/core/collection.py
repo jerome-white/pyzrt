@@ -4,6 +4,10 @@ import itertools as it
 
 from . import Term
 
+__all__ = [
+    'TermCollection',
+]
+
 class TermCollection(list):
     def __init__(self, collection=None):
         self.collection = collection

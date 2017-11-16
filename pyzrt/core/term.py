@@ -1,5 +1,9 @@
 import collections as clc
 
+__all__ = [
+    'Term',
+]
+
 BasicTerm = clc.namedtuple('BasicTerm', 'name, ngram, position')
 
 class Term(BasicTerm):
