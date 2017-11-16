@@ -1,19 +1,17 @@
-import functools
-import operator as op
+import functools as ft
 import itertools as it
-from collections import namedtuple
 
 import numpy as np
 import networkx as nx
 
 # from zrtlib import logger
-from zrtlib.indri import IndriQuery
+from .indri import IndriQuery
 
 def QueryBuilder(terms, model='ua'):
     return {
         'ua': BagOfWords,
         'sa': Synonym,
-        'u1': functools.partial(Synonym, n_longest=1),
+        'u1': ft.partial(Synonym, n_longest=1),
         'un': ShortestPath,
         'uaw': TotalWeight,
         'saw': LongestWeight,

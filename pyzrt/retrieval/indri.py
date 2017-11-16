@@ -6,8 +6,8 @@ import collections
 import xml.etree.ElementTree as et
 from tempfile import NamedTemporaryFile
 
-from zrtlib import logger
-from zrtlib import zutils
+#from zrtlib import logger
+from pyzrt.util import zutils
 
 QueryID = collections.namedtuple('QueryID', 'topic, number')
 

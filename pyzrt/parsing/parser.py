@@ -4,10 +4,9 @@ import xml.etree.ElementTree as et
 from pathlib import Path
 from functools import singledispatch
 
-from zrtlib import logger
-from zrtlib.strainer import Strainer
-# from zrtlib.document import TermDocument
-from zrtlib.terms import TermCollection
+from .strainer import Strainer
+from pyzrt.util import logger
+from pyzrt.types.collection import TermCollection
 
 class Document:
     def __init__(self, docno, text):
