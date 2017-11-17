@@ -4,18 +4,20 @@ import xml.etree.ElementTree as et
 from pathlib import Path
 from functools import singledispatch
 
-from .strainer import Strainer
-from pyzrt.util import logger
 from pyzrt.core.collection import TermCollection
+from pyzrt.parsing.strainer import _Strainer
+
+def Parser(parser_type, *args):
+    return _Parser.builder(parser_type, *args)
 
 class Document:
     def __init__(self, docno, text):
         self.docno = docno
         self.text = text
 
-class Parser():
+class _Parser():
     def __init__(self, strainer=None):
-        self.strainer = Strainer() if strainer is None else strainer
+        self.strainer = _Strainer() if strainer is None else strainer
 
     def parse(self, document):
         yield from map(self.strainer.strain, self._parse(document))
@@ -33,12 +35,12 @@ class Parser():
             'ngram': NGramParser,
         }[parser_type](*args)
 
-class TestParser(Parser):
+class TestParser(_Parser):
     def _parse(self, doc):
         with doc.open() as fp:
             yield Document(doc.name, fp.read())
 
-class WSJParser(Parser):
+class WSJParser(_Parser):
     def _parse(self, doc):
         xml = doc.read_text().replace('&', ' ')
 
@@ -59,7 +61,7 @@ class WSJParser(Parser):
 
             yield Document(docno, text)
 
-class TermDocumentParser(Parser):
+class TermDocumentParser(_Parser):
     def __init__(self, tostring, strainer=None):
         super().__init__(strainer)
         self.tostring = tostring
@@ -79,6 +81,6 @@ class NGramParser(TermDocumentParser):
     def __init__(self, strainer=None):
         super().__init__(repr, strainer)
 
-class PassThroughParser(Parser):
+class PassThroughParser(_Parser):
     def _parse(self, doc):
         yield Document(doc.stem, doc.read_text())
