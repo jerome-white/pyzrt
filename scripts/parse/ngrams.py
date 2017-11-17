@@ -15,9 +15,7 @@ import collections as cl
 from pathlib import Path
 from argparse import ArgumentParser
 
-from zrtlib import logger
-from zrtlib import zutils
-from zrtlib.terms import Term, TermCollection
+import pyzrt as pz
 
 class FileParser:
     def __init__(self, document):
@@ -33,7 +31,7 @@ class FileParser:
 
     def mkterm(self, chars, offset):
         ngram = ''.join(chars)
-        return Term(ngram, ngram, offset - len(ngram))
+        return pz.Term(ngram, ngram, offset - len(ngram))
 
     def get(self, character):
         raise NotImplementedError()
@@ -77,10 +75,10 @@ class NgramParser(FileParser):
 def func(args):
     (document, output_directory, minlen, maxlen) = args
 
-    log = logger.getlogger()
+    log = pz.util.get_logger()
     log.info(document.stem)
 
-    collection = TermCollection()
+    collection = pz.TermCollection()
     if minlen is None:
         parser = WordParser(document)
     else:
@@ -102,11 +100,11 @@ arguments.add_argument('--max-gram', type=int)
 arguments.add_argument('--workers', type=int, default=mp.cpu_count())
 args = arguments.parse_args()
 
-log = logger.getlogger(True)
+log = pz.util.get_logger(True)
 
 log.info('>| begin')
 with mp.Pool(args.workers) as pool:
     f = lambda x: (x, args.output, args.min_gram, args.max_gram)
-    for _ in pool.imap_unordered(func, map(f, zutils.walk(args.documents))):
+    for _ in pool.imap_unordered(func, map(f, pz.util.walk(args.documents))):
         pass
 log.info('<| complete')
