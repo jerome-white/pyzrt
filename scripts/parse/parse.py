@@ -3,10 +3,7 @@ from pathlib import Path
 from argparse import ArgumentParser
 from tempfile import NamedTemporaryFile
 
-from zrtlib import logger
-from zrtlib import zutils
-from zrtlib.zparser import Parser
-from zrtlib.strainer import Strainer
+import pyzrt as pz
 
 class Recorder:
     def __init__(self, path, single_file):
@@ -31,11 +28,10 @@ class Recorder:
             self.fp.close()
 
 def func(args, document_queue):
-    log = logger.getlogger()
+    log = pz.util.get_logger()
 
-    s = args.strainer.split(':') if args.strainer else []
-    parser = Parser.builder(args.parser.lower(), Strainer.builder(s))
-
+    s = args.strainer.split(':') if args.strainer else None
+    parser = pz.Parser(args.parser.lower(), pz.Strainer(s))
     recorder = Recorder(args.output, args.consolidate)
 
     while True:
@@ -52,16 +48,17 @@ arguments.add_argument('--parser')
 arguments.add_argument('--strainer')
 arguments.add_argument('--documents', type=Path)
 arguments.add_argument('--output', type=Path)
+arguments.add_argument('--workers', type=int, default=mp.cpu_count())
 arguments.add_argument('--consolidate', action='store_true')
 args = arguments.parse_args()
 
-log = logger.getlogger(True)
+log = pz.util.get_logger(True)
 log.info('>| begin')
 
 document_queue = mp.JoinableQueue()
-with mp.Pool(initializer=func, initargs=(args, document_queue)):
+with mp.Pool(args.workers, func, (args, document_queue)):
     args.output.mkdir(parents=True, exist_ok=True)
-    for i in zutils.walk(args.documents):
+    for i in pz.util.walk(args.documents):
         document_queue.put(i)
     document_queue.join()
 

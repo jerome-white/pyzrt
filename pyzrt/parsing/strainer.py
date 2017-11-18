@@ -2,7 +2,12 @@ import string
 import operator as op
 import xml.etree.ElementTree as et
 
-class Strainer:
+def Strainer(strainers=None):
+    if strainers is None:
+        strainers = []
+    return _Strainer.builder(strainers)
+
+class _Strainer:
     def __init__(self, strainer=None):
         self.strainer = strainer if strainer else self
 
@@ -26,7 +31,7 @@ class Strainer:
 
         return s
 
-class CaseStrainer(Strainer):
+class CaseStrainer(_Strainer):
     def __init__(self, strainer, casing='lower'):
         super().__init__(strainer)
 
@@ -41,7 +46,7 @@ class CaseStrainer(Strainer):
 # split_on's in-a-row are also replaced; its primary purpose is to
 # ensure there are single spaces between words.
 #
-class ReplacementStrainer(Strainer):
+class ReplacementStrainer(_Strainer):
     def __init__(self, strainer, new, old=' '):
         super().__init__(strainer)
 
@@ -62,7 +67,7 @@ class UnderscoreStrainer(ReplacementStrainer):
     def __init__(self, strainer):
         super().__init__(strainer, '_')
 
-class AlphaNumericStrainer(Strainer):
+class AlphaNumericStrainer(_Strainer):
     def __init__(self, strainer, extended=False, stops=True):
         super().__init__(strainer)
 
@@ -96,7 +101,7 @@ class AlphaNumericStrainer(Strainer):
         document.text = document.text.translate(self.table)
         return self.strainer.strain(document)
 
-class TRECStrainer(Strainer):
+class TRECStrainer(_Strainer):
     def strain(self, document):
         top = et.Element('DOC')
         top.text = '\n'
