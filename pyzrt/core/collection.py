@@ -11,10 +11,7 @@ class TermCollection(list):
 
         if self.collection:
             with self.collection.open() as fp:
-                for line in csv.DictReader(fp):
-                    position = int(line['position'])
-                    term = Term(line['name'], line['ngram'], position)
-                    self.append(term)
+                self.extend(map(Term._fromdict, csv.DictReader(fp)))
             self.sort()
 
     def __repr__(self):

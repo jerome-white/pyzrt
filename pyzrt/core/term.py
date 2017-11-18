@@ -26,3 +26,8 @@ class Term(BasicTerm):
 
     def end(self):
         return self.position + len(self)
+
+    @classmethod
+    def _fromdict(cls, d):
+        d['position'] = int(d['position'])
+        return cls(**d)
