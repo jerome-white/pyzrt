@@ -5,7 +5,7 @@ from argparse import ArgumentParser
 import pyzrt as pz
 
 def func(args):
-    log = logger.getlogger()
+    log = pz.util.get_logger(True)
 
     (document, model, output) = args
     log.info('{0} {1}'.format(document.stem, model))
@@ -17,7 +17,7 @@ def func(args):
     return output.stem
 
 def each(args):
-    for model in args.models:
+    for model in args.model:
         for doc in pz.util.walk(args.term_files):
             if pz.TrecDocument.isquery(doc):
                 out = args.output.joinpath(doc.stem).with_suffix('.' + model)
