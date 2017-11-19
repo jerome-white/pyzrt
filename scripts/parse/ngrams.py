@@ -45,7 +45,7 @@ class WordParser(FileParser):
         if character in string.whitespace:
             if self.word:
                 yield (self.word, position)
-                self.word.clear()
+                self.word = []
         else:
             self.word.append(character)
 
