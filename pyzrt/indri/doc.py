@@ -42,7 +42,7 @@ class IndriQuery:
 
         self.i += 1
 
-class QueryDocument:
+class TrecDocument:
     separator = '-'
     prefix = 'WSJQ00'
 
