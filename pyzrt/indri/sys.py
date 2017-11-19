@@ -60,7 +60,7 @@ class Search:
         self.indri = sh.which('IndriRunQuery')
         self.trec = sh.which('trec_eval')
 
-    def execute(query):
+    def execute(self, query):
         '''Build/execute the Indri command
 
         '''
@@ -139,3 +139,6 @@ class Search:
 
         if results and (summary or run >= 0):
             yield Measurement(run, results)
+
+    def do(self, query, metrics=None):
+        yield from self.interpret(self.evaluate(self.execute(query), metrics))
