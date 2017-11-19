@@ -6,11 +6,21 @@ import collections
 import xml.etree.ElementTree as et
 from tempfile import NamedTemporaryFile
 
-#from zrtlib import logger
-from pyzrt.util import zutils
-
 QueryID = collections.namedtuple('QueryID', 'topic, number')
 
+# XXX should replace the element function
+class IndriElement:
+    def __init__(self, root):
+        self.element = None
+        self._push(root, et.Element, '\n', '\n')
+
+    def _push(self, name, loc, text, tail):
+        self.element = loc(self.element, name)
+        (self.element.text, self.element.tail) = (text, tail)
+        
+    def add(self, name, text='\n', tail='\n'):
+        self._push(name, et.SubElement, text, tail)
+        
 def element(name, parent=None, text='\n', tail='\n'):
     if parent is None:
         e = et.Element(name)
@@ -20,14 +30,6 @@ def element(name, parent=None, text='\n', tail='\n'):
     e.tail = tail
 
     return e
-
-def relevant_documents(qrels):
-    with qrels.open() as fp:
-        # http://trec.nist.gov/data/qrels_eng/
-        for line in fp:
-            (topic, _, document, relevant) = line.strip().split()
-            if int(topic) == 0 and int(relevant) > 0:
-                yield document
 
 class IndriQuery:
     def __init__(self):
@@ -67,93 +69,6 @@ class TrecMetric:
 
         '''
         return '_'.join(self.metric.split('.', 1))
-
-class QueryExecutor:
-    def __init__(self, index, qrels):
-        self.index = index
-        self.indri = shutil.which('IndriRunQuery')
-        self.trec = shutil.which('trec_eval')
-
-        with qrels.open() as fp:
-            counts = set()
-            for line in fp:
-                (iteration, *_) = line.strip().split()
-                counts.add(iteration)
-            self.count = len(counts)
-
-        self.qrels = qrels
-
-        f = lambda x: NamedTemporaryFile(mode='w',
-                                         prefix='{0}{1}-'.format(x,qrels.stem))
-        (self.query_fp, self.results_fp) = map(f, 'qr')
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        self.query_fp.close()
-        self.results_fp.close()
-
-    def query(self, query, check=True):
-        # erase the query and results files
-        for i in (self.query_fp, self.results_fp):
-            if i.tell() > 0:
-                i.seek(0)
-                i.truncate()
-
-        # print the query to disk
-        print(query, file=self.query_fp, flush=True)
-
-        # build/execute the Indri command
-        cmd = [
-            self.indri,
-            '-trecFormat=true',
-            '-count={0}'.format(self.count),
-            '-index={0}'.format(self.index),
-            self.query_fp.name,
-        ]
-
-        result = subprocess.run(cmd, check=check, stdout=self.results_fp)
-        sys.stdout.flush()
-        self.results_fp.flush()
-
-        return result
-
-    def saveq(self, dest):
-        shutil.copy(self.query_fp.name, dest)
-
-    def relevant(self, judgements=None, limit=None):
-        if judgements is None:
-            judgements = relevant_documents(self.qrels)
-
-        with open(self.results_fp.name) as fp:
-            for line in fp:
-                (_, document, order, *_) = line.strip().split()
-                if limit is not None and int(order) > limit:
-                    break
-                if document in judgements:
-                    yield document
-
-    def evaluate(self, *metrics, all_metrics=True):
-        if os.stat(self.results_fp.name).st_size == 0:
-            raise ValueError()
-
-        cmd = [
-            self.trec,
-            '-q',
-            '-c',
-            '-mall_trec' if all_metrics else None,
-            *map(str, metrics),
-            '-M{0}'.format(self.count),
-            str(self.qrels),
-            self.results_fp.name,
-        ]
-
-        with subprocess.Popen(filter(None, cmd),
-                              bufsize=1,
-                              stdout=subprocess.PIPE,
-                              universal_newlines=True) as fp:
-            yield from zutils.read_trec(fp.stdout)
 
 class QueryDoc:
     separator = '-'
