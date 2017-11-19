@@ -1,3 +1,4 @@
+import os
 import shutil as sh
 import subprocess as sp
 import collections as cl
@@ -60,6 +61,15 @@ class Search:
         self.indri = sh.which('IndriRunQuery')
         self.trec = sh.which('trec_eval')
 
+    def _shell(self, cmd):
+        with sp.Popen(cmd,
+                      bufsize=1,
+                      stdout=sp.PIPE,
+                      universal_newlines=True) as proc:
+            proc.wait()
+
+            yield from proc.stdout
+
     def execute(self, query):
         '''Build/execute the Indri command
 
@@ -73,13 +83,7 @@ class Search:
             str(query),
         ]
 
-        with sp.Popen(cmd,
-                      bufsize=1,
-                      stdout=sp.PIPE,
-                      universal_newlines=True) as proc:
-            proc.wait()
-
-            yield from proc.stdout
+        yield from self._shell(cmd)
 
     def evaluate(self, execution, metrics=None):
         if not metrics:
@@ -94,19 +98,13 @@ class Search:
             str(self.qrels),
         ]
 
-        with NamedTemporaryFile(mode='w', dir='/scratch/jsw7/tmp') as fp:
+        with NamedTemporaryFile(mode='w') as fp:
             for i in execution:
                 fp.write(i)
             fp.flush()
-
-            cmd.append(fp.name)
-            with sp.Popen(cmd,
-                          bufsize=1,
-                          stdout=sp.PIPE,
-                          universal_newlines=True) as proc:
-                proc.wait()
-
-                yield from proc.stdout
+            if os.stat(fp.name):
+                cmd.append(fp.name)
+                yield from self._shell(cmd)
 
     def interpret(self, evaluation, summary=False):
         previous = None
