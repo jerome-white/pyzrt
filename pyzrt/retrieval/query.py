@@ -4,24 +4,13 @@ import itertools as it
 import numpy as np
 import networkx as nx
 
-from .indri import IndriQuery
+from pyzrt.indri.doc import IndriQuery
+from pyzrt.retrieval.regionalization import PerRegion, CollectionAtOnce
 
-class Regionalize:
-    def __init__(self, document):
-        self.document = document
+def Query(terms, model='ua', **kwargs):
+    return _Query.builder(terms, model, **kwargs)
 
-    def __iter__(self):
-        raise NotImplementedError()
-
-class PerRegion(Regionalize):
-    def __iter__(self):
-        yield from self.document.regions()
-
-class CollectionAtOnce(Regionalize):
-    def __iter__(self):
-        yield self.document
-
-class Query:
+class _Query:
     def __init__(self, doc):
         self.doc = doc
         self.regionalize = None
@@ -40,7 +29,7 @@ class Query:
         raise NotImplementedError()
 
     @staticmethod
-    def builder(terms, model='ua', **kwargs):
+    def builder(terms, model, **kwargs):
         return {
             'ua': BagOfWords,
             'sa': Synonym,
@@ -50,7 +39,7 @@ class Query:
             'saw': LongestWeight,
         }[model](terms, **kwargs)
 
-class BagOfWords(Query):
+class BagOfWords(_Query):
     def __init__(self, doc):
         super().__init__(doc)
         self.regionalize = CollectionAtOnce(self.doc)
@@ -58,7 +47,7 @@ class BagOfWords(Query):
     def make(self, collection):
         yield from collection
 
-class Synonym(Query):
+class Synonym(_Query):
     def __init__(self, doc, n_longest=None):
         super().__init__(doc)
         self.n = n_longest
@@ -82,7 +71,7 @@ class WeightedTerm:
     def __str__(self):
         return '{0} {1}'.format(self.weight, self.term)
 
-class Weighted(Query):
+class Weighted(_Query):
     def __init__(self, doc, alpha):
         super().__init__(doc)
         self.alpha = alpha
@@ -136,7 +125,7 @@ class GraphPath:
     def __lt__(self, other):
         return self.deviation < other.deviation
 
-class ShortestPath(Query):
+class ShortestPath(_Query):
     def __init__(self, doc):
         super().__init__(doc)
         self.regionalize = PerRegion(self.doc)
