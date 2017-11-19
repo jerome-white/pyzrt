@@ -29,7 +29,7 @@ class TrecMetric:
         return '_'.join(self.metric.split('.', 1))
 
 
-class Qrels:
+class QueryRelevance:
     def __init__(self, qrels):
         self.qrels = qrels
 
@@ -52,7 +52,7 @@ class Qrels:
                 if not int(topic) and int(relevant) > 0:
                     yield document
 
-class QueryExecutor:
+class Search:
     def __init__(self, index, qrels):
         self.index = index
         self.qrels = qrels
