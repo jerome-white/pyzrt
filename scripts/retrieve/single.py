@@ -11,7 +11,7 @@ def func(args):
     log.info('{0} {1}'.format(document.stem, model))
 
     terms = pz.TermCollection(document)
-    query = pz.Query.builder(terms, model)
+    query = pz.Query(terms, model)
     output.write_text(str(query))
 
     return output.stem
@@ -19,7 +19,7 @@ def func(args):
 def each(args):
     for model in args.models:
         for doc in pz.util.walk(args.term_files):
-            if pz.QueryDoc.isquery(doc):
+            if pz.TrecDocument.isquery(doc):
                 out = args.output.joinpath(doc.stem).with_suffix('.' + model)
                 if not out.exists():
                     yield (doc, model, out)
@@ -27,7 +27,7 @@ def each(args):
 arguments = ArgumentParser()
 arguments.add_argument('--term-files', type=Path)
 arguments.add_argument('--output', type=Path)
-arguments.add_argument('--model', action='append', default=['baseline'])
+arguments.add_argument('--model', action='append', default=['ua'])
 arguments.add_argument('--workers', type=int, default=mp.cpu_count())
 args = arguments.parse_args()
 
