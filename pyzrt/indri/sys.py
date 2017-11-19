@@ -3,7 +3,7 @@ import subprocess as sp
 import collections as cl
 from tempfile import SpooledTemporaryFile
 
-TrecMeasurement = cl.namedtuple('TrecMeasurement', 'run, results')
+Measurement = cl.namedtuple('Measurement', 'run, results')
 
 class TrecMetric:
     '''The trec_eval program uses different formats for the way metrics
@@ -125,7 +125,7 @@ class Search:
             if previous is not None and previous != run:
                 assert(not summarised)
 
-                yield TrecMeasurement(previous, results)
+                yield Measurement(previous, results)
 
                 results = {} # probably not necessary, but safe
                 if run < 0:
@@ -139,4 +139,4 @@ class Search:
             previous = run
 
         if results and (summary or run >= 0):
-            yield TrecMeasurement(run, results)
+            yield Measurement(run, results)
