@@ -1,7 +1,7 @@
 import shutil as sh
 import subprocess as sp
 import collections as cl
-from tempfile import SpooledTemporaryFile
+from tempfile import NamedTemporaryFile
 
 Measurement = cl.namedtuple('Measurement', 'run, results')
 
@@ -36,7 +36,7 @@ class QueryRelevance:
         return str(self.qrels)
 
     def __len__(self):
-        with qrels.open() as fp:
+        with self.qrels.open() as fp:
             counts = set()
             for line in fp:
                 (iteration, *_) = line.strip().split()
@@ -69,20 +69,19 @@ class Search:
             sh.which('IndriRunQuery'),
             '-trecFormat=true',
             '-count={0}'.format(self.count),
-            '-index={0}'.format(index),
+            '-index={0}'.format(self.index),
             str(query),
         ]
 
-        with SpooledTemporaryFile(mode='w') as fp:
-            result = sp.run(cmd, check=check, stdout=fp)
-            result.wait()
+        with sp.Popen(cmd,
+                      bufsize=1,
+                      stdout=sp.PIPE,
+                      universal_newlines=True) as proc:
+            proc.wait()
 
-            fp.flush()
-            fp.seek(0)
+            yield from proc.stdout
 
-            yield from fp
-
-    def evaluate(self, rankings, metrics=None):
+    def evaluate(self, execution, metrics=None):
         if not metrics:
             metrics = [ TrecMetric('all_trec') ]
 
@@ -93,27 +92,28 @@ class Search:
             *map(str, metrics),
             '-M{0}'.format(self.count),
             str(self.qrels),
-#            self.results_fp.name,
         ]
 
-        with sp.Popen(cmd,
-                      bufsize=1,
-                      stdin=sp.PIPE,
-                      stdout=sp.PIPE,
-                      universal_newlines=True) as proc:
-            with proc.stdin as pipe:
-                for i in rankings:
-                    pipe.write(i)
-            proc.wait()
+        with NamedTemporaryFile(mode='w', dir='/scratch/jsw7/tmp') as fp:
+            for i in execution:
+                fp.write(i)
+            fp.flush()
 
-            yield from proc.stdout
+            cmd.append(fp.name)
+            with sp.Popen(cmd,
+                          bufsize=1,
+                          stdout=sp.PIPE,
+                          universal_newlines=True) as proc:
+                proc.wait()
 
-    def interpret(self, results, summary=False):
+                yield from proc.stdout
+
+    def interpret(self, evaluation, summary=False):
         previous = None
         summarised = False
         results = {}
 
-        for line in results:
+        for line in evaluation:
             (metric, run, value) = line.strip().split()
             try:
                 run = int(run)
