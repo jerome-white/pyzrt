@@ -7,7 +7,7 @@ from pathlib import Path
 from argparse import ArgumentParser
 from collections import defaultdict
 
-from zrtlib import logger
+import pyzrt as pz
 
 #
 # http://trec.nist.gov/data/qrels_eng/
@@ -28,7 +28,7 @@ class Entry:
             yield [ i ] + j
 
 def write(output, jobs):
-    log = logger.getlogger()
+    log = pz.get_logger()
 
     while True:
         (topic, relevance) = jobs.get()
