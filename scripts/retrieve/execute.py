@@ -9,8 +9,6 @@ def func(queue, index, qrels, feedback):
     log = pz.util.get_logger()
 
     metrics = map(pz.TrecMetric, feedback)
-    relevance = pz.QueryRelevance(qrels)
-    search = pz.Search(index, relevance)
 
     while True:
         (query, output) = queue.get()
@@ -18,6 +16,9 @@ def func(queue, index, qrels, feedback):
 
         info = pz.TrecDocument.components(query)
         model = query.suffix[1:] # without the '.'
+
+        relevance = pz.QueryRelevance(qrels.joinpath(str(info.topic)))
+        search = pz.Search(index, relevance)
 
         with output.open('w') as fp:
             writer = None
@@ -49,14 +50,14 @@ initargs = [
     queue,
     args.index,
     args.qrels,
-    args.feedback,
+    args.feedback_metric,
 ]
 
-log.info('++ begin {0}'.format(args.term_files))
+log.info('++ begin {0}'.format(args.queries))
 with mp.Pool(args.workers, func, initargs) as pool:
     for i in args.queries.iterdir():
         out = args.output.joinpath(i.name)
         if not out.exists():
-            queue.put(i, out)
+            queue.put((i, out))
     queue.join()
 log.info('-- end')
