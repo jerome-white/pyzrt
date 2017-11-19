@@ -28,7 +28,6 @@ class TrecMetric:
         '''
         return '_'.join(self.metric.split('.', 1))
 
-
 class QueryRelevance:
     def __init__(self, qrels):
         self.qrels = qrels
