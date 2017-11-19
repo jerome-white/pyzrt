@@ -22,10 +22,10 @@ def func(queue, index, qrels, feedback):
 
         with output.open('w') as fp:
             writer = None
-            for record in search.do(query, metrics):
+            for i in search.do(query, metrics):
                 entry = { 'model': model, 'topic': info.topic }
-                assert(not any([ x in record for x in entry ]))
-                entry.update(**record)
+                assert(not any([ x in i.results for x in entry ]))
+                entry.update(**i.results)
 
                 if writer is None:
                     writer = csv.DictWriter(fp, fieldnames=entry.keys())
