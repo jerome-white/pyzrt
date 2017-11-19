@@ -28,7 +28,7 @@ class Entry:
             yield [ i ] + j
 
 def write(output, jobs):
-    log = pz.get_logger()
+    log = pz.util.get_logger()
 
     while True:
         (topic, relevance) = jobs.get()
