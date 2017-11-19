@@ -65,16 +65,16 @@ class TrecDocument:
         if not cls.isquery(doc):
             raise ValueError()
 
-        (name, number) = doc.stem.split(QueryDoc.separator)
-        topic = name[len(QueryDoc.prefix):]
+        (name, number) = doc.stem.split(cls.separator)
+        topic = name[len(cls.prefix):]
 
-        return QueryID(topic, int(number))
+        return QueryID(*map(int, (topic, number)))
 
     def add(self, query):
         attrs = collections.OrderedDict()
-        attrs['DOCNO'] = '{0}{1}{2}{3:04d}'.format(QueryDoc.prefix,
+        attrs['DOCNO'] = '{0}{1}{2}{3:04d}'.format(self.prefix,
                                                    self.name,
-                                                   QueryDoc.separator,
+                                                   self.separator,
                                                    len(self.docs))
         attrs['TEXT'] = ' '.join(query)
 
