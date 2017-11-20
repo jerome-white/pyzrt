@@ -9,13 +9,10 @@ import seaborn as sns
 # import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
 
-from zrtlib import logger
-from zrtlib import zutils
-from zrtlib.indri import QueryDoc, TrecMetric
-from zrtlib.jobqueue import JobQueue
+import pyzrt as pz
 
 def func(incoming, outgoing, args):
-    log = logger.getlogger()
+    log = pz.util.get_logger()
 
     metric = repr(args.metric)
     usecols=[ metric, 'model', 'query' ] # see query/models.py
@@ -23,15 +20,16 @@ def func(incoming, outgoing, args):
     if args.baseline is None:
         norms = None
     else:
-        norms = dict(zutils.read_baseline(args.baseline, args.metric))
+        norms = dict(pz.util.read_baseline(args.baseline, args.metric))
 
     while True:
         (result, ngrams) = incoming.get()
         log.info('{0} {1} {2}'.format(metric, ngrams, result.stem))
 
         df = pd.read_csv(result, usecols=usecols)
-        query = Path(df.get_value(0, 'query'))
-        topic = QueryDoc.components(query).topic
+        assert(len(df) == 1)
+        query = Path(df.iat[0, df.columns.get_loc('query')])
+        topic = pz.TrecDocument.components(query).topic
 
         if norms and norms[topic] == 0:
             log.warning('Skipping {0}'.format(topic))
@@ -51,17 +49,14 @@ def jobs(args):
         n = int(ngram.stem)
         if args.min_ngrams <= n <= args.max_ngrams:
             for result in ngram.iterdir():
-                if result.suffix == '.csv':
-                    yield (result, n)
+                yield (result, n)
 
 def aquire(args):
     incoming = mp.Queue()
     outgoing = mp.Queue()
 
-    initargs = (outgoing, incoming, args)
-
-    with mp.Pool(processes=args.workers, initializer=func, initargs=initargs):
-        queue = JobQueue(incoming, outgoing, jobs(args))
+    with mp.Pool(args.workers, func, (outgoing, incoming, args)):
+        queue = pz.util.JobQueue(incoming, outgoing, jobs(args))
         for i in queue:
             if i is not None:
                 yield i
@@ -72,7 +67,7 @@ arguments.add_argument('--y-max', type=float, default=None)
 arguments.add_argument('--common', action='store_true')
 arguments.add_argument('--zrt', type=Path)
 arguments.add_argument('--output', type=Path)
-arguments.add_argument('--metric', type=TrecMetric)
+arguments.add_argument('--metric', type=pz.TrecMetric)
 arguments.add_argument('--baseline', type=Path)
 arguments.add_argument('--min-ngrams', type=int, default=0)
 arguments.add_argument('--max-ngrams', type=float, default=np.inf)
@@ -81,7 +76,7 @@ arguments.add_argument('--model', action='append')
 arguments.add_argument('--save-data', type=Path)
 args = arguments.parse_args()
 
-log = logger.getlogger(True)
+log = pz.util.get_logger(True)
 
 #
 # Get the plotter options together first so that if they're wrong we
