@@ -70,7 +70,7 @@ class Search:
 
             yield from proc.stdout
 
-    def execute(self, query):
+    def execute(self, query, baseline=None):
         '''Build/execute the Indri command
 
         '''
@@ -82,6 +82,8 @@ class Search:
             '-index={0}'.format(self.index),
             str(query),
         ]
+        if baseline:
+            cmd.insert(-1, '-baseline='.format(baseline))
 
         yield from self._shell(cmd)
 
