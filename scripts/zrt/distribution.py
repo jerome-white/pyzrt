@@ -107,6 +107,7 @@ arguments.add_argument('--plot', type=Path)
 arguments.add_argument('--save', type=Path)
 arguments.add_argument('--creator')
 arguments.add_argument('--workers', type=int, default=mp.cpu_count())
+arguments.add_argument('--x-min', type=float, default=0)
 arguments.add_argument('--normalize', action='store_true')
 args = arguments.parse_args()
 
@@ -139,7 +140,5 @@ if args.save:
     df.to_csv(args.save, index_label='duration')
 
 if args.plot:
-    ax = df.plot(kind='line',
-                 grid=True,
-                 xlim=(0, None))
+    ax = df.plot.line(grid=True, xlim=(args.x_min, None))
     ax.figure.savefig(str(args.plot), bbox_inches='tight')
