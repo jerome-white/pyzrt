@@ -6,7 +6,7 @@ from argparse import ArgumentParser
 from multiprocessing import Pool
 
 # import seaborn as sns
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 import pandas as pd
 
 import pyzrt as pz
@@ -140,5 +140,5 @@ if args.save:
     df.to_csv(args.save, index_label='duration')
 
 if args.plot:
-    ax = df.plot.line(grid=True, xlim=(args.x_min, None))
-    ax.figure.savefig(str(args.plot), bbox_inches='tight')
+    df.plot.line(grid=True, xlim=(args.x_min, None))
+    plt.savefig(str(args.plot), bbox_inches='tight')
