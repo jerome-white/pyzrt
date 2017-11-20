@@ -25,7 +25,7 @@ class Term(BasicTerm):
         return self.ngram
 
     def end(self):
-        return self.position + len(self)
+        return self.position + len(self) - 1
 
     @classmethod
     def _fromdict(cls, dictionary):
