@@ -18,7 +18,10 @@ class TermCollection(list):
         return self.collection.stem if self.collection else ''
 
     def __str__(self):
-        return ' '.join(map(op.attrgetter('ngram'), self))
+        return self.tostring(str)
+
+    def tostring(self, how, separator=' '):
+        return separator.join(map(how, self))
 
     def bylength(self, descending=True):
         self.sort(key=len, reverse=descending)
