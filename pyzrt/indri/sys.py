@@ -76,7 +76,7 @@ class Search:
         '''
 
         cmd = [
-            sh.which('IndriRunQuery'),
+            self.indri,
             '-trecFormat=true',
             '-count={0}'.format(self.count),
             '-index={0}'.format(self.index),
@@ -102,6 +102,7 @@ class Search:
             for i in execution:
                 fp.write(i)
             fp.flush()
+
             if os.stat(fp.name):
                 cmd.append(fp.name)
                 yield from self._shell(cmd)
