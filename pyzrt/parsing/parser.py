@@ -62,24 +62,19 @@ class WSJParser(_Parser):
             yield Document(docno, text)
 
 class TermDocumentParser(_Parser):
-    def __init__(self, tostring, strainer=None):
-        super().__init__(strainer)
-        self.tostring = tostring
-
     def _parse(self, doc):
-        text = ' '.join(map(self.tostring, TermCollection(doc)))
-        yield Document(doc.stem, text)
+        yield Document(doc.stem, self.tostring(TermCollection(doc)))
 
-    def tostring(self, term):
+    def tostring(self, doc):
         raise NotImplementedError()
 
 class PseudoTermParser(TermDocumentParser):
-    def __init__(self, strainer=None):
-        super().__init__(str, strainer)
+    def tostring(self, doc):
+        return str(doc)
 
 class NGramParser(TermDocumentParser):
-    def __init__(self, strainer=None):
-        super().__init__(repr, strainer)
+    def tostring(self, doc):
+        return doc.tostring(repr)
 
 class PassThroughParser(_Parser):
     def _parse(self, doc):
