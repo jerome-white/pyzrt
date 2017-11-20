@@ -28,6 +28,8 @@ class Term(BasicTerm):
         return self.position + len(self)
 
     @classmethod
-    def _fromdict(cls, d):
+    def _fromdict(cls, dictionary):
+        d = { x: dictionary[x] for x in cls._fields }
         d['position'] = int(d['position'])
+
         return cls(**d)
