@@ -137,7 +137,7 @@ class ShortestPath(_Query):
             u = collection.index(source)
             for target in collection.immediates(u):
                 v = collection.index(target)
-                weight = source.end() - target.end()
+                weight = -(source - target)
                 graph.add_edge(u, v, weight=weight)
 
 
