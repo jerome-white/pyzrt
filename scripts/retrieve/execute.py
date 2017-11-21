@@ -6,7 +6,7 @@ from argparse import ArgumentParser
 
 import pyzrt as pz
 
-Info = cl.namedtuple('Info', 'model, topic, ngrams')
+Info = cl.namedtuple('Info', 'model, query, ngrams')
 
 def func(queue, index, feedback):
     log = pz.util.get_logger()
@@ -66,7 +66,7 @@ with mp.Pool(args.workers, func, initargs) as pool:
 
             qrels = args.qrels.joinpath(str(components.topic))
             model = i.suffix[1:] # without the '.'
-            info = Info(model, components.topic, args.ngrams)
+            info = Info(model, i.stem, args.ngrams)
 
             queue.put((i, out, qrels, info))
     queue.join()
