@@ -68,11 +68,11 @@ class Simulated(_Parser):
     def __init__(self, document):
         super().__init__()
 
-        self.collection = pz.TermCollection(document)
+        self.document = pz.TermCollection(document)
         self.itr = None
 
     def _prime(self):
-        self.itr = iter(self.collection)
+        self.itr = iter(self.document)
 
     def __next__(self):
         term = next(self.itr)
@@ -80,7 +80,7 @@ class Simulated(_Parser):
         return (str(term), len(term))
 
     def isquery(self):
-        return pz.TrecDocument.isquery(self.document)
+        return pz.TrecDocument.isquery(self.document.collection)
 
 def func(incoming, outgoing, creator):
     parser = Parser(creator)
@@ -140,5 +140,10 @@ if args.save:
     df.to_csv(args.save, index_label='duration')
 
 if args.plot:
+    kwargs = {
+        'aren': { 'xlim': (0, None) }
+        None: {}
+    }[args.creator]
+
     df.plot.line(grid=True, xlim=(args.x_min, None))
     plt.savefig(str(args.plot), bbox_inches='tight')
