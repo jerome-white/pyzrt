@@ -135,11 +135,10 @@ class ShortestPath(_Query):
 
         for source in collection:
             u = collection.index(source)
-            for target in collection.immediates(u):
+            for target in collection.after(u):
                 v = collection.index(target)
-                weight = -(source - target)
+                weight = source.span - target.position
                 graph.add_edge(u, v, weight=weight)
-
 
         (source, target) = (0, len(collection) - 1)
         best = GraphPath([ source ])

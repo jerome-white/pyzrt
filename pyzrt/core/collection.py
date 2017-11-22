@@ -7,7 +7,6 @@ from pyzrt.core.term import Term
 class TermCollection(list):
     def __init__(self, collection=None):
         self.collection = collection
-        self.inorder = True
 
         if self.collection:
             with self.collection.open() as fp:
@@ -25,34 +24,40 @@ class TermCollection(list):
 
     def bylength(self, descending=True):
         self.sort(key=len, reverse=descending)
-        self.inorder = False
 
     def get(self, ngram):
         for (i, term) in enumerate(self):
             if term.ngram == ngram:
                 yield (i, term)
 
-    def subset(self, difference, start=0):
-        assert(self.inorder)
+    def regions(self, start=0, follows=None):
+        if follows is None:
+            follows = lambda x, y: x.position > y.span
 
         region = TermCollection()
 
-        for term in it.islice(self, start, None):
-            if region and difference(region[-1], term) > 0:
-                yield region
-                region = TermCollection()
-            region.append(term)
+        for current in it.islice(self, start, None):
+            if region:
+                previous = region[-1]
+                assert(previous.position <= current.position) # not in order!
+                if follows(current, previous):
+                    yield region
+                    region = TermCollection()
+            region.append(current)
 
         if region:
             yield region
 
-    def regions(self):
-        yield from self.subset(op.sub)
+    def after(self, index):
+        ptr = self[index]
+        follows = lambda x, y: x.position > ptr.span
 
-    def immediates(self, index):
-        difference = lambda x, y: self[index] - y
+        for i in it.islice(self, index, None):
+            if i.position > ptr.position:
+                break
+            index += 1
 
-        yield from next(self.subset(difference, index + 1))
+        yield from next(self.regions(index, follows))
 
     def tocsv(self, fp, header=True):
         writer = csv.DictWriter(fp, fieldnames=Term._fields)

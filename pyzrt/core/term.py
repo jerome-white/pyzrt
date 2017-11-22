@@ -18,9 +18,6 @@ class Term(BasicTerm):
             return len(self) < len(other)
         return self.position < other.position
 
-    def __sub__(self, other):
-        return other.position - self.end()
-
     def __str__(self):
         return self.name
 
