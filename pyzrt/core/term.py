@@ -7,6 +7,9 @@ class Term(BasicTerm):
         self = super(Term, cls).__new__(cls, name, ngram, position)
         return self
 
+    def __init__(self, name, ngram, position):
+        self.span = self.position + len(self) - 1
+
     def __len__(self):
         return len(self.ngram)
 
@@ -20,9 +23,6 @@ class Term(BasicTerm):
 
     def __str__(self):
         return self.name
-
-    def end(self):
-        return self.position + len(self) - 1
 
     @classmethod
     def _fromdict(cls, dictionary):
