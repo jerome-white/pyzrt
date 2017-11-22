@@ -1,5 +1,6 @@
 import sys
 import itertools
+import operator as op
 import xml.etree.ElementTree as et
 from pathlib import Path
 from functools import singledispatch
@@ -74,7 +75,7 @@ class PseudoTermParser(TermDocumentParser):
 
 class NGramParser(TermDocumentParser):
     def tostring(self, doc):
-        return doc.tostring(repr)
+        return doc.tostring(op.attrgetter('name'))
 
 class PassThroughParser(_Parser):
     def _parse(self, doc):
