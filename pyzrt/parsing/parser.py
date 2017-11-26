@@ -16,6 +16,12 @@ class Document:
         self.docno = docno
         self.text = text
 
+    def xerox(self, text):
+        return Document(self.docno, text)
+
+    def __str__(self):
+        return self.text
+
 class _Parser():
     def __init__(self, strainer=None):
         self.strainer = _Strainer() if strainer is None else strainer
@@ -62,18 +68,18 @@ class WSJParser(_Parser):
 
             yield Document(docno, text)
 
-class TermDocumentParser(_Parser):
+class _TermDocumentParser(_Parser):
     def _parse(self, doc):
         yield Document(doc.stem, self.tostring(TermCollection(doc)))
 
     def tostring(self, doc):
         raise NotImplementedError()
 
-class PseudoTermParser(TermDocumentParser):
+class PseudoTermParser(_TermDocumentParser):
     def tostring(self, doc):
         return str(doc)
 
-class NGramParser(TermDocumentParser):
+class NGramParser(_TermDocumentParser):
     def tostring(self, doc):
         return doc.tostring(repr)
 
