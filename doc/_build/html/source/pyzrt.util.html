@@ -1,0 +1,375 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>pyzrt.util package &#8212; pyzrt 0 documentation</title>
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pyzrt 0 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">pyzrt.util package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-pyzrt.util.cluster">pyzrt.util.cluster module</a></li>
+<li><a class="reference internal" href="#module-pyzrt.util.influence">pyzrt.util.influence module</a></li>
+<li><a class="reference internal" href="#module-pyzrt.util.jobqueue">pyzrt.util.jobqueue module</a></li>
+<li><a class="reference internal" href="#module-pyzrt.util.logger">pyzrt.util.logger module</a></li>
+<li><a class="reference internal" href="#module-pyzrt.util.trec">pyzrt.util.trec module</a></li>
+<li><a class="reference internal" href="#module-pyzrt.util.walk">pyzrt.util.walk module</a></li>
+<li><a class="reference internal" href="#module-pyzrt.util.zutils">pyzrt.util.zutils module</a></li>
+<li><a class="reference internal" href="#module-pyzrt.util">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/source/pyzrt.util.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="pyzrt-util-package">
+<h1>pyzrt.util package<a class="headerlink" href="#pyzrt-util-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-pyzrt.util.cluster">
+<span id="pyzrt-util-cluster-module"></span><h2>pyzrt.util.cluster module<a class="headerlink" href="#module-pyzrt.util.cluster" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pyzrt.util.cluster.Centroid">
+<em class="property">class </em><code class="descclassname">pyzrt.util.cluster.</code><code class="descname">Centroid</code><span class="sig-paren">(</span><em>documents</em>, <em>save_raw_to=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/util/cluster.html#Centroid"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.util.cluster.Centroid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyzrt.util.cluster.Cluster" title="pyzrt.util.cluster.Cluster"><code class="xref py py-class docutils literal"><span class="pre">pyzrt.util.cluster.Cluster</span></code></a></p>
+<dl class="method">
+<dt id="pyzrt.util.cluster.Centroid.term_mapping">
+<code class="descname">term_mapping</code><span class="sig-paren">(</span><em>n_terms</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/util/cluster.html#Centroid.term_mapping"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.util.cluster.Centroid.term_mapping" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyzrt.util.cluster.Cluster">
+<em class="property">class </em><code class="descclassname">pyzrt.util.cluster.</code><code class="descname">Cluster</code><span class="sig-paren">(</span><em>documents</em>, <em>save_raw_to=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/util/cluster.html#Cluster"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.util.cluster.Cluster" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="pyzrt.util.cluster.Cluster.get_model">
+<code class="descname">get_model</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/util/cluster.html#Cluster.get_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.util.cluster.Cluster.get_model" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyzrt.util.cluster.Cluster.plot">
+<code class="descname">plot</code><span class="sig-paren">(</span><em>output</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/util/cluster.html#Cluster.plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.util.cluster.Cluster.plot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyzrt.util.cluster.Cluster.term_mapping">
+<code class="descname">term_mapping</code><span class="sig-paren">(</span><em>n_terms</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/util/cluster.html#Cluster.term_mapping"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.util.cluster.Cluster.term_mapping" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyzrt.util.cluster.Cluster.visualize">
+<code class="descname">visualize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/util/cluster.html#Cluster.visualize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.util.cluster.Cluster.visualize" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyzrt.util.cluster.Cluster.write">
+<code class="descname">write</code><span class="sig-paren">(</span><em>fp</em>, <em>n_terms=0</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/util/cluster.html#Cluster.write"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.util.cluster.Cluster.write" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyzrt.util.cluster.DBScan">
+<em class="property">class </em><code class="descclassname">pyzrt.util.cluster.</code><code class="descname">DBScan</code><span class="sig-paren">(</span><em>documents</em>, <em>save_raw_to=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/util/cluster.html#DBScan"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.util.cluster.DBScan" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyzrt.util.cluster.Centroid" title="pyzrt.util.cluster.Centroid"><code class="xref py py-class docutils literal"><span class="pre">pyzrt.util.cluster.Centroid</span></code></a></p>
+<dl class="method">
+<dt id="pyzrt.util.cluster.DBScan.get_model">
+<code class="descname">get_model</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/util/cluster.html#DBScan.get_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.util.cluster.DBScan.get_model" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyzrt.util.cluster.DBScan.visualize">
+<code class="descname">visualize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/util/cluster.html#DBScan.visualize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.util.cluster.DBScan.visualize" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyzrt.util.cluster.Entry">
+<em class="property">class </em><code class="descclassname">pyzrt.util.cluster.</code><code class="descname">Entry</code><span class="sig-paren">(</span><em>type</em>, <em>cluster</em>, <em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#pyzrt.util.cluster.Entry" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">tuple</span></code></p>
+<dl class="attribute">
+<dt id="pyzrt.util.cluster.Entry.cluster">
+<code class="descname">cluster</code><a class="headerlink" href="#pyzrt.util.cluster.Entry.cluster" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 1</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pyzrt.util.cluster.Entry.type">
+<code class="descname">type</code><a class="headerlink" href="#pyzrt.util.cluster.Entry.type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 0</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pyzrt.util.cluster.Entry.value">
+<code class="descname">value</code><a class="headerlink" href="#pyzrt.util.cluster.Entry.value" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 2</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyzrt.util.cluster.KMeans">
+<em class="property">class </em><code class="descclassname">pyzrt.util.cluster.</code><code class="descname">KMeans</code><span class="sig-paren">(</span><em>documents</em>, <em>save_raw_to=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/util/cluster.html#KMeans"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.util.cluster.KMeans" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyzrt.util.cluster.Centroid" title="pyzrt.util.cluster.Centroid"><code class="xref py py-class docutils literal"><span class="pre">pyzrt.util.cluster.Centroid</span></code></a></p>
+<dl class="method">
+<dt id="pyzrt.util.cluster.KMeans.elbow">
+<code class="descname">elbow</code><span class="sig-paren">(</span><em>output</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/util/cluster.html#KMeans.elbow"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.util.cluster.KMeans.elbow" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyzrt.util.cluster.KMeans.get_model">
+<code class="descname">get_model</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/util/cluster.html#KMeans.get_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.util.cluster.KMeans.get_model" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-pyzrt.util.influence">
+<span id="pyzrt-util-influence-module"></span><h2>pyzrt.util.influence module<a class="headerlink" href="#module-pyzrt.util.influence" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pyzrt.util.influence.Influence">
+<em class="property">class </em><code class="descclassname">pyzrt.util.influence.</code><code class="descname">Influence</code><span class="sig-paren">(</span><em>results</em>, <em>metric</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/util/influence.html#Influence"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.util.influence.Influence" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="pyzrt.util.influence.Influence.best">
+<code class="descname">best</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/util/influence.html#Influence.best"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.util.influence.Influence.best" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyzrt.util.influence.Influence.subsort">
+<code class="descname">subsort</code><span class="sig-paren">(</span><em>terms</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/util/influence.html#Influence.subsort"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.util.influence.Influence.subsort" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyzrt.util.influence.Influence.top">
+<code class="descname">top</code><span class="sig-paren">(</span><em>n</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/util/influence.html#Influence.top"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.util.influence.Influence.top" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyzrt.util.influence.TermInfluence">
+<em class="property">class </em><code class="descclassname">pyzrt.util.influence.</code><code class="descname">TermInfluence</code><span class="sig-paren">(</span><em>results</em>, <em>metric</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/util/influence.html#TermInfluence"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.util.influence.TermInfluence" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyzrt.util.influence.Influence" title="pyzrt.util.influence.Influence"><code class="xref py py-class docutils literal"><span class="pre">pyzrt.util.influence.Influence</span></code></a></p>
+<dl class="method">
+<dt id="pyzrt.util.influence.TermInfluence.subsort">
+<code class="descname">subsort</code><span class="sig-paren">(</span><em>terms</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/util/influence.html#TermInfluence.subsort"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.util.influence.TermInfluence.subsort" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pyzrt.util.influence.TermScore">
+<code class="descclassname">pyzrt.util.influence.</code><code class="descname">TermScore</code><a class="headerlink" href="#pyzrt.util.influence.TermScore" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal"><span class="pre">TopTerm</span></code></p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-pyzrt.util.jobqueue">
+<span id="pyzrt-util-jobqueue-module"></span><h2>pyzrt.util.jobqueue module<a class="headerlink" href="#module-pyzrt.util.jobqueue" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pyzrt.util.jobqueue.JobQueue">
+<em class="property">class </em><code class="descclassname">pyzrt.util.jobqueue.</code><code class="descname">JobQueue</code><span class="sig-paren">(</span><em>incoming</em>, <em>outgoing</em>, <em>jobs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/util/jobqueue.html#JobQueue"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.util.jobqueue.JobQueue" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="pyzrt.util.jobqueue.JobQueue.decrement">
+<code class="descname">decrement</code><span class="sig-paren">(</span><em>item</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/util/jobqueue.html#JobQueue.decrement"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.util.jobqueue.JobQueue.decrement" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyzrt.util.jobqueue.SentinalJobQueue">
+<em class="property">class </em><code class="descclassname">pyzrt.util.jobqueue.</code><code class="descname">SentinalJobQueue</code><span class="sig-paren">(</span><em>incoming</em>, <em>outgoing</em>, <em>jobs</em>, <em>sentinal=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/util/jobqueue.html#SentinalJobQueue"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.util.jobqueue.SentinalJobQueue" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyzrt.util.jobqueue.JobQueue" title="pyzrt.util.jobqueue.JobQueue"><code class="xref py py-class docutils literal"><span class="pre">pyzrt.util.jobqueue.JobQueue</span></code></a></p>
+<dl class="method">
+<dt id="pyzrt.util.jobqueue.SentinalJobQueue.decrement">
+<code class="descname">decrement</code><span class="sig-paren">(</span><em>item</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/util/jobqueue.html#SentinalJobQueue.decrement"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.util.jobqueue.SentinalJobQueue.decrement" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-pyzrt.util.logger">
+<span id="pyzrt-util-logger-module"></span><h2>pyzrt.util.logger module<a class="headerlink" href="#module-pyzrt.util.logger" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pyzrt.util.logger.LogConfigure">
+<em class="property">class </em><code class="descclassname">pyzrt.util.logger.</code><code class="descname">LogConfigure</code><a class="reference internal" href="../_modules/pyzrt/util/logger.html#LogConfigure"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.util.logger.LogConfigure" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dl class="attribute">
+<dt id="pyzrt.util.logger.LogConfigure.logname">
+<code class="descname">logname</code><em class="property"> = None</em><a class="headerlink" href="#pyzrt.util.logger.LogConfigure.logname" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyzrt.util.logger.LogConfigure.msgfmt">
+<code class="descname">msgfmt</code><em class="property"> = ['%(levelname)s', '%(asctime)s', '%(name)s', '%(filename)s:%(lineno)d', '%(message)s']</em><a class="headerlink" href="#pyzrt.util.logger.LogConfigure.msgfmt" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyzrt.util.logger.LogConfigure.msgsep">
+<code class="descname">msgsep</code><em class="property"> = ' '</em><a class="headerlink" href="#pyzrt.util.logger.LogConfigure.msgsep" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyzrt.util.logger.PeriodicLogger">
+<em class="property">class </em><code class="descclassname">pyzrt.util.logger.</code><code class="descname">PeriodicLogger</code><span class="sig-paren">(</span><em>periods</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/util/logger.html#PeriodicLogger"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.util.logger.PeriodicLogger" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="pyzrt.util.logger.PeriodicLogger.emit">
+<code class="descname">emit</code><span class="sig-paren">(</span><em>msg</em>, <em>log_method=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/util/logger.html#PeriodicLogger.emit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.util.logger.PeriodicLogger.emit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="pyzrt.util.logger.get_logger">
+<code class="descclassname">pyzrt.util.logger.</code><code class="descname">get_logger</code><span class="sig-paren">(</span><em>root=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/util/logger.html#get_logger"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.util.logger.get_logger" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="pyzrt.util.logger.readlog">
+<code class="descclassname">pyzrt.util.logger.</code><code class="descname">readlog</code><span class="sig-paren">(</span><em>fp</em>, <em>message_only=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/util/logger.html#readlog"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.util.logger.readlog" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-pyzrt.util.trec">
+<span id="pyzrt-util-trec-module"></span><h2>pyzrt.util.trec module<a class="headerlink" href="#module-pyzrt.util.trec" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pyzrt.util.trec.TrecMeasurement">
+<em class="property">class </em><code class="descclassname">pyzrt.util.trec.</code><code class="descname">TrecMeasurement</code><span class="sig-paren">(</span><em>run</em>, <em>results</em><span class="sig-paren">)</span><a class="headerlink" href="#pyzrt.util.trec.TrecMeasurement" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">tuple</span></code></p>
+<dl class="attribute">
+<dt id="pyzrt.util.trec.TrecMeasurement.results">
+<code class="descname">results</code><a class="headerlink" href="#pyzrt.util.trec.TrecMeasurement.results" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 1</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pyzrt.util.trec.TrecMeasurement.run">
+<code class="descname">run</code><a class="headerlink" href="#pyzrt.util.trec.TrecMeasurement.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 0</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="pyzrt.util.trec.read_trec">
+<code class="descclassname">pyzrt.util.trec.</code><code class="descname">read_trec</code><span class="sig-paren">(</span><em>fp</em>, <em>summary=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/util/trec.html#read_trec"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.util.trec.read_trec" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-pyzrt.util.walk">
+<span id="pyzrt-util-walk-module"></span><h2>pyzrt.util.walk module<a class="headerlink" href="#module-pyzrt.util.walk" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="pyzrt.util.walk.walk">
+<code class="descclassname">pyzrt.util.walk.</code><code class="descname">walk</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/util/walk.html#walk"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.util.walk.walk" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-pyzrt.util.zutils">
+<span id="pyzrt-util-zutils-module"></span><h2>pyzrt.util.zutils module<a class="headerlink" href="#module-pyzrt.util.zutils" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="pyzrt.util.zutils.read_baseline">
+<code class="descclassname">pyzrt.util.zutils.</code><code class="descname">read_baseline</code><span class="sig-paren">(</span><em>baseline</em>, <em>metric</em>, <em>single_topics=True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/util/zutils.html#read_baseline"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.util.zutils.read_baseline" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read the file created by baseline.py
+baseline (Path): path to baseline file
+metric (TrecMetric): metric of choice
+single_topics (Bool): whether to ensure topics are listed once</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-pyzrt.util">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-pyzrt.util" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pyzrt 0 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, Jerome White.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.3.
+    </div>
+  </body>
+</html>

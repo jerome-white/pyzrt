@@ -1,0 +1,241 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>pyzrt.parsing package &#8212; pyzrt 0 documentation</title>
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pyzrt 0 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">pyzrt.parsing package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-pyzrt.parsing.parser">pyzrt.parsing.parser module</a></li>
+<li><a class="reference internal" href="#module-pyzrt.parsing.strainer">pyzrt.parsing.strainer module</a></li>
+<li><a class="reference internal" href="#module-pyzrt.parsing">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/source/pyzrt.parsing.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="pyzrt-parsing-package">
+<h1>pyzrt.parsing package<a class="headerlink" href="#pyzrt-parsing-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-pyzrt.parsing.parser">
+<span id="pyzrt-parsing-parser-module"></span><h2>pyzrt.parsing.parser module<a class="headerlink" href="#module-pyzrt.parsing.parser" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pyzrt.parsing.parser.Document">
+<em class="property">class </em><code class="descclassname">pyzrt.parsing.parser.</code><code class="descname">Document</code><span class="sig-paren">(</span><em>docno</em>, <em>text</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/parsing/parser.html#Document"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.parsing.parser.Document" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="pyzrt.parsing.parser.NGramParser">
+<em class="property">class </em><code class="descclassname">pyzrt.parsing.parser.</code><code class="descname">NGramParser</code><span class="sig-paren">(</span><em>strainer=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/parsing/parser.html#NGramParser"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.parsing.parser.NGramParser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyzrt.parsing.parser.TermDocumentParser" title="pyzrt.parsing.parser.TermDocumentParser"><code class="xref py py-class docutils literal"><span class="pre">pyzrt.parsing.parser.TermDocumentParser</span></code></a></p>
+<dl class="method">
+<dt id="pyzrt.parsing.parser.NGramParser.tostring">
+<code class="descname">tostring</code><span class="sig-paren">(</span><em>doc</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/parsing/parser.html#NGramParser.tostring"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.parsing.parser.NGramParser.tostring" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="pyzrt.parsing.parser.Parser">
+<code class="descclassname">pyzrt.parsing.parser.</code><code class="descname">Parser</code><span class="sig-paren">(</span><em>parser_type</em>, <em>*args</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/parsing/parser.html#Parser"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.parsing.parser.Parser" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="class">
+<dt id="pyzrt.parsing.parser.PassThroughParser">
+<em class="property">class </em><code class="descclassname">pyzrt.parsing.parser.</code><code class="descname">PassThroughParser</code><span class="sig-paren">(</span><em>strainer=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/parsing/parser.html#PassThroughParser"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.parsing.parser.PassThroughParser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">pyzrt.parsing.parser._Parser</span></code></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="pyzrt.parsing.parser.PseudoTermParser">
+<em class="property">class </em><code class="descclassname">pyzrt.parsing.parser.</code><code class="descname">PseudoTermParser</code><span class="sig-paren">(</span><em>strainer=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/parsing/parser.html#PseudoTermParser"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.parsing.parser.PseudoTermParser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyzrt.parsing.parser.TermDocumentParser" title="pyzrt.parsing.parser.TermDocumentParser"><code class="xref py py-class docutils literal"><span class="pre">pyzrt.parsing.parser.TermDocumentParser</span></code></a></p>
+<dl class="method">
+<dt id="pyzrt.parsing.parser.PseudoTermParser.tostring">
+<code class="descname">tostring</code><span class="sig-paren">(</span><em>doc</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/parsing/parser.html#PseudoTermParser.tostring"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.parsing.parser.PseudoTermParser.tostring" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyzrt.parsing.parser.TermDocumentParser">
+<em class="property">class </em><code class="descclassname">pyzrt.parsing.parser.</code><code class="descname">TermDocumentParser</code><span class="sig-paren">(</span><em>strainer=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/parsing/parser.html#TermDocumentParser"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.parsing.parser.TermDocumentParser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">pyzrt.parsing.parser._Parser</span></code></p>
+<dl class="method">
+<dt id="pyzrt.parsing.parser.TermDocumentParser.tostring">
+<code class="descname">tostring</code><span class="sig-paren">(</span><em>doc</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/parsing/parser.html#TermDocumentParser.tostring"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.parsing.parser.TermDocumentParser.tostring" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyzrt.parsing.parser.TestParser">
+<em class="property">class </em><code class="descclassname">pyzrt.parsing.parser.</code><code class="descname">TestParser</code><span class="sig-paren">(</span><em>strainer=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/parsing/parser.html#TestParser"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.parsing.parser.TestParser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">pyzrt.parsing.parser._Parser</span></code></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="pyzrt.parsing.parser.WSJParser">
+<em class="property">class </em><code class="descclassname">pyzrt.parsing.parser.</code><code class="descname">WSJParser</code><span class="sig-paren">(</span><em>strainer=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/parsing/parser.html#WSJParser"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.parsing.parser.WSJParser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">pyzrt.parsing.parser._Parser</span></code></p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-pyzrt.parsing.strainer">
+<span id="pyzrt-parsing-strainer-module"></span><h2>pyzrt.parsing.strainer module<a class="headerlink" href="#module-pyzrt.parsing.strainer" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pyzrt.parsing.strainer.AlphaNumericStrainer">
+<em class="property">class </em><code class="descclassname">pyzrt.parsing.strainer.</code><code class="descname">AlphaNumericStrainer</code><span class="sig-paren">(</span><em>strainer</em>, <em>extended=False</em>, <em>stops=True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/parsing/strainer.html#AlphaNumericStrainer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.parsing.strainer.AlphaNumericStrainer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">pyzrt.parsing.strainer._Strainer</span></code></p>
+<dl class="method">
+<dt id="pyzrt.parsing.strainer.AlphaNumericStrainer.strain">
+<code class="descname">strain</code><span class="sig-paren">(</span><em>document</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/parsing/strainer.html#AlphaNumericStrainer.strain"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.parsing.strainer.AlphaNumericStrainer.strain" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyzrt.parsing.strainer.CaseStrainer">
+<em class="property">class </em><code class="descclassname">pyzrt.parsing.strainer.</code><code class="descname">CaseStrainer</code><span class="sig-paren">(</span><em>strainer</em>, <em>casing='lower'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/parsing/strainer.html#CaseStrainer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.parsing.strainer.CaseStrainer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">pyzrt.parsing.strainer._Strainer</span></code></p>
+<dl class="method">
+<dt id="pyzrt.parsing.strainer.CaseStrainer.strain">
+<code class="descname">strain</code><span class="sig-paren">(</span><em>document</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/parsing/strainer.html#CaseStrainer.strain"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.parsing.strainer.CaseStrainer.strain" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyzrt.parsing.strainer.ReplacementStrainer">
+<em class="property">class </em><code class="descclassname">pyzrt.parsing.strainer.</code><code class="descname">ReplacementStrainer</code><span class="sig-paren">(</span><em>strainer</em>, <em>new</em>, <em>old=' '</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/parsing/strainer.html#ReplacementStrainer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.parsing.strainer.ReplacementStrainer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">pyzrt.parsing.strainer._Strainer</span></code></p>
+<dl class="method">
+<dt id="pyzrt.parsing.strainer.ReplacementStrainer.strain">
+<code class="descname">strain</code><span class="sig-paren">(</span><em>document</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/parsing/strainer.html#ReplacementStrainer.strain"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.parsing.strainer.ReplacementStrainer.strain" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyzrt.parsing.strainer.SpaceStrainer">
+<em class="property">class </em><code class="descclassname">pyzrt.parsing.strainer.</code><code class="descname">SpaceStrainer</code><span class="sig-paren">(</span><em>strainer</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/parsing/strainer.html#SpaceStrainer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.parsing.strainer.SpaceStrainer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyzrt.parsing.strainer.ReplacementStrainer" title="pyzrt.parsing.strainer.ReplacementStrainer"><code class="xref py py-class docutils literal"><span class="pre">pyzrt.parsing.strainer.ReplacementStrainer</span></code></a></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyzrt.parsing.strainer.Strainer">
+<code class="descclassname">pyzrt.parsing.strainer.</code><code class="descname">Strainer</code><span class="sig-paren">(</span><em>strainers=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/parsing/strainer.html#Strainer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.parsing.strainer.Strainer" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="class">
+<dt id="pyzrt.parsing.strainer.TRECStrainer">
+<em class="property">class </em><code class="descclassname">pyzrt.parsing.strainer.</code><code class="descname">TRECStrainer</code><span class="sig-paren">(</span><em>strainer=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/parsing/strainer.html#TRECStrainer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.parsing.strainer.TRECStrainer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">pyzrt.parsing.strainer._Strainer</span></code></p>
+<dl class="method">
+<dt id="pyzrt.parsing.strainer.TRECStrainer.strain">
+<code class="descname">strain</code><span class="sig-paren">(</span><em>document</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/parsing/strainer.html#TRECStrainer.strain"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.parsing.strainer.TRECStrainer.strain" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyzrt.parsing.strainer.UnderscoreStrainer">
+<em class="property">class </em><code class="descclassname">pyzrt.parsing.strainer.</code><code class="descname">UnderscoreStrainer</code><span class="sig-paren">(</span><em>strainer</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/parsing/strainer.html#UnderscoreStrainer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.parsing.strainer.UnderscoreStrainer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyzrt.parsing.strainer.ReplacementStrainer" title="pyzrt.parsing.strainer.ReplacementStrainer"><code class="xref py py-class docutils literal"><span class="pre">pyzrt.parsing.strainer.ReplacementStrainer</span></code></a></p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-pyzrt.parsing">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-pyzrt.parsing" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pyzrt 0 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, Jerome White.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.3.
+    </div>
+  </body>
+</html>

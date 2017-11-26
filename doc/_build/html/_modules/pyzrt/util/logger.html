@@ -1,0 +1,171 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>pyzrt.util.logger &#8212; pyzrt 0 documentation</title>
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pyzrt 0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pyzrt.util.logger</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">csv</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">platform</span>
+
+<span class="c1"># Level    Numeric value</span>
+<span class="c1"># CRITICAL 50</span>
+<span class="c1"># ERROR    40</span>
+<span class="c1"># WARNING  30</span>
+<span class="c1"># INFO     20</span>
+<span class="c1"># DEBUG    10</span>
+<span class="c1"># NOTSET   0</span>
+
+<div class="viewcode-block" id="LogConfigure"><a class="viewcode-back" href="../../../source/pyzrt.util.html#pyzrt.util.logger.LogConfigure">[docs]</a><span class="k">class</span> <span class="nc">LogConfigure</span><span class="p">:</span>
+    <span class="c1"># basename for clients</span>
+    <span class="n">logname</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="c1"># message format</span>
+    <span class="n">msgfmt</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s1">&#39;</span><span class="si">%(levelname)s</span><span class="s1">&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;</span><span class="si">%(asctime)s</span><span class="s1">&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;</span><span class="si">%(name)s</span><span class="s1">&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;</span><span class="si">%(filename)s</span><span class="s1">:</span><span class="si">%(lineno)d</span><span class="s1">&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;</span><span class="si">%(message)s</span><span class="s1">&#39;</span><span class="p">,</span>
+    <span class="p">]</span>
+    <span class="n">msgsep</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span>
+
+    <span class="k">def</span> <span class="nf">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">logname</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># log level</span>
+            <span class="n">level</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span>
+
+            <span class="c1"># message format</span>
+            <span class="n">msgfmt</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">msgsep</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">msgfmt</span><span class="p">)</span>
+
+            <span class="c1"># date format</span>
+            <span class="n">mdy</span> <span class="o">=</span> <span class="p">[</span> <span class="s1">&#39;m&#39;</span><span class="p">,</span> <span class="s1">&#39;d&#39;</span> <span class="p">]</span>
+            <span class="n">hms</span> <span class="o">=</span> <span class="p">[</span> <span class="s1">&#39;H&#39;</span><span class="p">,</span> <span class="s1">&#39;M&#39;</span><span class="p">,</span> <span class="s1">&#39;S&#39;</span> <span class="p">]</span>
+            <span class="n">datesep_intra</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+            <span class="n">datesep_inter</span> <span class="o">=</span> <span class="s1">&#39;.&#39;</span>
+
+            <span class="n">mdyhms</span> <span class="o">=</span> <span class="p">[[</span> <span class="s1">&#39;%&#39;</span> <span class="o">+</span> <span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">y</span> <span class="p">]</span> <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="p">[</span> <span class="n">mdy</span><span class="p">,</span> <span class="n">hms</span> <span class="p">]]</span>
+            <span class="n">datefmt</span> <span class="o">=</span> <span class="n">datesep_inter</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">datesep_intra</span><span class="o">.</span><span class="n">join</span><span class="p">,</span> <span class="n">mdyhms</span><span class="p">))</span>
+
+            <span class="c1"># configure!</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">level</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="n">msgfmt</span><span class="p">,</span> <span class="n">datefmt</span><span class="o">=</span><span class="n">datefmt</span><span class="p">)</span>
+            <span class="bp">cls</span><span class="o">.</span><span class="n">logname</span> <span class="o">=</span> <span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="p">[</span> <span class="n">platform</span><span class="o">.</span><span class="n">node</span><span class="p">(),</span> <span class="n">os</span><span class="o">.</span><span class="n">getpid</span><span class="p">()</span> <span class="p">]))</span>
+
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">logname</span></div>
+
+<div class="viewcode-block" id="get_logger"><a class="viewcode-back" href="../../../source/pyzrt.util.html#pyzrt.util.logger.get_logger">[docs]</a><span class="k">def</span> <span class="nf">get_logger</span><span class="p">(</span><span class="n">root</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="n">elements</span> <span class="o">=</span> <span class="p">[</span> <span class="n">LogConfigure</span><span class="p">()</span> <span class="p">]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">root</span><span class="p">:</span>
+        <span class="n">elements</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getpid</span><span class="p">()))</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">elements</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">name</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="readlog"><a class="viewcode-back" href="../../../source/pyzrt.util.html#pyzrt.util.logger.readlog">[docs]</a><span class="k">def</span> <span class="nf">readlog</span><span class="p">(</span><span class="n">fp</span><span class="p">,</span> <span class="n">message_only</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="n">reader</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">reader</span><span class="p">(</span><span class="n">fp</span><span class="p">,</span> <span class="n">delimiter</span><span class="o">=</span><span class="n">LogConfigure</span><span class="o">.</span><span class="n">msgsep</span><span class="p">)</span>
+    <span class="n">msg</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">LogConfigure</span><span class="o">.</span><span class="n">msgfmt</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+
+    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">reader</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">row</span><span class="o">.</span><span class="n">isspace</span><span class="p">():</span>
+            <span class="k">yield</span> <span class="n">row</span><span class="p">[</span><span class="n">msg</span><span class="p">:]</span> <span class="k">if</span> <span class="n">message_only</span> <span class="k">else</span> <span class="n">row</span></div>
+
+<span class="c1">#</span>
+<span class="c1"># Log messages periodically. Handy for when the alternative is just</span>
+<span class="c1"># too much. Not thread safe!</span>
+<span class="c1">#</span>
+<div class="viewcode-block" id="PeriodicLogger"><a class="viewcode-back" href="../../../source/pyzrt.util.html#pyzrt.util.logger.PeriodicLogger">[docs]</a><span class="k">class</span> <span class="nc">PeriodicLogger</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">periods</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">periods</span> <span class="o">=</span> <span class="n">periods</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">last</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+<div class="viewcode-block" id="PeriodicLogger.emit"><a class="viewcode-back" href="../../../source/pyzrt.util.html#pyzrt.util.logger.PeriodicLogger.emit">[docs]</a>    <span class="k">def</span> <span class="nf">emit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="n">log_method</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">now</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">now</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">last</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">periods</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">last</span> <span class="o">=</span> <span class="n">now</span>
+            <span class="k">if</span> <span class="n">log_method</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">log_method</span> <span class="o">=</span> <span class="n">getlogger</span><span class="p">()</span><span class="o">.</span><span class="n">info</span>
+            <span class="n">log_method</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pyzrt 0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, Jerome White.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.3.
+    </div>
+  </body>
+</html>

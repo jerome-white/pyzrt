@@ -1,0 +1,273 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>pyzrt.core package &#8212; pyzrt 0 documentation</title>
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pyzrt 0 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">pyzrt.core package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-pyzrt.core.collection">pyzrt.core.collection module</a></li>
+<li><a class="reference internal" href="#module-pyzrt.core.term">pyzrt.core.term module</a></li>
+<li><a class="reference internal" href="#module-pyzrt.core">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/source/pyzrt.core.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="pyzrt-core-package">
+<h1>pyzrt.core package<a class="headerlink" href="#pyzrt-core-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-pyzrt.core.collection">
+<span id="pyzrt-core-collection-module"></span><h2>pyzrt.core.collection module<a class="headerlink" href="#module-pyzrt.core.collection" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pyzrt.core.collection.TermCollection">
+<em class="property">class </em><code class="descclassname">pyzrt.core.collection.</code><code class="descname">TermCollection</code><span class="sig-paren">(</span><em>collection=None</em>, <em>reader=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/core/collection.html#TermCollection"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.core.collection.TermCollection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">list</span></code></p>
+<p>A collection of Terms</p>
+<dl class="attribute">
+<dt id="pyzrt.core.collection.TermCollection.collection">
+<code class="descname">collection</code><a class="headerlink" href="#pyzrt.core.collection.TermCollection.collection" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>Path | NoneType</em> – Path to the term file this instance represents</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyzrt.core.collection.TermCollection.after">
+<code class="descname">after</code><span class="sig-paren">(</span><em>index</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/core/collection.html#TermCollection.after"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.core.collection.TermCollection.after" title="Permalink to this definition">¶</a></dt>
+<dd><p>Terms that overlap a Term at a given index.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>index</strong> (<em>int</em>) – Index within the collection from where to begin.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Yields:</th><td class="field-body"><em>TermCollection</em> – A single collection. Can also be thought of as the
+first ‘region’ relative to an index.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyzrt.core.collection.TermCollection.bylength">
+<code class="descname">bylength</code><span class="sig-paren">(</span><em>descending=True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/core/collection.html#TermCollection.bylength"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.core.collection.TermCollection.bylength" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sort the collections by Term length</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>descending</strong> (<em>Boolean</em><em>, </em><em>optional</em>) – Whether result should be in descending order</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyzrt.core.collection.TermCollection.get">
+<code class="descname">get</code><span class="sig-paren">(</span><em>ngram</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/core/collection.html#TermCollection.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.core.collection.TermCollection.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a Term and its respective index based on an ngram</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>ngram</strong> (<em>str</em>) – n-gram to find within the collection</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Yields:</th><td class="field-body"><em>(int, Term)</em> – The Term matching this ngram, along with the Term’s
+index in the collection</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyzrt.core.collection.TermCollection.regions">
+<code class="descname">regions</code><span class="sig-paren">(</span><em>start=0</em>, <em>follows=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/core/collection.html#TermCollection.regions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.core.collection.TermCollection.regions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate each overlapping region as a new collection.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>start</strong> (<em>int</em><em>, </em><em>optional</em>) – n-gram to find within the collection</li>
+<li><strong>follows</strong> (<a class="reference internal" href="#pyzrt.core.term.Term" title="pyzrt.core.term.Term"><em>Term</em></a><em>,</em><em>Term -&gt; bool</em><em> , </em><em>optional</em>) – Given two terms, returns True iff the
+terms “overlap”. Terms are presented to the function
+in sequential order (previous, current).</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Yields:</th><td class="field-body"><p class="first"><em>TermCollection</em> – An overlapping region relative to, and subset of, the
+calling collection.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><code class="xref py py-exc docutils literal"><span class="pre">AssertionError</span></code> – If the collection is not in sequential (Term
+less-than) order</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyzrt.core.collection.TermCollection.tocsv">
+<code class="descname">tocsv</code><span class="sig-paren">(</span><em>fp</em>, <em>header=True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/core/collection.html#TermCollection.tocsv"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.core.collection.TermCollection.tocsv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write a collection to CSV format.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>fp</strong> (<em>file-object</em>) – An open file stream</li>
+<li><strong>header</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to write the Term information as a header.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyzrt.core.collection.TermCollection.tostring">
+<code class="descname">tostring</code><span class="sig-paren">(</span><em>how</em>, <em>separator=' '</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/core/collection.html#TermCollection.tostring"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.core.collection.TermCollection.tostring" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a string from terms in the collection</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>how</strong> (<em>Term -&gt; str</em>) – Function mapping a Term objec to a string</li>
+<li><strong>separator</strong> (<em>str</em><em>, </em><em>optional</em>) – String used to separate individual Term’s</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-pyzrt.core.term">
+<span id="pyzrt-core-term-module"></span><h2>pyzrt.core.term module<a class="headerlink" href="#module-pyzrt.core.term" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pyzrt.core.term.BasicTerm">
+<em class="property">class </em><code class="descclassname">pyzrt.core.term.</code><code class="descname">BasicTerm</code><span class="sig-paren">(</span><em>name</em>, <em>ngram</em>, <em>position</em><span class="sig-paren">)</span><a class="headerlink" href="#pyzrt.core.term.BasicTerm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">tuple</span></code></p>
+<dl class="attribute">
+<dt id="pyzrt.core.term.BasicTerm.name">
+<code class="descname">name</code><a class="headerlink" href="#pyzrt.core.term.BasicTerm.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 0</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pyzrt.core.term.BasicTerm.ngram">
+<code class="descname">ngram</code><a class="headerlink" href="#pyzrt.core.term.BasicTerm.ngram" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 1</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pyzrt.core.term.BasicTerm.position">
+<code class="descname">position</code><a class="headerlink" href="#pyzrt.core.term.BasicTerm.position" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 2</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyzrt.core.term.Term">
+<em class="property">class </em><code class="descclassname">pyzrt.core.term.</code><code class="descname">Term</code><span class="sig-paren">(</span><em>name</em>, <em>ngram</em>, <em>position</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/core/term.html#Term"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.core.term.Term" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyzrt.core.term.BasicTerm" title="pyzrt.core.term.BasicTerm"><code class="xref py py-class docutils literal"><span class="pre">pyzrt.core.term.BasicTerm</span></code></a></p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-pyzrt.core">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-pyzrt.core" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pyzrt 0 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, Jerome White.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.3.
+    </div>
+  </body>
+</html>

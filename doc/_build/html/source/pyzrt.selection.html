@@ -1,0 +1,386 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>pyzrt.selection package &#8212; pyzrt 0 documentation</title>
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pyzrt 0 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">pyzrt.selection package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-pyzrt.selection.feedback">pyzrt.selection.feedback module</a></li>
+<li><a class="reference internal" href="#module-pyzrt.selection.management">pyzrt.selection.management module</a></li>
+<li><a class="reference internal" href="#module-pyzrt.selection.picker">pyzrt.selection.picker module</a></li>
+<li><a class="reference internal" href="#module-pyzrt.selection.sieve">pyzrt.selection.sieve module</a></li>
+<li><a class="reference internal" href="#module-pyzrt.selection.strategy">pyzrt.selection.strategy module</a></li>
+<li><a class="reference internal" href="#module-pyzrt.selection.technique">pyzrt.selection.technique module</a></li>
+<li><a class="reference internal" href="#module-pyzrt.selection">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/source/pyzrt.selection.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="pyzrt-selection-package">
+<h1>pyzrt.selection package<a class="headerlink" href="#pyzrt-selection-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-pyzrt.selection.feedback">
+<span id="pyzrt-selection-feedback-module"></span><h2>pyzrt.selection.feedback module<a class="headerlink" href="#module-pyzrt.selection.feedback" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pyzrt.selection.feedback.FeedbackHandler">
+<em class="property">class </em><code class="descclassname">pyzrt.selection.feedback.</code><code class="descname">FeedbackHandler</code><span class="sig-paren">(</span><em>maxlen=1</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/selection/feedback.html#FeedbackHandler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.selection.feedback.FeedbackHandler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">collections.deque</span></code></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="pyzrt.selection.feedback.RecentWeighted">
+<em class="property">class </em><code class="descclassname">pyzrt.selection.feedback.</code><code class="descname">RecentWeighted</code><span class="sig-paren">(</span><em>maxlen=1</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/selection/feedback.html#RecentWeighted"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.selection.feedback.RecentWeighted" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyzrt.selection.feedback.FeedbackHandler" title="pyzrt.selection.feedback.FeedbackHandler"><code class="xref py py-class docutils literal"><span class="pre">pyzrt.selection.feedback.FeedbackHandler</span></code></a></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyzrt.selection.feedback.average">
+<code class="descclassname">pyzrt.selection.feedback.</code><code class="descname">average</code><span class="sig-paren">(</span><em>values</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/selection/feedback.html#average"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.selection.feedback.average" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-pyzrt.selection.management">
+<span id="pyzrt-selection-management-module"></span><h2>pyzrt.selection.management module<a class="headerlink" href="#module-pyzrt.selection.management" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pyzrt.selection.management.TermSelector">
+<em class="property">class </em><code class="descclassname">pyzrt.selection.management.</code><code class="descname">TermSelector</code><span class="sig-paren">(</span><em>strategy</em>, <em>feedback</em>, <em>seed=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/selection/management.html#TermSelector"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.selection.management.TermSelector" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="pyzrt.selection.management.TermSelector.add">
+<code class="descname">add</code><span class="sig-paren">(</span><em>document</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/selection/management.html#TermSelector.add"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.selection.management.TermSelector.add" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyzrt.selection.management.TermSelector.mark_selected">
+<code class="descname">mark_selected</code><span class="sig-paren">(</span><em>term</em>, <em>order=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/selection/management.html#TermSelector.mark_selected"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.selection.management.TermSelector.mark_selected" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-pyzrt.selection.picker">
+<span id="pyzrt-selection-picker-module"></span><h2>pyzrt.selection.picker module<a class="headerlink" href="#module-pyzrt.selection.picker" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pyzrt.selection.picker.HiddenQuery">
+<em class="property">class </em><code class="descclassname">pyzrt.selection.picker.</code><code class="descname">HiddenQuery</code><span class="sig-paren">(</span><em>hidden_document</em>, <em>model='ua'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/selection/picker.html#HiddenQuery"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.selection.picker.HiddenQuery" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyzrt.selection.picker.Picker" title="pyzrt.selection.picker.Picker"><code class="xref py py-class docutils literal"><span class="pre">pyzrt.selection.picker.Picker</span></code></a></p>
+<dl class="method">
+<dt id="pyzrt.selection.picker.HiddenQuery.add">
+<code class="descname">add</code><span class="sig-paren">(</span><em>term</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/selection/picker.html#HiddenQuery.add"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.selection.picker.HiddenQuery.add" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyzrt.selection.picker.Picker">
+<em class="property">class </em><code class="descclassname">pyzrt.selection.picker.</code><code class="descname">Picker</code><a class="reference internal" href="../_modules/pyzrt/selection/picker.html#Picker"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.selection.picker.Picker" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="pyzrt.selection.picker.Picker.add">
+<code class="descname">add</code><span class="sig-paren">(</span><em>term</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/selection/picker.html#Picker.add"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.selection.picker.Picker.add" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyzrt.selection.picker.ProgressiveQuery">
+<em class="property">class </em><code class="descclassname">pyzrt.selection.picker.</code><code class="descname">ProgressiveQuery</code><a class="reference internal" href="../_modules/pyzrt/selection/picker.html#ProgressiveQuery"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.selection.picker.ProgressiveQuery" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyzrt.selection.picker.Picker" title="pyzrt.selection.picker.Picker"><code class="xref py py-class docutils literal"><span class="pre">pyzrt.selection.picker.Picker</span></code></a></p>
+<dl class="method">
+<dt id="pyzrt.selection.picker.ProgressiveQuery.add">
+<code class="descname">add</code><span class="sig-paren">(</span><em>term</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/selection/picker.html#ProgressiveQuery.add"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.selection.picker.ProgressiveQuery.add" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-pyzrt.selection.sieve">
+<span id="pyzrt-selection-sieve-module"></span><h2>pyzrt.selection.sieve module<a class="headerlink" href="#module-pyzrt.selection.sieve" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pyzrt.selection.sieve.ClusterSieve">
+<em class="property">class </em><code class="descclassname">pyzrt.selection.sieve.</code><code class="descname">ClusterSieve</code><span class="sig-paren">(</span><em>clusters</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/selection/sieve.html#ClusterSieve"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.selection.sieve.ClusterSieve" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyzrt.selection.sieve.TermSieve" title="pyzrt.selection.sieve.TermSieve"><code class="xref py py-class docutils literal"><span class="pre">pyzrt.selection.sieve.TermSieve</span></code></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="pyzrt.selection.sieve.Sieve">
+<em class="property">class </em><code class="descclassname">pyzrt.selection.sieve.</code><code class="descname">Sieve</code><a class="reference internal" href="../_modules/pyzrt/selection/sieve.html#Sieve"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.selection.sieve.Sieve" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="pyzrt.selection.sieve.Sieve.like">
+<code class="descname">like</code><span class="sig-paren">(</span><em>term</em>, <em>documents</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/selection/sieve.html#Sieve.like"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.selection.sieve.Sieve.like" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyzrt.selection.sieve.TermSieve">
+<em class="property">class </em><code class="descclassname">pyzrt.selection.sieve.</code><code class="descname">TermSieve</code><a class="reference internal" href="../_modules/pyzrt/selection/sieve.html#TermSieve"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.selection.sieve.TermSieve" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyzrt.selection.sieve.Sieve" title="pyzrt.selection.sieve.Sieve"><code class="xref py py-class docutils literal"><span class="pre">pyzrt.selection.sieve.Sieve</span></code></a></p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-pyzrt.selection.strategy">
+<span id="pyzrt-selection-strategy-module"></span><h2>pyzrt.selection.strategy module<a class="headerlink" href="#module-pyzrt.selection.strategy" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pyzrt.selection.strategy.BlindHomogenous">
+<em class="property">class </em><code class="descclassname">pyzrt.selection.strategy.</code><code class="descname">BlindHomogenous</code><span class="sig-paren">(</span><em>technique</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/selection/strategy.html#BlindHomogenous"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.selection.strategy.BlindHomogenous" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyzrt.selection.strategy.SelectionStrategy" title="pyzrt.selection.strategy.SelectionStrategy"><code class="xref py py-class docutils literal"><span class="pre">pyzrt.selection.strategy.SelectionStrategy</span></code></a></p>
+<dl class="method">
+<dt id="pyzrt.selection.strategy.BlindHomogenous.pick">
+<code class="descname">pick</code><span class="sig-paren">(</span><em>documents</em>, <em>feedback=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/selection/strategy.html#BlindHomogenous.pick"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.selection.strategy.BlindHomogenous.pick" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyzrt.selection.strategy.BlindRelevance">
+<em class="property">class </em><code class="descclassname">pyzrt.selection.strategy.</code><code class="descname">BlindRelevance</code><span class="sig-paren">(</span><em>sieve</em>, <em>technique</em>, <em>secondary_technique=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/selection/strategy.html#BlindRelevance"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.selection.strategy.BlindRelevance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyzrt.selection.strategy.FromFeedback" title="pyzrt.selection.strategy.FromFeedback"><code class="xref py py-class docutils literal"><span class="pre">pyzrt.selection.strategy.FromFeedback</span></code></a></p>
+<dl class="method">
+<dt id="pyzrt.selection.strategy.BlindRelevance.proximity">
+<code class="descname">proximity</code><span class="sig-paren">(</span><em>term</em>, <em>documents</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/selection/strategy.html#BlindRelevance.proximity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.selection.strategy.BlindRelevance.proximity" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyzrt.selection.strategy.CoOccurrence">
+<em class="property">class </em><code class="descclassname">pyzrt.selection.strategy.</code><code class="descname">CoOccurrence</code><span class="sig-paren">(</span><em>sieve</em>, <em>technique</em>, <em>radius=1</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/selection/strategy.html#CoOccurrence"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.selection.strategy.CoOccurrence" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyzrt.selection.strategy.FromFeedback" title="pyzrt.selection.strategy.FromFeedback"><code class="xref py py-class docutils literal"><span class="pre">pyzrt.selection.strategy.FromFeedback</span></code></a></p>
+<dl class="method">
+<dt id="pyzrt.selection.strategy.CoOccurrence.proximity">
+<code class="descname">proximity</code><span class="sig-paren">(</span><em>term</em>, <em>documents</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/selection/strategy.html#CoOccurrence.proximity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.selection.strategy.CoOccurrence.proximity" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyzrt.selection.strategy.DirectNeighbor">
+<em class="property">class </em><code class="descclassname">pyzrt.selection.strategy.</code><code class="descname">DirectNeighbor</code><span class="sig-paren">(</span><em>sieve</em>, <em>technique</em>, <em>radius=1</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/selection/strategy.html#DirectNeighbor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.selection.strategy.DirectNeighbor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyzrt.selection.strategy.CoOccurrence" title="pyzrt.selection.strategy.CoOccurrence"><code class="xref py py-class docutils literal"><span class="pre">pyzrt.selection.strategy.CoOccurrence</span></code></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="pyzrt.selection.strategy.FromFeedback">
+<em class="property">class </em><code class="descclassname">pyzrt.selection.strategy.</code><code class="descname">FromFeedback</code><span class="sig-paren">(</span><em>sieve</em>, <em>technique</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/selection/strategy.html#FromFeedback"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.selection.strategy.FromFeedback" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyzrt.selection.strategy.SelectionStrategy" title="pyzrt.selection.strategy.SelectionStrategy"><code class="xref py py-class docutils literal"><span class="pre">pyzrt.selection.strategy.SelectionStrategy</span></code></a></p>
+<dl class="method">
+<dt id="pyzrt.selection.strategy.FromFeedback.pick">
+<code class="descname">pick</code><span class="sig-paren">(</span><em>documents</em>, <em>feedback</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/selection/strategy.html#FromFeedback.pick"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.selection.strategy.FromFeedback.pick" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyzrt.selection.strategy.FromFeedback.proximity">
+<code class="descname">proximity</code><span class="sig-paren">(</span><em>term</em>, <em>documents</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/selection/strategy.html#FromFeedback.proximity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.selection.strategy.FromFeedback.proximity" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyzrt.selection.strategy.IterableStack">
+<em class="property">class </em><code class="descclassname">pyzrt.selection.strategy.</code><code class="descname">IterableStack</code><span class="sig-paren">(</span><em>descending=True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/selection/strategy.html#IterableStack"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.selection.strategy.IterableStack" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">list</span></code></p>
+<dl class="method">
+<dt id="pyzrt.selection.strategy.IterableStack.peel">
+<code class="descname">peel</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/selection/strategy.html#IterableStack.peel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.selection.strategy.IterableStack.peel" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyzrt.selection.strategy.IterableStack.push">
+<code class="descname">push</code><span class="sig-paren">(</span><em>iterable</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/selection/strategy.html#IterableStack.push"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.selection.strategy.IterableStack.push" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyzrt.selection.strategy.NearestNeighbor">
+<em class="property">class </em><code class="descclassname">pyzrt.selection.strategy.</code><code class="descname">NearestNeighbor</code><span class="sig-paren">(</span><em>sieve</em>, <em>technique</em>, <em>radius=1</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/selection/strategy.html#NearestNeighbor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.selection.strategy.NearestNeighbor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyzrt.selection.strategy.CoOccurrence" title="pyzrt.selection.strategy.CoOccurrence"><code class="xref py py-class docutils literal"><span class="pre">pyzrt.selection.strategy.CoOccurrence</span></code></a></p>
+<dl class="method">
+<dt id="pyzrt.selection.strategy.NearestNeighbor.navigate">
+<code class="descname">navigate</code><span class="sig-paren">(</span><em>position</em>, <em>documents</em>, <em>depth</em>, <em>step</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/selection/strategy.html#NearestNeighbor.navigate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.selection.strategy.NearestNeighbor.navigate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="staticmethod">
+<dt id="pyzrt.selection.strategy.NearestNeighbor.window">
+<em class="property">static </em><code class="descname">window</code><span class="sig-paren">(</span><em>position</em>, <em>documents</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/selection/strategy.html#NearestNeighbor.window"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.selection.strategy.NearestNeighbor.window" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyzrt.selection.strategy.RegionNeighbor">
+<em class="property">class </em><code class="descclassname">pyzrt.selection.strategy.</code><code class="descname">RegionNeighbor</code><span class="sig-paren">(</span><em>sieve</em>, <em>technique</em>, <em>radius=1</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/selection/strategy.html#RegionNeighbor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.selection.strategy.RegionNeighbor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyzrt.selection.strategy.CoOccurrence" title="pyzrt.selection.strategy.CoOccurrence"><code class="xref py py-class docutils literal"><span class="pre">pyzrt.selection.strategy.CoOccurrence</span></code></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="pyzrt.selection.strategy.SelectionStrategy">
+<em class="property">class </em><code class="descclassname">pyzrt.selection.strategy.</code><code class="descname">SelectionStrategy</code><a class="reference internal" href="../_modules/pyzrt/selection/strategy.html#SelectionStrategy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.selection.strategy.SelectionStrategy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="pyzrt.selection.strategy.SelectionStrategy.pick">
+<code class="descname">pick</code><span class="sig-paren">(</span><em>documents</em>, <em>feedback</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/selection/strategy.html#SelectionStrategy.pick"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.selection.strategy.SelectionStrategy.pick" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="pyzrt.selection.strategy.stream">
+<code class="descclassname">pyzrt.selection.strategy.</code><code class="descname">stream</code><span class="sig-paren">(</span><em>items</em>, <em>move=&lt;built-in function next&gt;</em>, <em>stop=None</em>, <em>compare=&lt;built-in function eq&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/selection/strategy.html#stream"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.selection.strategy.stream" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterate through a sequence that doesn’t strictly conform to
+Python’s iterable semantics.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-pyzrt.selection.technique">
+<span id="pyzrt-selection-technique-module"></span><h2>pyzrt.selection.technique module<a class="headerlink" href="#module-pyzrt.selection.technique" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pyzrt.selection.technique.DocumentFrequency">
+<em class="property">class </em><code class="descclassname">pyzrt.selection.technique.</code><code class="descname">DocumentFrequency</code><span class="sig-paren">(</span><em>documents</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/selection/technique.html#DocumentFrequency"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.selection.technique.DocumentFrequency" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyzrt.selection.technique.SelectionTechnique" title="pyzrt.selection.technique.SelectionTechnique"><code class="xref py py-class docutils literal"><span class="pre">pyzrt.selection.technique.SelectionTechnique</span></code></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="pyzrt.selection.technique.Entropy">
+<em class="property">class </em><code class="descclassname">pyzrt.selection.technique.</code><code class="descname">Entropy</code><span class="sig-paren">(</span><em>documents</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/selection/technique.html#Entropy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.selection.technique.Entropy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyzrt.selection.technique.SelectionTechnique" title="pyzrt.selection.technique.SelectionTechnique"><code class="xref py py-class docutils literal"><span class="pre">pyzrt.selection.technique.SelectionTechnique</span></code></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="pyzrt.selection.technique.Random">
+<em class="property">class </em><code class="descclassname">pyzrt.selection.technique.</code><code class="descname">Random</code><span class="sig-paren">(</span><em>documents</em>, <em>weighted=False</em>, <em>seed=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/selection/technique.html#Random"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.selection.technique.Random" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyzrt.selection.technique.SelectionTechnique" title="pyzrt.selection.technique.SelectionTechnique"><code class="xref py py-class docutils literal"><span class="pre">pyzrt.selection.technique.SelectionTechnique</span></code></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="pyzrt.selection.technique.Relevance">
+<em class="property">class </em><code class="descclassname">pyzrt.selection.technique.</code><code class="descname">Relevance</code><span class="sig-paren">(</span><em>documents</em>, <em>query</em>, <em>relevant</em>, <em>technique=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/selection/technique.html#Relevance"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.selection.technique.Relevance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyzrt.selection.technique.SelectionTechnique" title="pyzrt.selection.technique.SelectionTechnique"><code class="xref py py-class docutils literal"><span class="pre">pyzrt.selection.technique.SelectionTechnique</span></code></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="pyzrt.selection.technique.SelectionTechnique">
+<em class="property">class </em><code class="descclassname">pyzrt.selection.technique.</code><code class="descname">SelectionTechnique</code><a class="reference internal" href="../_modules/pyzrt/selection/technique.html#SelectionTechnique"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.selection.technique.SelectionTechnique" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="pyzrt.selection.technique.TFIDF">
+<em class="property">class </em><code class="descclassname">pyzrt.selection.technique.</code><code class="descname">TFIDF</code><span class="sig-paren">(</span><em>documents</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/selection/technique.html#TFIDF"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.selection.technique.TFIDF" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyzrt.selection.technique.SelectionTechnique" title="pyzrt.selection.technique.SelectionTechnique"><code class="xref py py-class docutils literal"><span class="pre">pyzrt.selection.technique.SelectionTechnique</span></code></a></p>
+<dl class="method">
+<dt id="pyzrt.selection.technique.TFIDF.stitch">
+<code class="descname">stitch</code><span class="sig-paren">(</span><em>indices</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/selection/technique.html#TFIDF.stitch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.selection.technique.TFIDF.stitch" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyzrt.selection.technique.TFIDF.terms">
+<code class="descname">terms</code><span class="sig-paren">(</span><em>row</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/selection/technique.html#TFIDF.terms"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.selection.technique.TFIDF.terms" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyzrt.selection.technique.TermFrequency">
+<em class="property">class </em><code class="descclassname">pyzrt.selection.technique.</code><code class="descname">TermFrequency</code><span class="sig-paren">(</span><em>documents</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/selection/technique.html#TermFrequency"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.selection.technique.TermFrequency" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyzrt.selection.technique.SelectionTechnique" title="pyzrt.selection.technique.SelectionTechnique"><code class="xref py py-class docutils literal"><span class="pre">pyzrt.selection.technique.SelectionTechnique</span></code></a></p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-pyzrt.selection">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-pyzrt.selection" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pyzrt 0 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, Jerome White.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.3.
+    </div>
+  </body>
+</html>

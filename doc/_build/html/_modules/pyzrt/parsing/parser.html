@@ -1,0 +1,170 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>pyzrt.parsing.parser &#8212; pyzrt 0 documentation</title>
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pyzrt 0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pyzrt.parsing.parser</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">itertools</span>
+<span class="kn">import</span> <span class="nn">operator</span> <span class="k">as</span> <span class="nn">op</span>
+<span class="kn">import</span> <span class="nn">xml.etree.ElementTree</span> <span class="k">as</span> <span class="nn">et</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="k">import</span> <span class="n">Path</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="k">import</span> <span class="n">singledispatch</span>
+
+<span class="kn">from</span> <span class="nn">pyzrt.core.collection</span> <span class="k">import</span> <span class="n">TermCollection</span>
+<span class="kn">from</span> <span class="nn">pyzrt.parsing.strainer</span> <span class="k">import</span> <span class="n">_Strainer</span>
+
+<div class="viewcode-block" id="Parser"><a class="viewcode-back" href="../../../source/pyzrt.parsing.html#pyzrt.parsing.parser.Parser">[docs]</a><span class="k">def</span> <span class="nf">Parser</span><span class="p">(</span><span class="n">parser_type</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">_Parser</span><span class="o">.</span><span class="n">builder</span><span class="p">(</span><span class="n">parser_type</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Document"><a class="viewcode-back" href="../../../source/pyzrt.parsing.html#pyzrt.parsing.parser.Document">[docs]</a><span class="k">class</span> <span class="nc">Document</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">docno</span><span class="p">,</span> <span class="n">text</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">docno</span> <span class="o">=</span> <span class="n">docno</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="n">text</span></div>
+
+<span class="k">class</span> <span class="nc">_Parser</span><span class="p">():</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">strainer</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">strainer</span> <span class="o">=</span> <span class="n">_Strainer</span><span class="p">()</span> <span class="k">if</span> <span class="n">strainer</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">strainer</span>
+
+    <span class="k">def</span> <span class="nf">parse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">document</span><span class="p">):</span>
+        <span class="k">yield from</span> <span class="nb">map</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">strainer</span><span class="o">.</span><span class="n">strain</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse</span><span class="p">(</span><span class="n">document</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">_parse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">doc</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">builder</span><span class="p">(</span><span class="n">parser_type</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s1">&#39;pt&#39;</span><span class="p">:</span> <span class="n">PseudoTermParser</span><span class="p">,</span>
+            <span class="s1">&#39;wsj&#39;</span><span class="p">:</span> <span class="n">WSJParser</span><span class="p">,</span>
+            <span class="s1">&#39;test&#39;</span><span class="p">:</span> <span class="n">TestParser</span><span class="p">,</span>
+            <span class="s1">&#39;pass&#39;</span><span class="p">:</span> <span class="n">PassThroughParser</span><span class="p">,</span>
+            <span class="s1">&#39;ngram&#39;</span><span class="p">:</span> <span class="n">NGramParser</span><span class="p">,</span>
+        <span class="p">}[</span><span class="n">parser_type</span><span class="p">](</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+
+<div class="viewcode-block" id="TestParser"><a class="viewcode-back" href="../../../source/pyzrt.parsing.html#pyzrt.parsing.parser.TestParser">[docs]</a><span class="k">class</span> <span class="nc">TestParser</span><span class="p">(</span><span class="n">_Parser</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_parse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">doc</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">doc</span><span class="o">.</span><span class="n">open</span><span class="p">()</span> <span class="k">as</span> <span class="n">fp</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">Document</span><span class="p">(</span><span class="n">doc</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">fp</span><span class="o">.</span><span class="n">read</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="WSJParser"><a class="viewcode-back" href="../../../source/pyzrt.parsing.html#pyzrt.parsing.parser.WSJParser">[docs]</a><span class="k">class</span> <span class="nc">WSJParser</span><span class="p">(</span><span class="n">_Parser</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_parse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">doc</span><span class="p">):</span>
+        <span class="n">xml</span> <span class="o">=</span> <span class="n">doc</span><span class="o">.</span><span class="n">read_text</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;&amp;&#39;</span><span class="p">,</span> <span class="s1">&#39; &#39;</span><span class="p">)</span>
+
+        <span class="c1"># overcome poorly formed XML (http://stackoverflow.com/a/23891895)</span>
+        <span class="n">combos</span> <span class="o">=</span> <span class="n">itertools</span><span class="o">.</span><span class="n">chain</span><span class="p">(</span><span class="s1">&#39;&lt;root&gt;&#39;</span><span class="p">,</span> <span class="n">xml</span><span class="p">,</span> <span class="s1">&#39;&lt;/root&gt;&#39;</span><span class="p">)</span>
+        <span class="n">root</span> <span class="o">=</span> <span class="n">et</span><span class="o">.</span><span class="n">fromstringlist</span><span class="p">(</span><span class="n">combos</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s1">&#39;DOC&#39;</span><span class="p">):</span>
+            <span class="n">docno</span> <span class="o">=</span> <span class="n">i</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s1">&#39;DOCNO&#39;</span><span class="p">)</span>
+            <span class="k">assert</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">docno</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">docno</span> <span class="o">=</span> <span class="n">docno</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+
+            <span class="n">text</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;LP&#39;</span><span class="p">,</span> <span class="s1">&#39;TEXT&#39;</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">i</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="n">j</span><span class="p">):</span>
+                    <span class="n">text</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">k</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+            <span class="n">text</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+
+            <span class="k">yield</span> <span class="n">Document</span><span class="p">(</span><span class="n">docno</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TermDocumentParser"><a class="viewcode-back" href="../../../source/pyzrt.parsing.html#pyzrt.parsing.parser.TermDocumentParser">[docs]</a><span class="k">class</span> <span class="nc">TermDocumentParser</span><span class="p">(</span><span class="n">_Parser</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_parse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">doc</span><span class="p">):</span>
+        <span class="k">yield</span> <span class="n">Document</span><span class="p">(</span><span class="n">doc</span><span class="o">.</span><span class="n">stem</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">tostring</span><span class="p">(</span><span class="n">TermCollection</span><span class="p">(</span><span class="n">doc</span><span class="p">)))</span>
+
+<div class="viewcode-block" id="TermDocumentParser.tostring"><a class="viewcode-back" href="../../../source/pyzrt.parsing.html#pyzrt.parsing.parser.TermDocumentParser.tostring">[docs]</a>    <span class="k">def</span> <span class="nf">tostring</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">doc</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></div></div>
+
+<div class="viewcode-block" id="PseudoTermParser"><a class="viewcode-back" href="../../../source/pyzrt.parsing.html#pyzrt.parsing.parser.PseudoTermParser">[docs]</a><span class="k">class</span> <span class="nc">PseudoTermParser</span><span class="p">(</span><span class="n">TermDocumentParser</span><span class="p">):</span>
+<div class="viewcode-block" id="PseudoTermParser.tostring"><a class="viewcode-back" href="../../../source/pyzrt.parsing.html#pyzrt.parsing.parser.PseudoTermParser.tostring">[docs]</a>    <span class="k">def</span> <span class="nf">tostring</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">doc</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span></div></div>
+
+<div class="viewcode-block" id="NGramParser"><a class="viewcode-back" href="../../../source/pyzrt.parsing.html#pyzrt.parsing.parser.NGramParser">[docs]</a><span class="k">class</span> <span class="nc">NGramParser</span><span class="p">(</span><span class="n">TermDocumentParser</span><span class="p">):</span>
+<div class="viewcode-block" id="NGramParser.tostring"><a class="viewcode-back" href="../../../source/pyzrt.parsing.html#pyzrt.parsing.parser.NGramParser.tostring">[docs]</a>    <span class="k">def</span> <span class="nf">tostring</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">doc</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">doc</span><span class="o">.</span><span class="n">tostring</span><span class="p">(</span><span class="n">op</span><span class="o">.</span><span class="n">attrgetter</span><span class="p">(</span><span class="s1">&#39;name&#39;</span><span class="p">))</span></div></div>
+
+<div class="viewcode-block" id="PassThroughParser"><a class="viewcode-back" href="../../../source/pyzrt.parsing.html#pyzrt.parsing.parser.PassThroughParser">[docs]</a><span class="k">class</span> <span class="nc">PassThroughParser</span><span class="p">(</span><span class="n">_Parser</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_parse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">doc</span><span class="p">):</span>
+        <span class="k">yield</span> <span class="n">Document</span><span class="p">(</span><span class="n">doc</span><span class="o">.</span><span class="n">stem</span><span class="p">,</span> <span class="n">doc</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pyzrt 0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, Jerome White.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.3.
+    </div>
+  </body>
+</html>

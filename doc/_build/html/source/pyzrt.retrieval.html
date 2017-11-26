@@ -1,0 +1,219 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>pyzrt.retrieval package &#8212; pyzrt 0 documentation</title>
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pyzrt 0 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">pyzrt.retrieval package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-pyzrt.retrieval.query">pyzrt.retrieval.query module</a></li>
+<li><a class="reference internal" href="#module-pyzrt.retrieval.regionalization">pyzrt.retrieval.regionalization module</a></li>
+<li><a class="reference internal" href="#module-pyzrt.retrieval">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/source/pyzrt.retrieval.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="pyzrt-retrieval-package">
+<h1>pyzrt.retrieval package<a class="headerlink" href="#pyzrt-retrieval-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-pyzrt.retrieval.query">
+<span id="pyzrt-retrieval-query-module"></span><h2>pyzrt.retrieval.query module<a class="headerlink" href="#module-pyzrt.retrieval.query" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pyzrt.retrieval.query.BagOfWords">
+<em class="property">class </em><code class="descclassname">pyzrt.retrieval.query.</code><code class="descname">BagOfWords</code><span class="sig-paren">(</span><em>doc</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/retrieval/query.html#BagOfWords"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.retrieval.query.BagOfWords" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">pyzrt.retrieval.query._Query</span></code></p>
+<dl class="method">
+<dt id="pyzrt.retrieval.query.BagOfWords.make">
+<code class="descname">make</code><span class="sig-paren">(</span><em>collection</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/retrieval/query.html#BagOfWords.make"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.retrieval.query.BagOfWords.make" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyzrt.retrieval.query.GraphPath">
+<em class="property">class </em><code class="descclassname">pyzrt.retrieval.query.</code><code class="descname">GraphPath</code><span class="sig-paren">(</span><em>path</em>, <em>deviation=inf</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/retrieval/query.html#GraphPath"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.retrieval.query.GraphPath" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="pyzrt.retrieval.query.LongestWeight">
+<em class="property">class </em><code class="descclassname">pyzrt.retrieval.query.</code><code class="descname">LongestWeight</code><span class="sig-paren">(</span><em>doc</em>, <em>alpha=0.5</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/retrieval/query.html#LongestWeight"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.retrieval.query.LongestWeight" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyzrt.retrieval.query.Weighted" title="pyzrt.retrieval.query.Weighted"><code class="xref py py-class docutils literal"><span class="pre">pyzrt.retrieval.query.Weighted</span></code></a></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyzrt.retrieval.query.Query">
+<code class="descclassname">pyzrt.retrieval.query.</code><code class="descname">Query</code><span class="sig-paren">(</span><em>terms</em>, <em>model='ua'</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/retrieval/query.html#Query"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.retrieval.query.Query" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="class">
+<dt id="pyzrt.retrieval.query.ShortestPath">
+<em class="property">class </em><code class="descclassname">pyzrt.retrieval.query.</code><code class="descname">ShortestPath</code><span class="sig-paren">(</span><em>doc</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/retrieval/query.html#ShortestPath"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.retrieval.query.ShortestPath" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">pyzrt.retrieval.query._Query</span></code></p>
+<dl class="method">
+<dt id="pyzrt.retrieval.query.ShortestPath.make">
+<code class="descname">make</code><span class="sig-paren">(</span><em>collection</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/retrieval/query.html#ShortestPath.make"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.retrieval.query.ShortestPath.make" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyzrt.retrieval.query.Synonym">
+<em class="property">class </em><code class="descclassname">pyzrt.retrieval.query.</code><code class="descname">Synonym</code><span class="sig-paren">(</span><em>doc</em>, <em>n_longest=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/retrieval/query.html#Synonym"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.retrieval.query.Synonym" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">pyzrt.retrieval.query._Query</span></code></p>
+<dl class="method">
+<dt id="pyzrt.retrieval.query.Synonym.make">
+<code class="descname">make</code><span class="sig-paren">(</span><em>collection</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/retrieval/query.html#Synonym.make"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.retrieval.query.Synonym.make" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyzrt.retrieval.query.TotalWeight">
+<em class="property">class </em><code class="descclassname">pyzrt.retrieval.query.</code><code class="descname">TotalWeight</code><span class="sig-paren">(</span><em>doc</em>, <em>alpha=0.5</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/retrieval/query.html#TotalWeight"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.retrieval.query.TotalWeight" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyzrt.retrieval.query.Weighted" title="pyzrt.retrieval.query.Weighted"><code class="xref py py-class docutils literal"><span class="pre">pyzrt.retrieval.query.Weighted</span></code></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="pyzrt.retrieval.query.Weighted">
+<em class="property">class </em><code class="descclassname">pyzrt.retrieval.query.</code><code class="descname">Weighted</code><span class="sig-paren">(</span><em>doc</em>, <em>alpha</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/retrieval/query.html#Weighted"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.retrieval.query.Weighted" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">pyzrt.retrieval.query._Query</span></code></p>
+<dl class="method">
+<dt id="pyzrt.retrieval.query.Weighted.combine">
+<code class="descname">combine</code><span class="sig-paren">(</span><em>region</em>, <em>threshold=0.0001</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/retrieval/query.html#Weighted.combine"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.retrieval.query.Weighted.combine" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyzrt.retrieval.query.Weighted.discount">
+<code class="descname">discount</code><span class="sig-paren">(</span><em>collection</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/retrieval/query.html#Weighted.discount"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.retrieval.query.Weighted.discount" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyzrt.retrieval.query.Weighted.make">
+<code class="descname">make</code><span class="sig-paren">(</span><em>collection</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/retrieval/query.html#Weighted.make"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.retrieval.query.Weighted.make" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyzrt.retrieval.query.WeightedTerm">
+<em class="property">class </em><code class="descclassname">pyzrt.retrieval.query.</code><code class="descname">WeightedTerm</code><span class="sig-paren">(</span><em>term</em>, <em>weight</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/retrieval/query.html#WeightedTerm"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.retrieval.query.WeightedTerm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-pyzrt.retrieval.regionalization">
+<span id="pyzrt-retrieval-regionalization-module"></span><h2>pyzrt.retrieval.regionalization module<a class="headerlink" href="#module-pyzrt.retrieval.regionalization" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pyzrt.retrieval.regionalization.CollectionAtOnce">
+<em class="property">class </em><code class="descclassname">pyzrt.retrieval.regionalization.</code><code class="descname">CollectionAtOnce</code><span class="sig-paren">(</span><em>document</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/retrieval/regionalization.html#CollectionAtOnce"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.retrieval.regionalization.CollectionAtOnce" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyzrt.retrieval.regionalization.Regionalize" title="pyzrt.retrieval.regionalization.Regionalize"><code class="xref py py-class docutils literal"><span class="pre">pyzrt.retrieval.regionalization.Regionalize</span></code></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="pyzrt.retrieval.regionalization.PerRegion">
+<em class="property">class </em><code class="descclassname">pyzrt.retrieval.regionalization.</code><code class="descname">PerRegion</code><span class="sig-paren">(</span><em>document</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/retrieval/regionalization.html#PerRegion"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.retrieval.regionalization.PerRegion" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyzrt.retrieval.regionalization.Regionalize" title="pyzrt.retrieval.regionalization.Regionalize"><code class="xref py py-class docutils literal"><span class="pre">pyzrt.retrieval.regionalization.Regionalize</span></code></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="pyzrt.retrieval.regionalization.Regionalize">
+<em class="property">class </em><code class="descclassname">pyzrt.retrieval.regionalization.</code><code class="descname">Regionalize</code><span class="sig-paren">(</span><em>document</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyzrt/retrieval/regionalization.html#Regionalize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyzrt.retrieval.regionalization.Regionalize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-pyzrt.retrieval">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-pyzrt.retrieval" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pyzrt 0 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, Jerome White.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.3.
+    </div>
+  </body>
+</html>
