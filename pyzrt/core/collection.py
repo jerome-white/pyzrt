@@ -5,12 +5,45 @@ import itertools as it
 from pyzrt.core.term import Term
 
 class TermCollection(list):
-    def __init__(self, collection=None):
+    '''
+    A collection of Terms
+
+    Attributes
+    ----------
+    collection : Path | NoneType
+        Path to the term file this instance represents
+    '''
+
+    def __init__(self, collection=None, reader=None):
+        '''
+        Parameters
+        ----------
+        collection : Path, optional
+           Path object representing location of the the term file
+           to be parsed. If None, then the instantiated
+           collection will be empty
+
+        reader : iterable, optional
+           Given a file object (generally the path represented by
+           collection) generate tuples that are capable of being
+           made into Term's. If None, dictionaries are created
+           from each line, which in turn are used to make Term's.
+
+        See Also
+        ----------
+        Term : namedtuple
+        '''
+
         self.collection = collection
 
         if self.collection:
             with self.collection.open() as fp:
-                self.extend(map(Term._fromdict, csv.DictReader(fp)))
+                if reader is None:
+                    f = Term._fromdict
+                    reader = csv.DictReader
+                else:
+                    f = lambda x: Term(*x)
+                self.extend(map(f, reader(fp)))
             self.sort()
 
     def __repr__(self):
@@ -20,17 +53,92 @@ class TermCollection(list):
         return self.tostring(str)
 
     def tostring(self, how, separator=' '):
+        '''Create a string from terms in the collection
+
+        Parameters
+        ----------
+        how : Term -> str
+           Function mapping a Term objec to a string
+
+        separator : str, optional
+           String used to separate individual Term's
+        '''
+
         return separator.join(map(how, self))
 
+    def tocsv(self, fp, header=True):
+        '''Write a collection to CSV format.
+
+        Parameters
+        ----------
+        fp : file-object
+           An open file stream
+
+        header : bool, optional
+           Whether to write the Term information as a header.
+        '''
+
+        writer = csv.DictWriter(fp, fieldnames=Term._fields)
+        if header:
+            writer.writeheader()
+        writer.writerows(map(op.methodcaller('_asdict'), self))
+
     def bylength(self, descending=True):
+        '''Sort the collections by Term length
+
+        Parameters
+        ----------
+        descending : Boolean, optional
+           Whether result should be in descending order
+        '''
+
         self.sort(key=len, reverse=descending)
 
     def get(self, ngram):
+        '''Get a Term and its respective index based on an ngram
+
+        Parameters
+        ----------
+        ngram : str
+           n-gram to find within the collection
+
+        Yields
+        ----------
+        (int, Term)
+           The Term matching this ngram, along with the Term's
+           index in the collection
+        '''
+
         for (i, term) in enumerate(self):
             if term.ngram == ngram:
                 yield (i, term)
 
     def regions(self, start=0, follows=None):
+        '''Generate each overlapping region as a new collection.
+
+        Parameters
+        ----------
+        start : int, optional
+           n-gram to find within the collection
+
+        follows : Term,Term -> bool , optional
+           Given two terms, returns True iff the
+           terms "overlap". Terms are presented to the function
+           in sequential order (previous, current).
+
+        Yields
+        ----------
+        TermCollection
+           An overlapping region relative to, and subset of, the
+           calling collection.
+
+        Raises
+        ----------
+        AssertionError
+           If the collection is not in sequential (Term
+           less-than) order
+        '''
+
         if follows is None:
             follows = lambda x, y: x.position > y.span
 
@@ -49,6 +157,20 @@ class TermCollection(list):
             yield region
 
     def after(self, index):
+        '''Terms that overlap a Term at a given index.
+
+        Parameters
+        ----------
+        index : int
+           Index within the collection from where to begin.
+
+        Yields
+        ----------
+        TermCollection
+           A single collection. Can also be thought of as the
+           first 'region' relative to an index.
+        '''
+
         ptr = self[index]
         follows = lambda x, y: x.position > ptr.span
 
@@ -58,9 +180,3 @@ class TermCollection(list):
             index += 1
 
         yield from next(self.regions(index, follows))
-
-    def tocsv(self, fp, header=True):
-        writer = csv.DictWriter(fp, fieldnames=Term._fields)
-        if header:
-            writer.writeheader()
-        writer.writerows(map(op.methodcaller('_asdict'), self))
