@@ -2,7 +2,7 @@ import operator as op
 import itertools
 import collections
 
-from zrtlib import logger
+from pyzrt.util import logger
 
 def stream(items, move=next, stop=None, compare=op.eq):
     '''Iterate through a sequence that doesn't strictly conform to

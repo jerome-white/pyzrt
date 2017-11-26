@@ -5,7 +5,7 @@ import pandas as pd
 import scipy.stats as st
 from sklearn.feature_extraction.text import TfidfVectorizer
 
-from zrtlib.document import HiddenDocument
+# from zrtlib.document import HiddenDocument
 
 class SelectionTechnique:
     def __init__(self):

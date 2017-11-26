@@ -1,5 +1,5 @@
-from zrtlib.indri import IndriQuery
-from zrtlib.query import QueryBuilder
+from pyzrt.indri.doc import IndriQuery
+from pyzrt.retrieval.query import Query
 
 class Picker:
     def __float__(self):
@@ -23,7 +23,7 @@ class HiddenQuery(Picker):
         return float(self.document)
 
     def __str__(self):
-        return str(QueryBuilder(self.document, self.model))
+        return str(Query(self.document, self.model))
 
     def add(self, term):
         if not self.document:
