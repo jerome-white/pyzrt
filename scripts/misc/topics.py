@@ -2,7 +2,7 @@ import gzip
 from pathlib import Path
 from argparse import ArgumentParser
 
-from zrtlib import logger
+import pyzrt as pz
 
 class Tracker:
     def __init__(self):
@@ -24,7 +24,8 @@ arguments.add_argument('--with-description', action='store_true')
 arguments.add_argument('--with-narrative', action='store_true')
 args = arguments.parse_args()
 
-log = logger.getlogger()
+log = pz.util.get_logger(True)
+
 tracker = Tracker()
 
 with gzip.open(args.topics) as fp:
