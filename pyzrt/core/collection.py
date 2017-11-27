@@ -180,3 +180,30 @@ class TermCollection(list):
             index += 1
 
         yield from next(self.regions(index, follows))
+
+    @classmethod
+    def fromaren(cls, collection):
+        '''Convert output from the actual (Aren-authored) term
+           detector to a term collection.
+
+        Parameters
+        ----------
+        collection : Path
+           Output from ZRT system
+
+        Returns
+        ----------
+        TermCollection
+        '''
+        
+        def reader(fp):
+            reader = csv.reader(fp, delimiter=' ')
+            for (psuedoterm, *position) in reader:
+                name = 'pt' + psuedoterm
+
+                (start, end) = map(int, position)
+                ngram = 'x' * (end - start)
+
+                yield (name, ngram, start)
+
+        return cls(collection, reader)
