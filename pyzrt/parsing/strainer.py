@@ -1,5 +1,6 @@
 import string
 import operator as op
+import functools as ft
 import xml.etree.ElementTree as et
 
 def Strainer(strainers=None):
@@ -22,11 +23,12 @@ class _Strainer:
     @classmethod
     def builder(cls, strainers):
         strain_selector = {
-            'trec': TRECStrainer,
-            'lower': ft.partial(CaseStrainer, casing='lower'),
+            'trec': TrecGenerate,
+            'pause': PauseNormalize,
+            'alpha': AlphaNumeric,
+            'lower': ft.partial(CaseNormalize, casing='lower'),
             'space': ft.partial(ReplacementPlus, new=' '),
             'under': ft.partial(ReplacementPlus, new='_'),
-            'alpha': AlphaNumericStrainer,
             'nospace': ft.partial(ReplacementPlus, new=''),
         }
 
@@ -37,7 +39,7 @@ class _Strainer:
 
         return s
 
-class CaseNormalizer(_Strainer):
+class CaseNormalize(_Strainer):
     def __init__(self, strainer, casing):
         assert(hasattr(str, casing))
         super().__init__(strainer)
@@ -63,8 +65,8 @@ class ReplacementPlus(_Strainer):
     def _manipulate(self, text):
         return self.new.join(text.split(self.old))
 
-class Replacement(_Strainer):
-    def __init__(self, strainer, extended=False):
+class Translate(_Strainer):
+    def __init__(self, strainer, extended):
         super().__init__(strainer)
 
         ascii_range = 7
@@ -76,32 +78,28 @@ class Replacement(_Strainer):
     def _manipulate(self, text):
         return text.translate(self.table)
 
-class AlphaNumeric(Replacement):
+class AlphaNumeric(Translate):
     def __init__(self, strainer, extended=False):
         super().__init__(strainer)
 
-        replacements = {
+        self.table.update({
+            '-': ' ',
             '&': ' and ',
             '%': ' percent ',
-            '-': ' ',
-        }
-        self.table.update(replacements)
-        self.table.update({ x: ' ' for x in string.whitespace })
+            **{ x: ' ' for x in string.whitespace },
+        })
 
         for (i, c) in self.table.items():
             if not c.isalnum():
                 self.table[i] = ''
 
-class Punctuation(Replacement):
-    def __init__(self, strainer, stop='.'):
+class PauseNormalize(Translate):
+    def __init__(self, strainer, pause=',;:.?!', norm='.'):
         super().__init__(strainer)
 
-        endings = '.?!'
-        pauses = ',;:'
+        self.table.update({ x: stop for x in pause })
 
-        self.table.update({ x: stop for x in endings + pauses })
-
-class TRECStrainer(_Strainer):
+class TrecGeneration(_Strainer):
     def _manipulate(self, text):
         top = et.Element('DOC')
         top.text = '\n'
