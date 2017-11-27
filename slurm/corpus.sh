@@ -1,69 +1,35 @@
 #!/bin/bash
 
-#SBATCH --mem=60GB
-#SBATCH --time=60
-#SBATCH --cpus-per-task=20
-#SBATCH --nodes=1
-#SBATCH --job-name=pyzrt-corpus
+strainers=(
+    space:lower:alpha # "standard"
+    nospace:lower:alpha # no spaces
+    pause:nospace:lower:alpha # no spaces, pauses as periods
+)
+documents=$HOME/etc/wsj/docs
+workers=20
 
-#
-# Usage:
-#
-#  $> sbatch $0 strainer path/to/raw/data
-#
-# where
-#    - strainer is the colon separated strainers to use; examples:
-#
-#        space:lower:alpha            "standard"
-#        nospace:lower:alpha          no spaces
-#        pause:nospace:lower:alpha    no spaces, pauses as periods
-#
-#      see pyzrt/parsing/strainer.py
-#
-#    - path/to/raw/data is the path to the directory containing the
-#      unformatted data; assumes TREC WSJ
-#
+for i in ${strainers[@]}; do
+    output=$BEEGFS/corpus/`sed -e's/:/_/g' <<< $i`
 
-if [ ${2} ]; then
-    data=${2}
-else
-    data=$HOME/etc/wsj
-fi
+    jobs=`mktemp`
+    cat <<EOF > $jobs
+#!/bin/bash
 
-#
-# Generate the queries
-#
-o1=`mktemp --directory --tmpdir=$SLURM_JOBTMP`
+rm --force --recursive $output
+mkdir --parents $output
 
-python $ZR_HOME/src/support/topics.py \
-       --topics $data/topics.251-300.gz \
-       --output $o1 \
-       --with-title \
-       --with-description \
-       --with-narrative
-
-#
-# Format the queries
-#
-o2=$data/docs/0000
-rm --force --recursive $o2
-mkdir --parents $o2
-
-python $ZR_HOME/src/create/qformatter.py \
-       --input $o1 \
-       --output $o2 \
-       --with-topic
-
-#
-# Build the corpus
-#
-
-o3=$BEEGFS/corpus/`sed -e's/:/_/g' <<< $strainer`
-rm --force --recursive $o3
-mkdir --parents $o3
-
-python3 $ZR_HOME/src/create/parse.py \
-        --documents `dirname $o2` \
-        --output $o3 \
+python $ZR_HOME/src/create/parse.py \
         --parser wsj \
-        --strainer ${1}
+        --documents $documents \
+        --workers $workers \
+        --output $output \
+        --strainer $i
+EOF
+    sbatch \
+        --mem=60GB \
+        --time=60 \
+        --cpus-per-task=$workers \
+        --nodes=1 \
+        --job-name=$i \
+        $jobs
+done
