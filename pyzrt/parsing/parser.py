@@ -17,7 +17,7 @@ class Document:
         self.text = text
 
     def xerox(self, text):
-        return Document(self.docno, text)
+        return type(self)(self.docno, text)
 
     def __str__(self):
         return self.text
