@@ -99,7 +99,7 @@ class PauseNormalize(Translate):
 
         self.table.update({ x: stop for x in pause })
 
-class TrecGeneration(_Strainer):
+class TrecGenerate(_Strainer):
     def _manipulate(self, text):
         top = et.Element('DOC')
         top.text = '\n'
