@@ -16,6 +16,9 @@ class Tracker:
     def __str__(self):
         return ' '.join(self.text)
 
+    def add(self, text):
+        self.text.append(text)
+
 arguments = ArgumentParser()
 arguments.add_argument('--topics')
 arguments.add_argument('--output', type=Path)
@@ -26,8 +29,6 @@ args = arguments.parse_args()
 
 log = pz.util.get_logger(True)
 
-tracker = Tracker()
-
 with gzip.open(args.topics) as fp:
     for i in fp:
         line = i.decode().strip()
@@ -35,23 +36,29 @@ with gzip.open(args.topics) as fp:
             continue
 
         parts = line.split()
-        line_type = parts[0]
-        if line_type == '<num>':
+        kind = parts[0]
+
+        if kind == '<top>':
+            tracker = Tracker()
+
+        elif kind == '<num>':
             tracker.topic = parts[-1]
-        elif line_type == '<title>' and args.with_title:
+
+        elif kind == '<title>' and args.with_title:
             start = 2 if parts[1] == 'Topic:' else 1
-            tracker.text.extend(parts[start:])
-        elif line_type == '<desc>':
+            tracker.add(' '.join(parts[start:]) + '.')
+
+        elif kind == '<desc>':
             tracker.recording = args.with_description
-        elif line_type == '<narr>':
+
+        elif kind == '<narr>':
             tracker.recording = args.with_narrative
-        elif line_type == '</top>':
+
+        elif kind == '</top>':
             assert(tracker)
             log.info(tracker.topic)
-            path = args.output.joinpath(tracker.topic)
-            with path.open('w') as op:
-                print(tracker, file=op)
 
-            tracker = Tracker()
+            args.output.joinpath(tracker.topic).write_text(str(tracker))
+
         elif tracker.recording:
-            tracker.text.append(line)
+            tracker.add(line)
