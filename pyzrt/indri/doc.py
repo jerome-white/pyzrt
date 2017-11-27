@@ -54,7 +54,7 @@ class TrecDocument:
         yield from map(lambda x: et.tostring(x, encoding='unicode'), self.docs)
 
     def __bool__(self):
-        return len(self.docs) > 0
+        return bool(self.docs)
 
     @classmethod
     def isquery(cls, doc):
