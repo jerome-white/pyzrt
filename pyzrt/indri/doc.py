@@ -54,7 +54,7 @@ class TrecDocument:
         yield from map(lambda x: et.tostring(x, encoding='unicode'), self.docs)
 
     def __bool__(self):
-        return len(self.docs) > 0
+        return bool(self.docs)
 
     @classmethod
     def isquery(cls, doc):
@@ -71,7 +71,7 @@ class TrecDocument:
         return QueryID(*map(int, (topic, number)))
 
     def add(self, query):
-        attrs = collections.OrderedDict()
+        attrs = cl.OrderedDict()
         attrs['DOCNO'] = '{0}{1}{2}{3:04d}'.format(self.prefix,
                                                    self.name,
                                                    self.separator,

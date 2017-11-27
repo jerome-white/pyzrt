@@ -1,4 +1,5 @@
 import sys
+from pathlib import Path
 from functools import singledispatch
 
 @singledispatch
