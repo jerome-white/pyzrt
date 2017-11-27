@@ -66,21 +66,23 @@ class ReplacementPlus(_Strainer):
         return self.new.join(text.split(self.old))
 
 class Translate(_Strainer):
-    def __init__(self, strainer, extended):
+    ascii_range = 7
+
+    def __init__(self, strainer):
         super().__init__(strainer)
 
-        ascii_range = 7
-        if extended:
-            ascii_range += 1
-
-        self.table = { x: chr(x) for x in range(2 ** ascii_range) }
+        self.table = { x: chr(x) for x in range(2 ** self.ascii_range) }
 
     def _manipulate(self, text):
-        return text.translate(self.table)
+        return text.translate(str.maketrans(self.table))
 
 class AlphaNumeric(Translate):
-    def __init__(self, strainer, extended=False):
+    def __init__(self, strainer):
         super().__init__(strainer)
+
+        for (i, c) in self.table.items():
+            if not c.isalnum():
+                self.table[i] = None
 
         self.table.update({
             '-': ' ',
@@ -89,15 +91,11 @@ class AlphaNumeric(Translate):
             **{ x: ' ' for x in string.whitespace },
         })
 
-        for (i, c) in self.table.items():
-            if not c.isalnum():
-                self.table[i] = ''
-
 class PauseNormalize(Translate):
-    def __init__(self, strainer, pause=',;:.?!', norm='.'):
+    def __init__(self, strainer):
         super().__init__(strainer)
 
-        self.table.update({ x: stop for x in pause })
+        self.table.update({ x: '.' for x in ',;:.?!' })
 
 class TrecGenerate(_Strainer):
     def _manipulate(self, text):
