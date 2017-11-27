@@ -5,101 +5,60 @@ from pathlib import Path
 from argparse import ArgumentParser
 from multiprocessing import Pool
 
-# import seaborn as sns
+import seaborn as sns
 import matplotlib.pyplot as plt
 import pandas as pd
 
 import pyzrt as pz
 
-Result = cl.namedtuple('Result', 'terms, counts, doctype')
+class Stats:
+    def __init__(self):
+        self.unique = 0 # unique terms
+        self.terms = [] # terms per region
+        self.regions = [] # regions per document
+        self.durations = [] # term length
 
-def Parser(corpus_type):
+    def __add__(self, other):
+        result = type(self)()
+
+        result.terms = self.terms + other.terms
+        result.unique = self.unique + other.unique
+        result.regions = self.regions + other.regions
+        result.durations = self.durations + other.durations
+
+        return result
+
+def Collection(corpus_type):
     return {
-        'aren': Audio,
-        'simulator': Simulated,
+        'aren': pz.TermCollection.fromaren,
+        'simulator': pz.TermCollection,
     }[corpus_type]
 
-class _Parser:
-    def __init__(self):
-        self.qtype = 'queries'
-        self.dtype = 'documents'
-
-    def	__iter__(self):
-        self._prime()
-        return self
-
-    def __next__(self):
-        raise NotImplementedError()
-
-    def gettype(self):
-        return self.qtype if self.isquery() else self.dtype
-
-    def isquery(self):
-        raise NotImplementedError()
-
-class Audio(_Parser):
-    def __init__(self, document):
-        super().__init__()
-
-        self.document = document
-        self.fp = None
-        self.reader = None
-
-    def _prime(self):
-        self.fp = self.document.open()
-        self.reader = csv.reader(self.fp, delimiter=' ')
-
-    def __next__(self):
-        try:
-            (term, *duration) = next(self.reader)
-        except StopIteration:
-            self.fp.close()
-            raise StopIteration()
-
-        (start, stop) = map(int, duration)
-        seconds = (stop - start) / 100
-
-        return (term, seconds)
-
-    def isquery(self):
-        return str(self.document.stem).startswith('Q')
-
-class Simulated(_Parser):
-    def __init__(self, document):
-        super().__init__()
-
-        self.document = pz.TermCollection(document)
-        self.itr = None
-
-    def _prime(self):
-        self.itr = iter(self.document)
-
-    def __next__(self):
-        term = next(self.itr)
-
-        return (str(term), len(term))
-
-    def isquery(self):
-        return pz.TrecDocument.isquery(self.document.collection)
-
 def func(incoming, outgoing, creator):
-    parser = Parser(creator)
+    log = pz.util.get_logger()
+
+    collection = Collection(creator)
 
     while True:
         document = incoming.get()
-        pz.util.get_logger().info(document.stem)
+        log.info(document.stem)
 
-        terms = set()
-        counts = cl.Counter()
-        p = parser(document)
+        names = set()
+        stats = Stats()
+        tc = collection(document)
 
-        for (term, duration) in p:
-            terms.add(term)
-            counts[duration] += 1
+        n = 0
+        for region in tc.regions():
+            stats.terms.append(len(region))
+            for term in region:
+                names.add(str(term))
+                stats.durations.append(len(term))
+            n += 1
 
-        result = Result(terms, counts, p.gettype())
+        stats.regions.append(n)
+        stats.unique = len(names)
 
-        outgoing.put(result)
+        outgoing.put(stats)
 
 arguments = ArgumentParser()
 arguments.add_argument('--terms', type=Path)
@@ -115,35 +74,40 @@ assert(args.save or args.plot)
 
 log = pz.util.get_logger(True)
 
-names = ('corpus', 'documents', 'queries')
-tallies = dict(zip(names, map(lambda x: x(), [ cl.Counter ] * 3)))
-terms = set()
-
 incoming = mp.Queue()
 outgoing = mp.Queue()
 
 with Pool(args.workers, func, (outgoing, incoming, args.creator)) as pool:
     jobs = pz.util.JobQueue(incoming, outgoing, args.terms.iterdir())
+    # stats = sum(jobs)
+    stats = Stats()
+    for i in jobs:
+        stats += i
 
-    for result in jobs:
-        terms.update(result.terms)
-        for i in ('corpus', result.doctype):
-            tallies[i].update(result.counts)
+# log.debug('{0}'.format(len(terms)))
 
-log.debug('{0}'.format(len(terms)))
+for i in ('terms', 'regions', 'durations'):
+    s = getattr(stats, i)
 
-df = pd.DataFrame(tallies, columns=tallies.keys()).sort_index()
-if args.normalize:
-    df /= len(terms)
+    df = pd.Series(s) # .value_counts()
+    df.rename(i, inplace=True)
 
-if args.save:
-    df.to_csv(args.save, index_label='duration')
+    if args.normalize:
+        df /= stats.unique
 
-if args.plot:
-    kwargs = {
-        'aren': { 'xlim': (0, None) }
-        None: {}
-    }[args.creator]
+    if args.save:
+        dat = args.save.joinpath(i).with_suffix('.csv')
+        df.to_csv(dat) # , index_label='duration')
 
-    df.plot.line(grid=True, xlim=(args.x_min, None))
-    plt.savefig(str(args.plot), bbox_inches='tight')
+    if args.plot:
+        # kwargs = {
+        #     'aren': { 'xlim': (0, None) },
+        #     None: {}
+        # }[args.creator]
+
+        # df.plot.line(grid=True, xlim=(args.x_min, None))
+        sns.distplot(df)
+
+        img = args.plot.joinpath(i).with_suffix('.png')
+        plt.savefig(str(img), bbox_inches='tight')
+        plt.clf()
