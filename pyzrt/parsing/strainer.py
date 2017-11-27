@@ -10,12 +10,14 @@ def Strainer(strainers=None):
 
 class _Strainer:
     def __init__(self, strainer=None):
-        self.strainer = strainer if strainer else self
+        self.strainer = strainer
 
     def strain(self, document):
-        manipulation = self._manipulate(str(document))
+        if not self.strainer:
+            return document
 
-        return document.xerox(self.strainer.strain(manipulation))
+        manipulation = self._manipulate(str(document))
+        return self.strainer.strain(document.xerox(manipulation))
 
     def _manipulate(self, text):
         return text
@@ -24,12 +26,13 @@ class _Strainer:
     def builder(cls, strainers):
         strain_selector = {
             'trec': TrecGenerate,
-            'pause': PauseNormalize,
             'alpha': AlphaNumeric,
-            'lower': ft.partial(CaseNormalize, casing='lower'),
+            'pause': PauseNormalize,
             'space': ft.partial(ReplacementPlus, new=' '),
             'under': ft.partial(ReplacementPlus, new='_'),
-            'nospace': ft.partial(ReplacementPlus, new=''),
+            'lower': ft.partial(CaseNormalize, casing='lower'),
+            'symbol': SymbolNormalize,
+            'clobber': ft.partial(ReplacementPlus, new=''),
         }
 
         s = cls()
@@ -76,26 +79,38 @@ class Translate(_Strainer):
     def _manipulate(self, text):
         return text.translate(str.maketrans(self.table))
 
+class SymbolNormalize(Translate):
+    def __init__(self, strainer):
+        super().__init__(strainer)
+
+        punctuation = {}
+        for i in string.punctuation:
+            if i not in PauseNormalize.pauses:
+                punctuation[i] = ' '
+
+        self.table.update({
+            '-': ' ',
+            '&': ' and ',
+            '%': ' percent ',
+            **punctuation,
+            **{ x: ' ' for x in string.whitespace },
+        })
+
 class AlphaNumeric(Translate):
     def __init__(self, strainer):
         super().__init__(strainer)
 
         for (i, c) in self.table.items():
             if not c.isalnum():
-                self.table[i] = None
-
-        self.table.update({
-            '-': ' ',
-            '&': ' and ',
-            '%': ' percent ',
-            **{ x: ' ' for x in string.whitespace },
-        })
+                self.table[i] = ' '
 
 class PauseNormalize(Translate):
+    pauses = ',;:.?!'
+
     def __init__(self, strainer):
         super().__init__(strainer)
 
-        self.table.update({ x: '.' for x in ',;:.?!' })
+        self.table.update({ x: '.' for x in PauseNormalize.pauses })
 
 class TrecGenerate(_Strainer):
     def _manipulate(self, text):
