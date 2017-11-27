@@ -142,7 +142,7 @@ class TermCollection(list):
         if follows is None:
             follows = lambda x, y: x.position > y.span
 
-        region = TermCollection()
+        region = type(self)()
 
         for current in it.islice(self, start, None):
             if region:
@@ -150,7 +150,7 @@ class TermCollection(list):
                 assert(previous.position <= current.position) # not in order!
                 if follows(current, previous):
                     yield region
-                    region = TermCollection()
+                    region = type(self)()
             region.append(current)
 
         if region:
