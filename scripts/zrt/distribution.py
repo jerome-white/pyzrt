@@ -16,44 +16,47 @@ class Stats:
         self.regions = [] # regions per document
         self.durations = [] # term length
 
-    def __add__(self, other):
-        result = type(self)()
+    def extend(self, other):
+        self.unique += other.unique
 
-        result.terms = self.terms + other.terms
-        result.unique = self.unique + other.unique
-        result.regions = self.regions + other.regions
-        result.durations = self.durations + other.durations
+        for i in ('terms', 'regions', 'durations'):
+            (s, o) = [ getattr(x, i) for x in (self, other) ]
+            s.extend(o)
 
-        return result
-
-def Collection(corpus_type, document):
+def Collection(corpus_type):
     return {
         'aren': pz.TermCollection.fromaren,
         'simulator': pz.TermCollection,
-    }[corpus_type](document)
+    }[corpus_type]
 
-def func(args):
-    (document, creator) = args
-
+def func(incoming, outgoing, creator):
     log = pz.util.get_logger()
-    log.info(document.stem)
 
-    n = 0
-    names = set()
     stats = Stats()
-    collection = Collection(creator, document)
+    collection = Collection(creator)
 
-    for region in collection.regions():
-        stats.terms.append(len(region))
-        for term in region:
-            names.add(str(term))
-            stats.durations.append(len(term))
-        n += 1
+    while True:
+        document = incoming.get()
+        if document is None:
+            outgoing.put(stats)
+            break
+        log.info(document.stem)
 
-    stats.regions.append(n)
-    stats.unique = len(names)
+        docstats = Stats()
+        names = set()
+        tc = collection(document)
 
-    return stats
+        n = 0
+        for region in tc.regions():
+            docstats.terms.append(len(region))
+            for term in region:
+                names.add(str(term))
+                docstats.durations.append(len(term))
+            n += 1
+        docstats.regions.append(n)
+        docstats.unique = len(names)
+
+        stats.extend(docstats)
 
 arguments = ArgumentParser()
 arguments.add_argument('--terms', type=Path)
@@ -67,11 +70,17 @@ args = arguments.parse_args()
 
 assert(args.save or args.plot)
 
-with mp.Pool(args.workers) as pool:
+incoming = mp.Queue()
+outgoing = mp.Queue()
+
+with mp.Pool(args.workers, func, (outgoing, incoming, args.creator)):
+    for i in args.terms.iterdir():
+        outgoing.put(i)
+
     stats = Stats()
-    iterable = map(lambda x: (x, args.creator), args.terms.iterdir())
-    for i in pool.imap_unordered(func, iterable):
-        stats += i
+    for _ in range(args.workers):
+        outgoing.put(None)
+        stats.extend(incoming.get())
 
 log = pz.util.get_logger(True)
 for i in ('terms', 'regions', 'durations'):
