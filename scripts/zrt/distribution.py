@@ -5,9 +5,8 @@ from pathlib import Path
 from argparse import ArgumentParser
 from multiprocessing import Pool
 
-import seaborn as sns
-import matplotlib.pyplot as plt
 import pandas as pd
+import matplotlib.pyplot as plt
 
 import pyzrt as pz
 
@@ -84,29 +83,25 @@ with Pool(args.workers, func, (outgoing, incoming, args.creator)) as pool:
     for i in jobs:
         stats += i
 
-# log.debug('{0}'.format(len(terms)))
-
 for i in ('terms', 'regions', 'durations'):
-    s = getattr(stats, i)
-
-    df = pd.Series(s) # .value_counts()
-    df.rename(i, inplace=True)
-
-    if args.normalize:
-        df /= stats.unique
+    df = pd.Series(getattr(stats, i), name=i)
 
     if args.save:
         dat = args.save.joinpath(i).with_suffix('.csv')
-        df.to_csv(dat) # , index_label='duration')
+        df.to_csv(dat, header=True, index_label='count')
 
     if args.plot:
-        # kwargs = {
-        #     'aren': { 'xlim': (0, None) },
-        #     None: {}
-        # }[args.creator]
+        df = df.value_counts().sort_index()
 
-        # df.plot.line(grid=True, xlim=(args.x_min, None))
-        sns.distplot(df)
+        if args.normalize:
+            df /= df.sum()
+
+        kwargs = {
+            'aren': { 'xlim': (0, None) },
+            None: {}
+        }[args.creator]
+
+        df.plot.line(grid=True, xlim=(args.x_min, None))
 
         img = args.plot.joinpath(i).with_suffix('.png')
         plt.savefig(str(img), bbox_inches='tight')
