@@ -1,4 +1,3 @@
-import csv
 import multiprocessing as mp
 from pathlib import Path
 from argparse import ArgumentParser
