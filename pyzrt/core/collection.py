@@ -202,7 +202,7 @@ class TermCollection(list):
                 name = 'pt' + psuedoterm
 
                 (start, end) = map(int, position)
-                ngram = 'x' * (end - start)
+                ngram = 'x' * (end - start + 1)
 
                 yield (name, ngram, start)
 
