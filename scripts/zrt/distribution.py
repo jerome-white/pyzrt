@@ -1,8 +1,8 @@
 import csv
-import collections as cl
 import multiprocessing as mp
 from pathlib import Path
 from argparse import ArgumentParser
+from collections import Counter
 
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -12,16 +12,16 @@ import pyzrt as pz
 class Stats:
     def __init__(self):
         self.unique = 0 # unique terms
-        self.terms = [] # terms per region
-        self.regions = [] # regions per document
-        self.durations = [] # term length
+        self.terms = Counter() # terms per region
+        self.regions = Counter() # regions per document
+        self.durations = Counter() # term length
 
     def extend(self, other):
         self.unique += other.unique
 
         for i in ('terms', 'regions', 'durations'):
             (s, o) = [ getattr(x, i) for x in (self, other) ]
-            s.extend(o)
+            s.update(o)
 
 def Collection(corpus_type):
     return {
@@ -42,18 +42,18 @@ def func(incoming, outgoing, creator):
             break
         log.info(document.stem)
 
-        docstats = Stats()
-        names = set()
         tc = collection(document)
+        docstats = Stats()
 
         n = 0
+        names = set()
         for region in tc.regions():
-            docstats.terms.append(len(region))
+            docstats.terms[len(region)] += 1
             for term in region:
                 names.add(str(term))
-                docstats.durations.append(len(term))
+                docstats.durations[len(term)] += 1
             n += 1
-        docstats.regions.append(n)
+        docstats.regions[n] += 1
         docstats.unique = len(names)
 
         stats.extend(docstats)
@@ -83,20 +83,20 @@ with mp.Pool(args.workers, func, (outgoing, incoming, args.creator)):
         stats.extend(incoming.get())
 
 log = pz.util.get_logger(True)
+
+log.info('BEGIN')
 for i in ('terms', 'regions', 'durations'):
-    df = pd.Series(getattr(stats, i), name=i)
+    df = pd.Series(getattr(stats, i), name='count')
 
     if args.save:
         dat = args.save.joinpath(i).with_suffix('.csv')
         log.info(dat)
 
-        df.to_csv(dat, header=True, index_label='count')
+        df.to_csv(dat, header=True, index_label=i)
 
     if args.plot:
         img = args.plot.joinpath(i).with_suffix('.png')
         log.info(img)
-
-        df = df.value_counts().sort_index()
 
         if args.normalize:
             df /= df.sum()
@@ -110,3 +110,4 @@ for i in ('terms', 'regions', 'durations'):
 
         plt.savefig(str(img), bbox_inches='tight')
         plt.clf()
+log.info('END')
