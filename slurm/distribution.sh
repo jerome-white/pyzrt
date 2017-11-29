@@ -2,7 +2,7 @@
 
 module load pbzip2/intel/1.1.13
 
-while getopts "r:n:h" OPTION; do
+while getopts "r:nh" OPTION; do
     case $OPTION in
         n) normalize=--normalize ;;
         r) root=$OPTARG ;;
