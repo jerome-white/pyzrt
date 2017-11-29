@@ -101,11 +101,6 @@ for i in ('terms', 'regions', 'durations'):
         if args.normalize:
             df /= df.sum()
 
-        kwargs = {
-            'aren': { 'xlim': (0, None) },
-            None: {}
-        }[args.creator]
-
         df.plot.line(grid=True, xlim=(args.x_min, None))
 
         plt.savefig(str(img), bbox_inches='tight')
