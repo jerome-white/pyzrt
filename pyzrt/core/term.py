@@ -4,8 +4,7 @@ BasicTerm = cl.namedtuple('BasicTerm', 'name, ngram, position')
 
 class Term(BasicTerm):
     def __new__(cls, name, ngram, position):
-        self = super(Term, cls).__new__(cls, name, ngram, position)
-        return self
+        return super(Term, cls).__new__(cls, name, ngram, position)
 
     def __init__(self, name, ngram, position):
         self.span = self.position + len(self) - 1
