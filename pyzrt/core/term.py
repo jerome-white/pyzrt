@@ -1,8 +1,8 @@
 import collections as cl
 
-BasicTerm = cl.namedtuple('BasicTerm', 'name, ngram, position')
+_Term = cl.namedtuple('_Term', 'name, ngram, position')
 
-class Term(BasicTerm):
+class Term(_Term):
     def __new__(cls, name, ngram, position):
         return super(Term, cls).__new__(cls, name, ngram, position)
 
