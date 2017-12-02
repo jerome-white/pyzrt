@@ -1,24 +1,31 @@
+import collections as cl
 import multiprocessing as mp
 from pathlib import Path
 from argparse import ArgumentParser
-from collections import Counter
 
 import pandas as pd
 import matplotlib.pyplot as plt
 
 import pyzrt as pz
 
-class Stats:
+_Stats = cl.namedtuple('_Stats', [
+    'terms',     # terms per region
+    'regions',   # regions per document
+    'durations', # term length
+])
+
+class Stats(_Stats):
+    def __new__(cls):
+        args = map(lambda _: cl.Counter(), range(len(Stats._fields)))
+        return super(Stats, cls).__new__(cls, *args)
+
     def __init__(self):
         self.unique = 0 # unique terms
-        self.terms = Counter() # terms per region
-        self.regions = Counter() # regions per document
-        self.durations = Counter() # term length
 
     def extend(self, other):
         self.unique += other.unique
 
-        for i in ('terms', 'regions', 'durations'):
+        for i in self._fields:
             (s, o) = [ getattr(x, i) for x in (self, other) ]
             s.update(o)
 
@@ -59,15 +66,10 @@ def func(incoming, outgoing, creator):
 
 arguments = ArgumentParser()
 arguments.add_argument('--terms', type=Path)
-arguments.add_argument('--plot', type=Path)
-arguments.add_argument('--save', type=Path)
+arguments.add_argument('--output', type=Path)
 arguments.add_argument('--creator')
 arguments.add_argument('--workers', type=int, default=mp.cpu_count())
-arguments.add_argument('--x-min', type=float, default=0)
-arguments.add_argument('--normalize', action='store_true')
 args = arguments.parse_args()
-
-assert(args.save or args.plot)
 
 incoming = mp.Queue()
 outgoing = mp.Queue()
@@ -82,26 +84,11 @@ with mp.Pool(args.workers, func, (outgoing, incoming, args.creator)):
         stats.extend(incoming.get())
 
 log = pz.util.get_logger(True)
-
 log.info('BEGIN')
-for i in ('terms', 'regions', 'durations'):
+
+for i in Stats._fields:
     df = pd.Series(getattr(stats, i), name='count')
+    dat = args.save.joinpath(i).with_suffix('.csv')
+    df.to_csv(dat, header=True, index_label=i)
 
-    if args.save:
-        dat = args.save.joinpath(i).with_suffix('.csv')
-        log.info(dat)
-
-        df.to_csv(dat, header=True, index_label=i)
-
-    if args.plot:
-        img = args.plot.joinpath(i).with_suffix('.png')
-        log.info(img)
-
-        if args.normalize:
-            df /= df.sum()
-
-        df.plot.line(grid=True, xlim=(args.x_min, None))
-
-        plt.savefig(str(img), bbox_inches='tight')
-        plt.clf()
 log.info('END')
