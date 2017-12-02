@@ -1,6 +1,6 @@
-import collections as clc
+import collections as cl
 
-BasicTerm = clc.namedtuple('BasicTerm', 'name, ngram, position')
+BasicTerm = cl.namedtuple('BasicTerm', 'name, ngram, position')
 
 class Term(BasicTerm):
     def __new__(cls, name, ngram, position):
