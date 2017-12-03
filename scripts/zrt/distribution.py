@@ -1,31 +1,27 @@
-import collections as cl
 import multiprocessing as mp
 from pathlib import Path
 from argparse import ArgumentParser
+from tempfile import NamedTemporaryFile
+from collections import Counter
 
 import pandas as pd
 import matplotlib.pyplot as plt
 
 import pyzrt as pz
 
-_Stats = cl.namedtuple('_Stats', [
-    'terms',     # terms per region
-    'regions',   # regions per document
-    'durations', # term length
-])
-
-class Stats(_Stats):
-    def __new__(cls):
-        args = map(lambda _: cl.Counter(), range(len(Stats._fields)))
-        return super(Stats, cls).__new__(cls, *args)
-
+class Stats:
     def __init__(self):
         self.unique = 0 # unique terms
+
+        self.terms = Counter()     # terms per region
+        self.regions = Counter()   # regions per document
+        self.durations = Counter() # term length
+        self.fields = ['terms', 'regions', 'durations']
 
     def extend(self, other):
         self.unique += other.unique
 
-        for i in Stats._fields:
+        for i in self.fields:
             (s, o) = [ getattr(x, i) for x in (self, other) ]
             s.update(o)
 
@@ -88,17 +84,18 @@ log = pz.util.get_logger(True)
 log.info('BEGIN')
 
 kwargs = {
-    'dir': str(args.output),    
+    'dir': str(args.output),
     'mode': 'w',
-    'delete': False,    
+    'delete': False,
     'suffix': '.csv',
 }
+version = '{0}-{1}'.format(args.creator[:2], args.version)
 
-for field in Stats._fields:
+for field in stats.fields:
     with NamedTemporaryFile(**kwargs) as fp:
         pd.DataFrame({
             field: getattr(stats, field),
-            'version': args.creator[:2] + args.version,
+            'version': version,
         }).to_csv(fp, header=True, index_label='count')
 
 log.info('END')
