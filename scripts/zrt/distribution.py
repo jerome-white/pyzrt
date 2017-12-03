@@ -25,7 +25,7 @@ class Stats(_Stats):
     def extend(self, other):
         self.unique += other.unique
 
-        for i in self._fields:
+        for i in Stats._fields:
             (s, o) = [ getattr(x, i) for x in (self, other) ]
             s.update(o)
 
@@ -68,6 +68,7 @@ arguments = ArgumentParser()
 arguments.add_argument('--terms', type=Path)
 arguments.add_argument('--output', type=Path)
 arguments.add_argument('--creator')
+arguments.add_argument('--version')
 arguments.add_argument('--workers', type=int, default=mp.cpu_count())
 args = arguments.parse_args()
 
@@ -86,9 +87,18 @@ with mp.Pool(args.workers, func, (outgoing, incoming, args.creator)):
 log = pz.util.get_logger(True)
 log.info('BEGIN')
 
-for i in Stats._fields:
-    df = pd.Series(getattr(stats, i), name='count')
-    dat = args.save.joinpath(i).with_suffix('.csv')
-    df.to_csv(dat, header=True, index_label=i)
+kwargs = {
+    'dir': str(args.output),    
+    'mode': 'w',
+    'delete': False,    
+    'suffix': '.csv',
+}
+
+for field in Stats._fields:
+    with NamedTemporaryFile(**kwargs) as fp:
+        pd.DataFrame({
+            field: getattr(stats, field),
+            'version': args.creator[:2] + args.version,
+        }).to_csv(fp, header=True, index_label='count')
 
 log.info('END')
