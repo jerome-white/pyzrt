@@ -87,6 +87,7 @@ kwargs = {
     'dir': str(args.output),
     'mode': 'w',
     'delete': False,
+    'prefix': '',
     'suffix': '.csv',
 }
 version = '{0}-{1}'.format(args.creator[:2], args.version)
