@@ -1,5 +1,6 @@
 from pathlib import Path
 from argparse import ArgumentParser
+from multiprocessing import Pool
 
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -16,8 +17,7 @@ def func(args):
 def aquire(measurement, directory):
     with Pool() as pool:
         iterable = map(lambda x: (x, measurement), directory.iterdir())
-        for i in pool.imap_unordered(func, iterable):
-            yield i
+        yield from pool.imap_unordered(func, iterable)
 
 arguments = ArgumentParser()
 arguments.add_argument('--terms', type=Path)
@@ -30,10 +30,10 @@ args = arguments.parse_args()
 df = pd.concat(aquire(args.measurement, args.terms))
 assert(not df.empty)
 
-df = df.pivot(index='count', columns='ngrams', values=args.measurement)
+df = df.pivot(index='count', columns='version', values=args.measurement)
 if args.normalize:
     df /= df.sum()
 df.plot.line(grid=True, xlim=(args.x_min, None))
 
-img = args.plot.joinpath(args.measurement).with_suffix('.png')
+img = args.output.joinpath(args.measurement).with_suffix('.png')
 plt.savefig(str(img), bbox_inches='tight')
