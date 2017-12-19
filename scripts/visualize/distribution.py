@@ -41,6 +41,7 @@ if args.normalize:
 title = '../{0} - {1}'.format(args.terms.parts[-2:], args.measurement)
 df.plot.line(grid=True,
              xlim=(args.x_min, args.x_max),
+             ylim=(0, None),
              title=title)
 
 img = args.output.joinpath(args.measurement).with_suffix('.png')
