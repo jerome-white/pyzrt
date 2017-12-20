@@ -30,7 +30,7 @@ log = pz.util.get_logger(True)
 
 log.info('|< BEGIN')
 with Pool(args.workers) as pool:
-    definition = Entry(w_fields.STORED, w_fields.TEXT)
+    definition = Entry(w_fields.ID(stored=True), w_fields.TEXT)
     schema = w_fields.Schema(**definition._asdict())
     ix = w_index.create_in(args.index, schema)
     ix = w_index.open_dir(args.index)

@@ -25,7 +25,7 @@ log = pz.util.get_logger(True)
 
 log.info('|< BEGIN')
 with Pool(args.workers) as pool:
-    definition = Entry(wfld.ID, wfld.TEXT(vector))
+    definition = Entry(wfld.ID(stored=True), wfld.TEXT)
     schema = wfld.Schema(**definition._asdict())
 
     ix = wndx.open_dir(args.index)
@@ -34,7 +34,8 @@ with Pool(args.workers) as pool:
     with ix.reader() as reader:
         postings = reader.postings('contents', term)
         for i in postings.all_ids():
-            print(i)
+            fields = reader.stored_fields(i)
+            print(fields)
 
     with ix.searcher() as searcher:
         query = QueryParser('contents', ix.schema).parse(term)
