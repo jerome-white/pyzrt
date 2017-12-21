@@ -17,10 +17,10 @@ class Term(_Term):
             return len(self) < len(other)
         return self.position < other.position
 
-    def __str__(self):
+    def __repr__(self):
         return self.name
 
-    def __repr__(self):
+    def __str__(self):
         return self.ngram
 
     @classmethod

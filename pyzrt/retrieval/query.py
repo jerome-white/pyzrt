@@ -23,7 +23,7 @@ class _Query:
 
     def compose(self):
         terms = map(self.make, self.regionalize)
-        return ' '.join(map(str, it.chain.from_iterable(terms)))
+        return ' '.join(map(repr, it.chain.from_iterable(terms)))
 
     def make(self, region):
         raise NotImplementedError()
