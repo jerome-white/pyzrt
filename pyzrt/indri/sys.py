@@ -54,11 +54,9 @@ class QueryRelevance:
 
 class Search:
     def __init__(self, index, qrels):
-        self.index = index
         self.qrels = qrels
         self.count = len(self.qrels)
 
-        self.indri = sh.which('IndriRunQuery')
         self.trec = sh.which('trec_eval')
 
     def _shell(self, cmd):
@@ -70,22 +68,8 @@ class Search:
 
             yield from proc.stdout
 
-    def execute(self, query, baseline=None):
-        '''Build/execute the Indri command
-
-        '''
-
-        cmd = [
-            self.indri,
-            '-trecFormat=true',
-            '-count={0}'.format(self.count),
-            '-index={0}'.format(self.index),
-            str(query),
-        ]
-        if baseline:
-            cmd.insert(-1, '-baseline='.format(baseline))
-
-        yield from self._shell(cmd)
+    def execute(self, query):
+        raise NotImplementedError()
 
     def evaluate(self, execution, metrics=None):
         if not metrics:
@@ -143,3 +127,27 @@ class Search:
 
     def do(self, query, metrics=None):
         yield from self.interpret(self.evaluate(self.execute(query), metrics))
+
+class IndriSearch(Search):
+    def __init__(self, index, qrels):
+        super().__init__(qrels)
+
+        self.index = index
+        self.indri = sh.which('IndriRunQuery')
+
+    def execute(self, query, baseline=None):
+        '''Build/execute the Indri command
+
+        '''
+
+        cmd = [
+            self.indri,
+            '-trecFormat=true',
+            '-count={0}'.format(self.count),
+            '-index={0}'.format(self.index),
+            str(query),
+        ]
+        if baseline:
+            cmd.insert(-1, '-baseline='.format(baseline))
+
+        yield from self._shell(cmd)
