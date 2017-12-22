@@ -53,7 +53,7 @@ class QueryRelevance:
                     yield document
 
 class Search:
-    def __init__(self, index, qrels):
+    def __init__(self, qrels):
         self.qrels = qrels
         self.count = len(self.qrels)
 
@@ -66,7 +66,8 @@ class Search:
                       universal_newlines=True) as proc:
             proc.wait()
 
-            yield from proc.stdout
+            for i in proc.stdout:
+                yield i.strip()
 
     def execute(self, query):
         raise NotImplementedError()
@@ -127,27 +128,3 @@ class Search:
 
     def do(self, query, metrics=None):
         yield from self.interpret(self.evaluate(self.execute(query), metrics))
-
-class IndriSearch(Search):
-    def __init__(self, index, qrels):
-        super().__init__(qrels)
-
-        self.index = index
-        self.indri = sh.which('IndriRunQuery')
-
-    def execute(self, query, baseline=None):
-        '''Build/execute the Indri command
-
-        '''
-
-        cmd = [
-            self.indri,
-            '-trecFormat=true',
-            '-count={0}'.format(self.count),
-            '-index={0}'.format(self.index),
-            str(query),
-        ]
-        if baseline:
-            cmd.insert(-1, '-baseline='.format(baseline))
-
-        yield from self._shell(cmd)
