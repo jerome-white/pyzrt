@@ -9,21 +9,22 @@ from whoosh.qparser import QueryParser
 from pyzrt.core.collection import TermCollection
 from pyzrt.indri.sys import Search
 
-Entry = cl.namedtuple('_Entry', 'document, content')
+Entry = cl.namedtuple('Entry', 'document, content')
 
 @ft.singledispatch
-def WhooshEntry(value=None):
-    return Entry(ID(stored=True, unique=True), TEXT)
+def WhooshEntry(value):
+    raise TypeError('{0} not supported'.format(type(value)))
 
 @WhooshEntry.register(Path)
 def _(value):
     identity = lambda x: x
-    args = map(str, map(lambda x: x(value), (identity, TermCollection)))
+    args = map(str, map(lambda f: f(value), (identity, TermCollection)))
+
     return Entry(*args)
 
 @WhooshEntry.register(dict)
 def _(value):
-    return Entry(**value)
+    return Entry(**{ x: value[x] for x in Entry._fields })
 
 @WhooshEntry.register(str)
 def _(value, collect=False):
@@ -31,6 +32,15 @@ def _(value, collect=False):
     content = TermCollection(document) if collect else None
 
     return Entry(document, content)
+
+@WhooshEntry.register(type(None))
+def _(value):
+    return Entry(ID(stored=True, unique=True), TEXT)
+
+def WhooshSchema():
+    entry = WhooshEntry(None)._asdict()
+
+    return Schema(**entry)
 
 # class Entry(_Entry):
 #     def __new__(cls, document, contents):
@@ -53,22 +63,23 @@ class WhooshSearch(Search):
         self.session = 0
 
     def execute(self, query):
-        parser = QueryParser('contents', self.index.schema)
+        parser = QueryParser('content', self.index.schema)
         whquery = parser.parse(str(query))
+        session = 'Q{0}'.format(self.session)
 
         with self.index.searcher() as searcher:
             results = searcher.search(whquery, limit=self.count)
-            for (i, hit) in enumerate(results):
-                doc = Path(hit['doc'])
+            for (i, hit) in enumerate(results, 1):
+                doc = Path(hit['document'])
                 out = [
-                    0,             # * qid
-                    self.session,  #   iter
-                    doc.stem,      # * docno
-                    i,             #   rank
-                    hit.score,     # * sim
-                    'whoosh',      #   run_id
+                    0,         # * qid
+                    session,   #   iter
+                    doc.stem,  # * docno
+                    i,         #   rank
+                    hit.score, # * sim
+                    'whoosh',  #   run_id
                 ]
 
-                yield '\t'.join(map(str, out))
+                yield ' '.join(map(str, out))
 
         self.session += 1
