@@ -33,26 +33,33 @@ class TermSelector:
 
         return term
 
-    def pick(self, reader):
+    def pick(self):
         raise NotImplementedError()
 
 class SequentialSelector(TermSelector):
     def __init__(self, index, seed=None):
-        super().__init__(index, seed):
-        self.documents = None
+        super().__init__(index, seed)
+
+        self.documents = []
+        self.itr = None
+
+        with index.reader() as reader:
+            for i in reader.all_doc_ids():
+                field = reader.stored_fields(i)
+                entry = WhooshEntry(fields)
+                self.documents.append(entry.document)
+        self.documents.sort()
 
     def pick(self, reader):
-        if self.document is None:
-            for i in reader.all_doc_ids():
-                entry = WhooshEntry(reader.stored_fields(i))
-                with entry.document.open() as fp:
-                    word = []
-                    while True:
-                        c = fp.read()
-                        if not c:
-                            break
-                        if c in strings.whitespace:
-                            yield ''.join(word)
-                            word = []
-                        else:
-                            word.append(c)
+        if not self.documents:
+            raise StopIteration()
+
+        if self.itr is None:
+            doc = self.documents.pop()
+            self.itr = iter(TermCollection(doc))
+
+        for i in self.itr:
+            pterm = repr(i)
+            if pterm != str(i):
+                return pterm
+        self.itr = None
