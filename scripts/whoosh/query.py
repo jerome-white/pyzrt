@@ -2,6 +2,7 @@ from pathlib import Path
 from argparse import ArgumentParser
 
 import whoosh.index as wndx
+import whoosh.scoring as wscr
 from whoosh.qparser import QueryParser
 
 import pyzrt as pz
@@ -21,18 +22,15 @@ log.debug(q[:20])
 
 log.info('|< BEGIN')
 ix = wndx.open_dir(args.index)
-# log.debug(ix.schema)
-
-# with ix.searcher() as searcher:
-#     query = QueryParser('content', ix.schema).parse(q)
-#     results = searcher.search(query, limit=args.count)
-#     for result in results:
-#         doc = Path(result['document'])
-#         print(doc.stem, result.score)
 
 tc = pz.TermCollection(args.query)
 qrels = [ None ] * args.count
 search = pz.WhooshSearch(args.index, qrels)
-for i in search.execute(repr(tc[0])):
+
+query = tc
+# query = repr(tc[0])
+# query = ' '.join(map(repr, tc[:3]))
+
+for i in search.execute(query):
     print(i)
 log.info('|> COMPLETE')
