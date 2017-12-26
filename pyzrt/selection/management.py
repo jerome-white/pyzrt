@@ -1,23 +1,18 @@
-from collections import deque
-
-import pandas as pd
+import collections as cl
 
 class TermSelector:
-    def __init__(self, strategy, feedback, seed=None):
-        self.strategy = strategy
-        self.feedback = feedback
-        self.seed = deque(seed) if seed is not None else []
+    def __init__(self, index, seed=None):
+        self.index = index
+        self.seed = cl.deque(seed) if seed is not None else []
 
-        self.df = None
-        self.documents = {}
+        self.feedback = None
+        self.selected = None
 
     #
     # Set up the DataFrame used by the selectors
     #
     def __iter__(self):
-        self.df = pd.concat(self.documents.values(), copy=False)
-        self.df.reset_index(drop=True, inplace=True)
-
+        self.selected = {}
         return self
 
     #
@@ -28,31 +23,43 @@ class TermSelector:
         if self.seed:
             term = self.seed.popleft()
         else:
-            term = self.strategy.pick(self.df, self.feedback)
-        self.mark_selected(term)
+            with self.index.reader() as reader:
+                while True:
+                    term = self.pick(reader)
+                    if term not in self.selected:
+                        break
+
+        self.selected[term] = len(self.selected) + 1
 
         return term
 
-    #
-    # mark the term as being selected
-    #
-    def mark_selected(self, term, order=None):
-        matches = self.df['term'] == term
-        if matches.empty:
-            return
+    def pick(self):
+        raise NotImplementedError()
 
-        if order is None:
-            order = self.df['selected'].max() + 1
-        self.df.loc[matches, 'selected'] = order
+class SequentialSelector(TermSelector):
+    def __init__(self, index, seed=None):
+        super().__init__(index, seed)
 
-    #
-    # Add documents to the corpus
-    #
-    def add(self, document):
-        assert(document.name not in self.documents)
+        self.documents = []
+        self.itr = None
 
-        new_columns = {
-            'document': document.name,
-            'selected': 0,
-        }
-        self.documents[document.name] = document.df.assign(**new_columns)
+        with index.reader() as reader:
+            for i in reader.all_doc_ids():
+                field = reader.stored_fields(i)
+                entry = WhooshEntry(fields)
+                self.documents.append(entry.document)
+        self.documents.sort()
+
+    def pick(self, reader):
+        if not self.documents:
+            raise StopIteration()
+
+        if self.itr is None:
+            doc = self.documents.pop()
+            self.itr = iter(TermCollection(doc))
+
+        for i in self.itr:
+            pterm = repr(i)
+            if pterm != str(i):
+                return pterm
+        self.itr = None
