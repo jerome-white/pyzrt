@@ -5,6 +5,9 @@ from pathlib import Path
 import whoosh.index as wndx
 from whoosh.fields import Schema, ID, TEXT
 from whoosh.qparser import QueryParser
+from whoosh.qparser.syntax import OrGroup
+from whoosh.scoring import BM25F
+from whoosh.analysis import SimpleAnalyzer
 
 from pyzrt.core.collection import TermCollection
 from pyzrt.indri.sys import Search
@@ -35,7 +38,8 @@ def _(value, collect=False):
 
 @WhooshEntry.register(type(None))
 def _(value):
-    return Entry(ID(stored=True, unique=True), TEXT)
+    return Entry(ID(stored=True, unique=True),
+                 TEXT(analyzer=SimpleAnalyzer(), phrase=False))
 
 def WhooshSchema():
     entry = WhooshEntry(None)._asdict()
@@ -62,12 +66,15 @@ class WhooshSearch(Search):
         self.index = wndx.open_dir(index)
         self.session = 0
 
-    def execute(self, query):
-        parser = QueryParser('content', self.index.schema)
+    def execute(self, query, weighting=None):
+        parser = QueryParser('content', self.index.schema, group=OrGroup)
         whquery = parser.parse(str(query))
         session = 'Q{0}'.format(self.session)
 
-        with self.index.searcher() as searcher:
+        if weighting is None:
+            weighting=BM25F()
+
+        with self.index.searcher(weighting=weighting) as searcher:
             results = searcher.search(whquery, limit=self.count)
             for (i, hit) in enumerate(results, 1):
                 doc = Path(hit['document'])
