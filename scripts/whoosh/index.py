@@ -22,15 +22,13 @@ log.info('|< BEGIN')
 with Pool(args.workers) as pool:
     args.index.mkdir()
     ix = wndx.create_in(args.index, pz.WhooshSchema())
-    stem_ana = ix.schema['content'].format.analyzer
-    stem_ana.cachesize = -1
-    stem_ana.clear()
+    # stem_ana = ix.schema['content'].format.analyzer
+    # stem_ana.cachesize = -1
+    # stem_ana.clear()
 
     with ix.writer(procs=args.workers, limitmb=args.memory) as writer:
         iterable = pz.util.walk(args.corpus)
         for i in pool.imap_unordered(pz.WhooshEntry, iterable):
-            log.debug(i.document)
-            log.debug(i.content[:20])
             writer.add_document(**i._asdict())
         log.info('|+ COMMIT')
 log.info('|> COMPLETE')
