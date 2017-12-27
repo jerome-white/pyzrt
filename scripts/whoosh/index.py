@@ -29,6 +29,7 @@ with Pool(args.workers) as pool:
     with ix.writer(procs=args.workers, limitmb=args.memory) as writer:
         iterable = pz.util.walk(args.corpus)
         for i in pool.imap_unordered(pz.WhooshEntry, iterable):
+            log.debug(i.document)
             writer.add_document(**i._asdict())
         log.info('|+ COMMIT')
 log.info('|> COMPLETE')
