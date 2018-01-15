@@ -11,22 +11,23 @@ class TrecMetric:
     are specified and how they are presented in their results; this
     class acts a shield between knowing the difference.
     '''
+
     def __init__(self, metric):
         '''A metric as it would be specified to the trec_eval command.
 
         '''
         self.metric = metric
 
+    #
+    # Suitable for supplying directly to the trec_eval command
+    #
     def __str__(self):
-        '''Suitable for supplying directly to the trec_eval command
-
-        '''
         return '-m' + self.metric
 
+    #
+    # The key in trec_eval results
+    #
     def __repr__(self):
-        '''The key in trec_eval results
-
-        '''
         return '_'.join(self.metric.split('.', 1))
 
 class QueryRelevance:
@@ -128,3 +129,6 @@ class Search:
 
     def do(self, query, metrics=None):
         yield from self.interpret(self.evaluate(self.execute(query), metrics))
+
+    def get(self, query, metrics=None):
+        return next(self.do(query, metrics))
