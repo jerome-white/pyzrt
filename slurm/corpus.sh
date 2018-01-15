@@ -1,11 +1,19 @@
 #!/bin/bash
 
-basic=lower:symbol
-standard=space:alpha:$basic
+#
+# symbol: non-punctuation non-alphanumeric removed
+# lower: lower-cased
+# alpha: non-alphanumeric removed
+# space: whitespace regularization
+# clobber: whitespace removed
+# pause: punctuation regularized (as periods)
+# phonetic: words translated to proununciation
+#
 strainers=(
-    $standard # "standard"
-    clobber:$standard # no spaces
-    pause:clobber:$basic # no spaces, pauses as periods
+    space:alpha:lower:symbol # standard (CIKM)
+    clobber:alpha:lower:symbol
+    pause:clobber:lower:symbol
+    clobber:symbol:lower:phonetic:pause
 )
 documents=$HOME/etc/wsj/docs
 workers=20
