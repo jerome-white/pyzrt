@@ -1,7 +1,11 @@
+import os
 import string
 import operator as op
 import functools as ft
 import xml.etree.ElementTree as et
+from pathlib import Path
+
+import nltk
 
 def Strainer(strainers=None):
     if strainers is None:
@@ -33,6 +37,7 @@ class _Strainer:
             'lower': ft.partial(CaseNormalize, casing='lower'),
             'symbol': SymbolNormalize,
             'clobber': ft.partial(ReplacementPlus, new=''),
+            'phonetic': Phonetic,
         }
 
         s = cls()
@@ -46,25 +51,21 @@ class Phonetic(_Strainer):
     '''Should be run before whitespace removal.
     '''
 
-    def __init__(self, strainer, phones):
+    def __init__(self, strainer):
         super().__init__(strainer)
 
-        self.pronunciation = {}
-
-        comment = ';;;'
-        delimiter = ' ' * 2
-        with phones.open() as fp:
-            for i in fp:
-                if i[0] != comment:
-                    (written, spoken) = i.strip().split(delimiter)
-                    if written.isalpha():
-                        self.pronunciation[written] = spoken
+        self.pronunciation = nltk.corpus.cmudict.dict()
 
     def _manipulate(self, text):
         speech = []
 
-        for i in text.split(' '):
-            trans = self.pronunciation[i] if i in self.pronunciation else i
+        for i in text.split():
+            key = i.lower()
+            if key in self.pronunciation:
+                p = self.pronunciation[key]
+                trans = ' '.join(p[0])
+            else:
+                trans = i
             speech.append(trans)
 
         return ' '.join(speech)
