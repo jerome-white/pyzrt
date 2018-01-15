@@ -42,6 +42,33 @@ class _Strainer:
 
         return s
 
+class Phonetic(_Strainer):
+    '''Should be run before whitespace removal.
+    '''
+
+    def __init__(self, strainer, phones):
+        super().__init__(strainer)
+
+        self.pronunciation = {}
+
+        comment = ';;;'
+        delimiter = ' ' * 2
+        with phones.open() as fp:
+            for i in fp:
+                if i[0] != comment:
+                    (written, spoken) = i.strip().split(delimiter)
+                    if written.isalpha():
+                        self.pronunciation[written] = spoken
+
+    def _manipulate(self, text):
+        speech = []
+
+        for i in text.split(' '):
+            trans = self.pronunciation[i] if i in self.pronunciation else i
+            speech.append(trans)
+
+        return ' '.join(speech)
+
 class CaseNormalize(_Strainer):
     def __init__(self, strainer, casing):
         assert(hasattr(str, casing))
@@ -110,7 +137,7 @@ class PauseNormalize(Translate):
     def __init__(self, strainer):
         super().__init__(strainer)
 
-        self.table.update({ x: '.' for x in PauseNormalize.pauses })
+        self.table.update({ x: ' . ' for x in PauseNormalize.pauses })
 
 class TrecGenerate(_Strainer):
     def _manipulate(self, text):
