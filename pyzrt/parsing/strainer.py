@@ -1,7 +1,11 @@
+import os
 import string
 import operator as op
 import functools as ft
 import xml.etree.ElementTree as et
+from pathlib import Path
+
+import nltk
 
 def Strainer(strainers=None):
     if strainers is None:
@@ -33,6 +37,7 @@ class _Strainer:
             'lower': ft.partial(CaseNormalize, casing='lower'),
             'symbol': SymbolNormalize,
             'clobber': ft.partial(ReplacementPlus, new=''),
+            'phonetic': Phonetic,
         }
 
         s = cls()
@@ -41,6 +46,29 @@ class _Strainer:
             s = Strainer(s)
 
         return s
+
+class Phonetic(_Strainer):
+    '''Should be run before whitespace removal.
+    '''
+
+    def __init__(self, strainer):
+        super().__init__(strainer)
+
+        self.pronunciation = nltk.corpus.cmudict.dict()
+
+    def _manipulate(self, text):
+        speech = []
+
+        for i in text.split():
+            key = i.lower()
+            if key in self.pronunciation:
+                p = self.pronunciation[key]
+                trans = ' '.join(p[0])
+            else:
+                trans = i
+            speech.append(trans)
+
+        return ' '.join(speech)
 
 class CaseNormalize(_Strainer):
     def __init__(self, strainer, casing):
@@ -110,7 +138,7 @@ class PauseNormalize(Translate):
     def __init__(self, strainer):
         super().__init__(strainer)
 
-        self.table.update({ x: '.' for x in PauseNormalize.pauses })
+        self.table.update({ x: ' . ' for x in PauseNormalize.pauses })
 
 class TrecGenerate(_Strainer):
     def _manipulate(self, text):
