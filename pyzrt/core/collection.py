@@ -40,7 +40,7 @@ class TermCollection(list):
             with self.collection.open() as fp:
                 if reader is None:
                     f = Term._fromdict
-                    reader = csv.DictReader
+                    reader = TermCollection.reader
                 else:
                     f = lambda x: Term(*x)
                 self.extend(map(f, reader(fp)))
@@ -207,3 +207,42 @@ class TermCollection(list):
                 yield (name, ngram, start)
 
         return cls(collection, reader)
+
+    @staticmethod
+    def reader(fp, delimiter=',', header=None):
+        '''Parse simulator output.
+
+        Parameters
+        ----------
+        fp: iterable->string
+            Any object that supports the iterator protocol and returns
+            a string each time its __next__() method is called
+
+        delimiter : str , optional
+           String that delimits fields on each line
+
+        header: list , optional
+           List of keys to use as the header. If None, uses first line
+           of fp
+
+        Yields
+        ----------
+        dict
+           Header is used as keys, fields used as values.
+
+        '''
+
+        for i in fp:
+            line = i.strip()
+
+            (x, y) = [ f(delimiter) for f in (line.index, line.rindex) ]
+            parts = [
+                line[:x],
+                line[x+1:y],
+                line[y+1:],
+            ]
+
+            if header is None:
+                header = parts
+            else:
+                yield dict(zip(header, parts))
