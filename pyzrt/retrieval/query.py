@@ -124,8 +124,8 @@ class LongestWeight(Weighted):
         self.regionalize = PerRegion(self.doc)
 
 class GraphPath:
-    def __init__(self, path, deviation=np.inf):
-        self.path = path
+    def __init__(self, path=None, deviation=np.inf):
+        self.path = [ 0 ] if path is None else path
         self.deviation = deviation
 
     def __iter__(self):
@@ -142,17 +142,18 @@ class ShortestPath(_Query):
     def make(self, collection):
         graph = nx.DiGraph()
 
-        for source in collection:
-            u = collection.index(source)
-            for target in collection.after(u):
-                v = collection.index(target)
-                weight = source.span - target.position
+        for (u, src) in enumerate(collection):
+            nxt = u + 1
+            for (v, dst) in enumerate(it.islice(collection, nxt, None), nxt):
+                weight = src.span - dst.position
+                if weight < 0:
+                    break
                 graph.add_edge(u, v, weight=weight)
 
-        (source, target) = (0, len(collection) - 1)
-        best = GraphPath([ source ])
+        best = GraphPath()
 
         if len(graph):
+            (source, target) = map(lambda x: x(graph.nodes()), (min, max))
             for i in nx.all_shortest_paths(graph,
                                            source,
                                            target,
