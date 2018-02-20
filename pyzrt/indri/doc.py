@@ -1,46 +1,45 @@
 import collections as cl
+import xml.dom.minidom as dom
 import xml.etree.ElementTree as et
 
 QueryID = cl.namedtuple('QueryID', 'topic, number')
 
-# XXX should replace the element function
-class IndriElement:
-    def __init__(self, root):
-        self.element = None
-        self._push(root, et.Element, '\n', '\n')
-
-    def _push(self, name, loc, text, tail):
-        self.element = loc(self.element, name)
-        (self.element.text, self.element.tail) = (text, tail)
-        
-    def add(self, name, text='\n', tail='\n'):
-        self._push(name, et.SubElement, text, tail)
-        
-def element(name, parent=None, text='\n', tail='\n'):
-    if parent is None:
-        e = et.Element(name)
-    else:
-        e = et.SubElement(parent, name)
-    e.text = text
-    e.tail = tail
-
-    return e
-
-class IndriQuery:
+class _IndriXML:
     def __init__(self):
-        self.i = 0
-        self.query = element('parameter')
-        self.keys = ('type', 'number', 'text')
+        self.xml = None
 
     def __str__(self):
-        return et.tostring(self.query, encoding='unicode')
+        flatten = et.tostring(self.xml, encoding='utf-8')
+        pretty = dom.parseString(flatten).toprettyxml(indent='')
+        body = pretty.index('\n') + 1 # first line ('<? xml...') confuses Indri
+
+        return pretty[body:]
+
+class IndriDocument(_IndriXML):
+    def __init__(self, collection):
+        super().__init__()
+
+        self.xml = et.Element('DOC')
+        parts = map(lambda x: x(collection), (repr, str))
+        for (i, j) in zip(('DOCNO', 'TEXT'), parts):
+            e = et.SubElement(self.xml, i)
+            e.text = str(j)
+
+class IndriQuery(_IndriXML):
+    def __init__(self):
+        super().__init__()
+
+        self.xml = et.Element('parameter')
+        self.keys = ('type', 'number', 'text')
+        self.number = 0
 
     def add(self, text):
-        q = element('query', self.query)
-        for (i, j) in zip(self.keys, ('indri', str(self.i), text)):
-            element(i, q, j)
+        child = et.SubElement(self.xml, 'query')
+        for (x, y) in zip(self.keys, ('indri', str(self.number), text)):
+            e = et.SubElement(child, x)
+            e.text = str(y)
 
-        self.i += 1
+        self.number += 1
 
 class TrecDocument:
     separator = '-'
