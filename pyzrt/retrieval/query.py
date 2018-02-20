@@ -153,11 +153,8 @@ class ShortestPath(_Query):
         best = GraphPath()
 
         if len(graph):
-            (source, target) = map(lambda x: x(graph.nodes()), (min, max))
-            for i in nx.all_shortest_paths(graph,
-                                           source,
-                                           target,
-                                           weight='weight'):
+            nodes = map(lambda x: x(graph.nodes()), (min, max))
+            for i in nx.all_shortest_paths(graph, *nodes, weight='weight'):
                 weights = []
                 for edge in zip(i, i[1:]):
                     d = graph.get_edge_data(*edge)
