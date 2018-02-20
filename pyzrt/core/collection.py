@@ -171,15 +171,16 @@ class TermCollection(list):
            first 'region' relative to an index.
         '''
 
-        ptr = self[index]
-        follows = lambda x, y: x.position > ptr.span
+        anchor = self[index]
+        follows = lambda x, y: x.position > anchor.span
+        distance = 0
 
         for i in it.islice(self, index, None):
-            if i.position > ptr.position:
+            if i.position > anchor.position:
                 break
-            index += 1
+            distance += 1
 
-        yield from next(self.regions(index, follows))
+        yield from next(self.regions(index + distance, follows))
 
     @classmethod
     def fromaren(cls, collection):
