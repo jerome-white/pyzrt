@@ -113,18 +113,13 @@ class TermCollection(list):
             if term.ngram == ngram:
                 yield (i, term)
 
-    def regions(self, start=0, follows=None):
+    def regions(self, start=0):
         '''Generate each overlapping region as a new collection.
 
         Parameters
         ----------
         start : int, optional
            n-gram to find within the collection
-
-        follows : Term,Term -> bool , optional
-           Given two terms, returns True iff the
-           terms "overlap". Terms are presented to the function
-           in sequential order (previous, current).
 
         Yields
         ----------
@@ -139,48 +134,19 @@ class TermCollection(list):
            less-than) order
         '''
 
-        if follows is None:
-            follows = lambda x, y: x.position > y.span
-
         region = type(self)()
 
         for current in it.islice(self, start, None):
             if region:
                 previous = region[-1]
                 assert(previous.position <= current.position) # not in order!
-                if follows(current, previous):
+                if current.position > previous.span:
                     yield region
                     region = type(self)()
             region.append(current)
 
         if region:
             yield region
-
-    def after(self, index):
-        '''Terms that overlap a Term at a given index.
-
-        Parameters
-        ----------
-        index : int
-           Index within the collection from where to begin.
-
-        Yields
-        ----------
-        TermCollection
-           A single collection. Can also be thought of as the
-           first 'region' relative to an index.
-        '''
-
-        anchor = self[index]
-        follows = lambda x, y: x.position > anchor.span
-        distance = 0
-
-        for i in it.islice(self, index, None):
-            if i.position > anchor.position:
-                break
-            distance += 1
-
-        yield from next(self.regions(index + distance, follows))
 
     @classmethod
     def fromaren(cls, collection):
