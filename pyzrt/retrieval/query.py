@@ -143,8 +143,8 @@ class ShortestPath(_Query):
         graph = nx.DiGraph()
 
         for (u, src) in enumerate(collection):
-            nxt = u + 1
-            for (v, dst) in enumerate(it.islice(collection, nxt, None), nxt):
+            for v in range(u + 1, len(collection)):
+                dst = collection[v]
                 weight = src.span - dst.position
                 if weight < 0:
                     break
