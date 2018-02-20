@@ -10,6 +10,13 @@ from pyzrt.retrieval.regionalization import PerRegion, CollectionAtOnce
 def Query(terms, model='ua', **kwargs):
     return _Query.builder(terms, model, **kwargs)
 
+class ReprStr:
+    def __init__(self, word):
+        self.word = word
+
+    def __repr__(self):
+        return str(self.word)
+
 class _Query:
     def __init__(self, doc):
         self.doc = doc
@@ -58,8 +65,8 @@ class Synonym(_Query):
 
         iterable = [ it.islice(collection, 0, self.n) ]
         if self.n is None or self.n > 1:
-            iterable.insert(0, [ '#syn(' ])
-            iterable.append([ ')' ])
+            iterable.insert(0, [ ReprStr('#syn(') ])
+            iterable.append([ ReprStr(')') ])
 
         yield from it.chain.from_iterable(iterable)
 
@@ -100,7 +107,9 @@ class Weighted(_Query):
     def make(self, collection):
         operator = '#{0}('.format(self.operator)
 
-        yield from it.chain([operator], self.combine(collection), [')'])
+        yield from it.chain([ ReprStr(operator) ],
+                            self.combine(collection),
+                            [ ReprStr(')') ])
 
 class TotalWeight(Weighted):
     def __init__(self, doc, alpha=0.5):
