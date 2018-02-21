@@ -165,4 +165,4 @@ class ShortestPath(_Query):
                 if current < best:
                     best = current
 
-        yield from map(lambda x: collection[x], best)
+        yield from [ collection[x] for x in best ]
