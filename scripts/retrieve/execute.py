@@ -8,7 +8,7 @@ import pyzrt as pz
 
 Info = cl.namedtuple('Info', 'model, query, ngrams')
 
-def func(queue, index, feedback):
+def func(queue, index, feedback, indri):
     log = pz.util.get_logger()
 
     metrics = map(pz.TrecMetric, feedback)
@@ -18,7 +18,7 @@ def func(queue, index, feedback):
         log.info('{0}'.format(query.name))
 
         relevance = pz.QueryRelevance(qrels)
-        search = pz.Search(index, relevance)
+        search = pz.IndriSearch(index, relevance, indri)
         writer = None
 
         with output.open('w') as fp:
@@ -39,6 +39,7 @@ def func(queue, index, feedback):
         queue.task_done()
 
 arguments = ArgumentParser()
+arguments.add_argument('--indri', type=Path)
 arguments.add_argument('--index', type=Path)
 arguments.add_argument('--qrels', type=Path)
 arguments.add_argument('--queries', type=Path)
@@ -55,6 +56,7 @@ initargs = [
     queue,
     args.index,
     args.feedback_metric,
+    args.indri,
 ]
 
 log.info('++ begin {0}'.format(args.queries))
@@ -63,9 +65,9 @@ with mp.Pool(args.workers, func, initargs) as pool:
         out = args.output.joinpath(i.name)
         if not out.exists():
             components = pz.TrecDocument.components(i)
-
             qrels = args.qrels.joinpath(str(components.topic))
             model = i.suffix[1:] # without the '.'
+
             info = Info(model, i.stem, args.ngrams)
 
             queue.put((i, out, qrels, info))
