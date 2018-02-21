@@ -1,56 +1,46 @@
 #!/bin/bash
 
-#SBATCH --mem=60G
-#SBATCH --time=4:00:00
-#SBATCH --nodes=1
-#SBATCH --cpus-per-task=20
-#SBATCH --job-name=index
-
-#
-# Usage:
-#
-#  $> sbatch $0 n path/to/toplevel
-#
-# where
-#    - n is the number of n-grams with which to work
-#    - path/to/toplevel is the path to the directory containing the
-#      trees ($output in $ZR_HOME/slurm/suffix.sh)
-#
+workers=20
+while getopts "r:" OPTION; do
+    case $OPTION in
+	r) run=$OPTARG ;;
+        h)
+            exit
+            ;;
+        *) exit 1 ;;
+    esac
+done
 
 module load pbzip2/intel/1.1.13
 
-ngrams=`printf "%02.f" ${1}`
+tmp=`mktemp --directory --tmpdir=$BEEGFS`
 
-#
-# Extract the term files
-#
+for i in $run/pseudoterms/*; do
+    ngrams=`basename --suffix=.tar.bz $i`
+
+    documents=$tmp/$ngrams
+    mkdir $documents
+
+    index=$run/indri/$ngrams
+    rm --recursive --force $index
+    mkdir --parents $index
+
+    job=`mktemp`
+
+    cat <<EOF > $job
+#!/bin/bash
 
 tar \
     --extract \
     --use-compress-prog=pbzip2 \
-    --directory=$SLURM_JOBTMP \
-    --file=${2}/pseudoterms/${ngrams}.tar.bz
+    --directory=\$SLURM_JOBTMP \
+    --file=$run/pseudoterms/${ngrams}.tar.bz
 
-#
-# Generate TREC formatted documents
-#
-
-documents=`mktemp --directory --tmpdir=$BEEGFS`
-
-find $SLURM_JOBTMP/$ngrams -name 'WSJ*' -not -name 'WSJQ*' | \
-  python3 $ZR_HOME/src/create/parse.py \
+find \$SLURM_JOBTMP/$ngrams -regextype posix-awk -regex '.*/[0-9]{4}' | \
+  python3 $ZR_HOME/scripts/parse/to-indri.py \
     --output $documents \
-    --parser pt \
-    --strainer trec \
+    --workers $workers \
     --consolidate
-
-#
-# Generate Indri indexes from the documents
-#
-
-index=${2}/indri/$ngrams
-rm --recursive --force $index
-mkdir --parents $index
 
 IndriBuildIndex \
   -corpus.path=$documents \
@@ -58,3 +48,14 @@ IndriBuildIndex \
   -index=$index
 
 rm --recursive --force $documents
+EOF
+
+    echo -n "$ngrams $job "
+    sbatch \
+	--mem=60G \
+	--time=4:00:00 \
+	--nodes=1 \
+	--cpus-per-task=$workers \
+	--job-name=index-$ngrams \
+	$job
+done
