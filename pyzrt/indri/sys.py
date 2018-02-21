@@ -38,19 +38,23 @@ class QueryRelevance:
         return str(self.qrels)
 
     def __len__(self):
+        counts = set()
+
         with self.qrels.open() as fp:
-            counts = set()
             for line in fp:
-                (iteration, *_) = line.strip().split()
+                (iteration, *_) = line.lstrip().split()
                 counts.add(iteration)
             return len(counts)
 
+    # http://trec.nist.gov/data/qrels_eng/
     def relevant(self):
+        reported = set()
+
         with self.qrels.open() as fp:
-            # http://trec.nist.gov/data/qrels_eng/
             for line in fp:
-                (topic, _, document, relevant) = line.strip().split()
-                if not int(topic) and int(relevant) > 0:
+                (*_, document, relevant) = line.rstrip().split()
+                if document not in reported and int(relevant) > 0:
+                    reported.add(document)
                     yield document
 
 class Search:
