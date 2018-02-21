@@ -4,6 +4,7 @@ import itertools as it
 import numpy as np
 import networkx as nx
 
+from pyzrt.util import zutils
 from pyzrt.indri.doc import IndriQuery
 from pyzrt.retrieval.regionalization import PerRegion, CollectionAtOnce
 
@@ -156,7 +157,7 @@ class ShortestPath(_Query):
             nodes = map(lambda x: x(graph.nodes()), (min, max))
             for i in nx.all_shortest_paths(graph, *nodes, weight='weight'):
                 weights = []
-                for edge in zip(i, i[1:]):
+                for edge in zutils.pairwise(i):
                     d = graph.get_edge_data(*edge)
                     weights.append(d['weight'])
                 current = GraphPath(i, np.std(weights))
