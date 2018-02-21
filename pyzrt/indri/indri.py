@@ -4,11 +4,11 @@ from tempfile import NamedTemporaryFile
 from pyzrt.indri.sys import Search
 
 class IndriSearch(Search):
-    def __init__(self, index, qrels):
+    def __init__(self, index, qrels, indri=None):
         super().__init__(qrels)
 
         self.index = index
-        self.indri = sh.which('IndriRunQuery')
+        self.indri = sh.which('IndriRunQuery') if indri is None else indri
 
     def execute(self, query, baseline=None):
         '''Build/execute the Indri command
