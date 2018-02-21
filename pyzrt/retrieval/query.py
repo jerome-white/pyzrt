@@ -79,6 +79,9 @@ class WeightedTerm:
     def __str__(self):
         return '{0} {1}'.format(self.weight, self.term)
 
+    def __repr__(self):
+        return str(self)
+
 class Weighted(_Query):
     def __init__(self, doc, alpha):
         super().__init__(doc)
