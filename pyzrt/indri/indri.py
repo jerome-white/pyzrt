@@ -1,5 +1,4 @@
 import shutil as sh
-from tempfile import NamedTemporaryFile
 
 from pyzrt.indri.sys import Search
 
@@ -8,7 +7,7 @@ class IndriSearch(Search):
         super().__init__(qrels)
 
         self.index = index
-        self.indri = sh.which('IndriRunQuery') if indri is None else indri
+        self.indri = sh.which('IndriRunQuery') if indri is None else str(indri)
 
     def execute(self, query, baseline=None):
         cmd = [
