@@ -11,20 +11,14 @@ class IndriSearch(Search):
         self.indri = sh.which('IndriRunQuery') if indri is None else indri
 
     def execute(self, query, baseline=None):
-        '''Build/execute the Indri command
+        cmd = [
+            self.indri,
+            '-trecFormat=true',
+            '-count={0}'.format(self.count),
+            '-index={0}'.format(self.index),
+            str(query),
+        ]
+        if baseline:
+            cmd.insert(-1, '-baseline='.format(baseline))
 
-        '''
-
-        with NamedTemporaryFile(mode='w') as fp:
-            print(query, file=fp, flush=True)
-            cmd = [
-                self.indri,
-                '-trecFormat=true',
-                '-count={0}'.format(self.count),
-                '-index={0}'.format(self.index),
-                fp.name,
-            ]
-            if baseline:
-                cmd.insert(-1, '-baseline='.format(baseline))
-                
-            yield from self._shell(cmd)
+        yield from self._shell(cmd)
