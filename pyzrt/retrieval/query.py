@@ -5,7 +5,7 @@ import numpy as np
 import networkx as nx
 
 from pyzrt.util import zutils
-from pyzrt.indri.doc import IndriQuery
+from pyzrt.search.doc import IndriQuery
 from pyzrt.retrieval.regionalization import PerRegion, CollectionAtOnce
 
 def Query(terms, model='ua', **kwargs):

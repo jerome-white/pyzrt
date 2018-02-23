@@ -1,4 +1,4 @@
-from pyzrt.indri.doc import IndriQuery
+from pyzrt.search.doc import IndriQuery
 from pyzrt.retrieval.query import Query
 
 class Picker:
