@@ -11,13 +11,6 @@ from pyzrt.retrieval.regionalization import PerRegion, CollectionAtOnce
 def Query(terms, model='ua', **kwargs):
     return _Query.builder(terms, model, **kwargs)
 
-class ReprStr:
-    def __init__(self, word):
-        self.word = word
-
-    def __repr__(self):
-        return str(self.word)
-
 class _Query:
     def __init__(self, doc):
         self.doc = doc
@@ -31,7 +24,7 @@ class _Query:
 
     def compose(self):
         terms = map(self.make, self.regionalize)
-        return ' '.join(map(repr, it.chain.from_iterable(terms)))
+        return ' '.join(map(str, it.chain.from_iterable(terms)))
 
     def make(self, region):
         raise NotImplementedError()
@@ -66,8 +59,8 @@ class Synonym(_Query):
 
         iterable = [ it.islice(collection, 0, self.n) ]
         if self.n is None or self.n > 1:
-            iterable.insert(0, [ ReprStr('#syn(') ])
-            iterable.append([ ReprStr(')') ])
+            iterable.insert(0, ('#syn(', ))
+            iterable.append((')', ))
 
         yield from it.chain.from_iterable(iterable)
 
@@ -78,9 +71,6 @@ class WeightedTerm:
 
     def __str__(self):
         return '{0} {1}'.format(self.weight, self.term)
-
-    def __repr__(self):
-        return str(self)
 
 class Weighted(_Query):
     def __init__(self, doc, alpha):
@@ -111,9 +101,7 @@ class Weighted(_Query):
     def make(self, collection):
         operator = '#{0}('.format(self.operator)
 
-        yield from it.chain([ ReprStr(operator) ],
-                            self.combine(collection),
-                            [ ReprStr(')') ])
+        yield from it.chain((operator, ), self.combine(collection), (')', ))
 
 class TotalWeight(Weighted):
     def __init__(self, doc, alpha=0.5):

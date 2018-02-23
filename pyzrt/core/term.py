@@ -18,10 +18,10 @@ class Term(_Term):
         return self.position < other.position
 
     def __repr__(self):
-        return self.name
+        return self.ngram
 
     def __str__(self):
-        return self.ngram
+        return self.name
 
     @classmethod
     def _fromdict(cls, dictionary):

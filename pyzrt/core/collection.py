@@ -50,7 +50,7 @@ class TermCollection(list):
         return self.collection.stem if self.collection else ''
 
     def __str__(self):
-        return self.tostring(repr)
+        return self.tostring(str)
 
     def tostring(self, how, separator=' '):
         '''Create a string from terms in the collection

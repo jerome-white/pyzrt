@@ -81,7 +81,7 @@ class PseudoTermParser(_TermDocumentParser):
 
 class NGramParser(_TermDocumentParser):
     def tostring(self, doc):
-        return doc.tostring(str)
+        return doc.tostring(repr)
 
 class PassThroughParser(_Parser):
     def _parse(self, doc):
