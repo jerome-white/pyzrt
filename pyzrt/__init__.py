@@ -7,6 +7,7 @@ from pyzrt.parsing.parser import Parser
 from pyzrt.parsing.strainer import Strainer
 
 from pyzrt.search.doc import IndriQuery
+from pyzrt.search.doc import IndriDocument
 from pyzrt.search.doc import TrecDocument
 from pyzrt.search.sys import Search
 from pyzrt.search.sys import TrecMetric
