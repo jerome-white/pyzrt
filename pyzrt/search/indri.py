@@ -1,6 +1,6 @@
 import shutil as sh
 
-from pyzrt.indri.sys import Search
+from pyzrt.search.sys import Search
 
 class IndriSearch(Search):
     def __init__(self, index, qrels, indri=None):

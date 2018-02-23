@@ -10,7 +10,7 @@ from whoosh.scoring import BM25F
 from whoosh.analysis import SimpleAnalyzer
 
 from pyzrt.core.collection import TermCollection
-from pyzrt.indri.sys import Search
+from pyzrt.search.sys import Search
 
 Entry = cl.namedtuple('Entry', 'document, content')
 
