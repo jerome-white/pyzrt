@@ -9,16 +9,17 @@ from pyzrt.util import zutils
 from pyzrt.search.doc import IndriQuery
 from pyzrt.retrieval.regionalization import PerRegion, CollectionAtOnce
 
-def Query(terms, model='ua', **kwargs):
-    return _Query.builder(terms, model, **kwargs)
+def Query(terms, model, num, **kwargs):
+    return _Query.builder(terms, model, num, **kwargs)
 
 class _Query:
-    def __init__(self, doc):
+    def __init__(self, doc, num):
         self.doc = doc
+        self.num = num
         self.regionalize = None
 
     def __str__(self):
-        query = IndriQuery()
+        query = IndriQuery(self.num)
         query.add(self.compose())
 
         return str(query)
@@ -31,7 +32,7 @@ class _Query:
         raise NotImplementedError()
 
     @staticmethod
-    def builder(terms, model, **kwargs):
+    def builder(terms, model, num, **kwargs):
         return {
             'ua': BagOfWords,
             'sa': Synonym,
@@ -39,12 +40,12 @@ class _Query:
             'un': ShortestPath,
             'uaw': TotalWeight,
             'saw': LongestWeight,
-        }[model](terms, **kwargs)
+        }[model](terms, num, **kwargs)
 
 # ua
 class BagOfWords(_Query):
-    def __init__(self, doc):
-        super().__init__(doc)
+    def __init__(self, doc, num):
+        super().__init__(doc, num)
         self.regionalize = CollectionAtOnce(self.doc)
 
     def make(self, collection):
@@ -52,8 +53,8 @@ class BagOfWords(_Query):
 
 # sa, u1
 class Synonym(_Query):
-    def __init__(self, doc, n_longest=None):
-        super().__init__(doc)
+    def __init__(self, doc, num, n_longest=None):
+        super().__init__(doc, num)
         self.n = n_longest
         self.regionalize = PerRegion(self.doc)
 
@@ -76,8 +77,8 @@ class WeightedTerm:
         return '{0} {1}'.format(self.weight, self.term)
 
 class Weighted(_Query):
-    def __init__(self, doc, alpha):
-        super().__init__(doc)
+    def __init__(self, doc, num, alpha):
+        super().__init__(doc, num)
         self.alpha = alpha
         self.operator = None
 
@@ -113,15 +114,15 @@ class Weighted(_Query):
 
 # uaw
 class TotalWeight(Weighted):
-    def __init__(self, doc, alpha=0.5):
-        super().__init__(doc, alpha)
+    def __init__(self, doc, num, alpha=0.5):
+        super().__init__(doc, num, alpha)
         self.operator = 'weight'
         self.regionalize = CollectionAtOnce(self.doc)
 
 # saw
 class LongestWeight(Weighted):
-    def __init__(self, doc, alpha=0.5):
-        super().__init__(doc, alpha)
+    def __init__(self, doc, num, alpha=0.5):
+        super().__init__(doc, num, alpha)
         self.operator = 'wsyn'
         self.regionalize = PerRegion(self.doc)
 
@@ -138,8 +139,8 @@ class GraphPath:
 
 # un
 class ShortestPath(_Query):
-    def __init__(self, doc):
-        super().__init__(doc)
+    def __init__(self, doc, num):
+        super().__init__(doc, num)
         self.regionalize = PerRegion(self.doc)
 
     def make(self, collection):

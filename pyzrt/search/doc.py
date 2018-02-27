@@ -26,12 +26,12 @@ class IndriDocument(_IndriXML):
             e.text = str(j)
 
 class IndriQuery(_IndriXML):
-    def __init__(self):
+    def __init__(self, number):
         super().__init__()
 
         self.xml = et.Element('parameter')
         self.keys = ('type', 'number', 'text')
-        self.number = 0
+        self.number = number
 
     def add(self, text):
         child = et.SubElement(self.xml, 'query')
