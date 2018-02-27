@@ -96,7 +96,7 @@ class Weighted(_Query):
         for (term, weight) in self.discount(region):
             if weight < threshold:
                 break
-            yield WeightedTerm(weight, term)
+            yield WeightedTerm(term, weight)
 
     def make(self, collection):
         operator = '#{0}('.format(self.operator)
