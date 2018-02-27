@@ -61,7 +61,6 @@ class Search:
     def __init__(self, qrels):
         self.qrels = qrels
         self.count = len(self.qrels)
-
         self.trec = sh.which('trec_eval')
 
     def _shell(self, cmd):
