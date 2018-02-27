@@ -1,5 +1,6 @@
 import functools as ft
 import itertools as it
+import collections as cl
 
 import numpy as np
 import networkx as nx
@@ -40,6 +41,7 @@ class _Query:
             'saw': LongestWeight,
         }[model](terms, **kwargs)
 
+# ua
 class BagOfWords(_Query):
     def __init__(self, doc):
         super().__init__(doc)
@@ -48,6 +50,7 @@ class BagOfWords(_Query):
     def make(self, collection):
         yield from collection
 
+# sa, u1
 class Synonym(_Query):
     def __init__(self, doc, n_longest=None):
         super().__init__(doc)
@@ -57,10 +60,10 @@ class Synonym(_Query):
     def make(self, collection):
         collection.bylength()
 
-        iterable = [ it.islice(collection, 0, self.n) ]
+        iterable = cl.deque([ it.islice(collection, 0, self.n) ])
         if self.n is None or self.n > 1:
-            iterable.insert(0, ('#syn(', ))
-            iterable.append((')', ))
+            iterable.appendleft([ '#syn(' ])
+            iterable.append([ ')' ])
 
         yield from it.chain.from_iterable(iterable)
 
@@ -101,14 +104,21 @@ class Weighted(_Query):
     def make(self, collection):
         operator = '#{0}('.format(self.operator)
 
-        yield from it.chain((operator, ), self.combine(collection), (')', ))
+        if len(collection) == 1:
+            yield collection[0]
+        else:
+            yield from it.chain([ operator ],
+                                self.combine(collection),
+                                [ ')' ])
 
+# uaw
 class TotalWeight(Weighted):
     def __init__(self, doc, alpha=0.5):
         super().__init__(doc, alpha)
         self.operator = 'weight'
         self.regionalize = CollectionAtOnce(self.doc)
 
+# saw
 class LongestWeight(Weighted):
     def __init__(self, doc, alpha=0.5):
         super().__init__(doc, alpha)
@@ -126,6 +136,7 @@ class GraphPath:
     def __lt__(self, other):
         return self.deviation < other.deviation
 
+# un
 class ShortestPath(_Query):
     def __init__(self, doc):
         super().__init__(doc)
