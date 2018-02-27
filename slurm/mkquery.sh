@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #SBATCH --mem=60G
-#SBATCH --time=1:00:00
+#SBATCH --time=9:00:00
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=20
 #SBATCH --job-name=query
@@ -31,6 +31,8 @@ tar \
     --use-compress-prog=pbzip2 \
     --file=$run/pseudoterms/$ngrams.tar.bz \
     --directory=$SLURM_JOBTMP
+
+find $run/queries -size 0 -delete
 
 for i in ${models[@]}; do
     output=$run/queries/$ngrams
