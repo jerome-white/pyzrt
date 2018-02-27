@@ -10,7 +10,7 @@ arguments.add_argument('--model', default='ua')
 args = arguments.parse_args()
 
 log = pz.util.get_logger(True)
-log.info('{0} {1}'.format(args.document, args.model))
+log.info('{0} {1}'.format(args.document.stem, args.model))
 
 terms = pz.TermCollection(args.document)
 query = pz.Query(terms, args.model, args.number)
