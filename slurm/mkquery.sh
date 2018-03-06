@@ -1,20 +1,21 @@
 #!/bin/bash
 
-module try-load pbzip2/intel/1.1.13
+#SBATCH --mem=60G
+#SBATCH --time=9:00:00
+#SBATCH --nodes=1
+#SBATCH --cpus-per-task=20
+#SBATCH --job-name=query
 
-workers=20
-hours=1
-while getopts "r:t:ch" OPTION; do
+while getopts "r:n:h" OPTION; do
     case $OPTION in
-	r) run=$OPTARG ;;
-	t) hours=$OPTARG ;;
-	c) clean=1 ;;
-        h)
-            exit
-            ;;
+        r) run=$OPTARG ;;
+	n) ngrams=`printf "%02.f" $OPTARG` ;;
         *) exit 1 ;;
     esac
 done
+
+module try-load pbzip2/intel/1.1.13
+module try-load parallel/20171022
 
 models=(
     ua
@@ -25,38 +26,28 @@ models=(
     un # Hardest last!
 )
 
-for i in $run/pseudoterms/*; do
-    ngrams=`basename --suffix=.tar.bz $i`
-
-    queries=$run/queries/$ngrams
-    if [ $clean ]; then
-	rm --recursive --force $queries
-    fi
-    mkdir --parents $queries
-
-    job=`mktemp`
-    cat <<EOF > $job
-#!/bin/bash
-
 tar \
     --extract \
     --use-compress-prog=pbzip2 \
-    --file=$i \
-    --directory=\$SLURM_JOBTMP
+    --file=$run/pseudoterms/$ngrams.tar.bz \
+    --directory=$SLURM_JOBTMP
 
-python3 $ZR_HOME/scripts/retrieve/make.py \
-    --model `sed -e's/ / --model /g' <<< ${models[@]}` \
-    --term-files \$SLURM_JOBTMP/$ngrams \
-    --output $queries \
-    --workers $workers
+find $run/queries -size 0 -delete
+
+for i in ${models[@]}; do
+    output=$run/queries/$ngrams
+    mkdir --parents $output
+
+    for j in $SLURM_JOBTMP/$ngrams/*; do
+	doc=`basename $j`
+	out=$output/$doc.$i 
+	if [ ! -e $out ] && [ ${doc:0:1} == 'Q' ]; then
+	    cat <<EOF
+python3 $ZR_HOME/scripts/retrieve/mkquery.py \
+    --model $i \
+    --document $j \
+    --number ${doc:1} > $out
 EOF
-
-    echo -n "$ngrams $job "
-    sbatch \
-	--mem=60G \
-	--time=$hours:00:00 \
-	--nodes=1 \
-	--cpus-per-task=$workers \
-	--job-name=query-$ngrams \
-	$job
-done
+	fi
+    done
+done | parallel

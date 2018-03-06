@@ -1,5 +1,6 @@
 import functools as ft
 import itertools as it
+import collections as cl
 
 import numpy as np
 import networkx as nx
@@ -8,16 +9,17 @@ from pyzrt.util import zutils
 from pyzrt.search.doc import IndriQuery
 from pyzrt.retrieval.regionalization import PerRegion, CollectionAtOnce
 
-def Query(terms, model='ua', **kwargs):
-    return _Query.builder(terms, model, **kwargs)
+def Query(terms, model, num, **kwargs):
+    return _Query.builder(terms, model, num, **kwargs)
 
 class _Query:
-    def __init__(self, doc):
+    def __init__(self, doc, num):
         self.doc = doc
+        self.num = num
         self.regionalize = None
 
     def __str__(self):
-        query = IndriQuery()
+        query = IndriQuery(self.num)
         query.add(self.compose())
 
         return str(query)
@@ -30,7 +32,7 @@ class _Query:
         raise NotImplementedError()
 
     @staticmethod
-    def builder(terms, model, **kwargs):
+    def builder(terms, model, num, **kwargs):
         return {
             'ua': BagOfWords,
             'sa': Synonym,
@@ -38,29 +40,31 @@ class _Query:
             'un': ShortestPath,
             'uaw': TotalWeight,
             'saw': LongestWeight,
-        }[model](terms, **kwargs)
+        }[model](terms, num, **kwargs)
 
+# ua
 class BagOfWords(_Query):
-    def __init__(self, doc):
-        super().__init__(doc)
+    def __init__(self, doc, num):
+        super().__init__(doc, num)
         self.regionalize = CollectionAtOnce(self.doc)
 
     def make(self, collection):
         yield from collection
 
+# sa, u1
 class Synonym(_Query):
-    def __init__(self, doc, n_longest=None):
-        super().__init__(doc)
+    def __init__(self, doc, num, n_longest=None):
+        super().__init__(doc, num)
         self.n = n_longest
         self.regionalize = PerRegion(self.doc)
 
     def make(self, collection):
         collection.bylength()
 
-        iterable = [ it.islice(collection, 0, self.n) ]
+        iterable = cl.deque([ it.islice(collection, 0, self.n) ])
         if self.n is None or self.n > 1:
-            iterable.insert(0, ('#syn(', ))
-            iterable.append((')', ))
+            iterable.appendleft([ '#syn(' ])
+            iterable.append([ ')' ])
 
         yield from it.chain.from_iterable(iterable)
 
@@ -73,8 +77,8 @@ class WeightedTerm:
         return '{0} {1}'.format(self.weight, self.term)
 
 class Weighted(_Query):
-    def __init__(self, doc, alpha):
-        super().__init__(doc)
+    def __init__(self, doc, num, alpha):
+        super().__init__(doc, num)
         self.alpha = alpha
         self.operator = None
 
@@ -96,22 +100,29 @@ class Weighted(_Query):
         for (term, weight) in self.discount(region):
             if weight < threshold:
                 break
-            yield WeightedTerm(weight, term)
+            yield WeightedTerm(term, weight)
 
     def make(self, collection):
         operator = '#{0}('.format(self.operator)
 
-        yield from it.chain((operator, ), self.combine(collection), (')', ))
+        if len(collection) == 1:
+            yield collection[0]
+        else:
+            yield from it.chain([ operator ],
+                                self.combine(collection),
+                                [ ')' ])
 
+# uaw
 class TotalWeight(Weighted):
-    def __init__(self, doc, alpha=0.5):
-        super().__init__(doc, alpha)
+    def __init__(self, doc, num, alpha=0.5):
+        super().__init__(doc, num, alpha)
         self.operator = 'weight'
         self.regionalize = CollectionAtOnce(self.doc)
 
+# saw
 class LongestWeight(Weighted):
-    def __init__(self, doc, alpha=0.5):
-        super().__init__(doc, alpha)
+    def __init__(self, doc, num, alpha=0.5):
+        super().__init__(doc, num, alpha)
         self.operator = 'wsyn'
         self.regionalize = PerRegion(self.doc)
 
@@ -126,9 +137,10 @@ class GraphPath:
     def __lt__(self, other):
         return self.deviation < other.deviation
 
+# un
 class ShortestPath(_Query):
-    def __init__(self, doc):
-        super().__init__(doc)
+    def __init__(self, doc, num):
+        super().__init__(doc, num)
         self.regionalize = PerRegion(self.doc)
 
     def make(self, collection):

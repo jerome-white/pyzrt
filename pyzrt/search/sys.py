@@ -61,7 +61,6 @@ class Search:
     def __init__(self, qrels):
         self.qrels = qrels
         self.count = len(self.qrels)
-
         self.trec = sh.which('trec_eval')
 
     def _shell(self, cmd):
@@ -99,7 +98,8 @@ class Search:
                 cmd.append(fp.name)
                 yield from self._shell(cmd)
 
-    def interpret(self, evaluation, summary=False):
+    @staticmethod
+    def interpret(evaluation, summary=False):
         previous = None
         summarised = False
         results = {}
@@ -132,7 +132,7 @@ class Search:
             yield Measurement(run, results)
 
     def do(self, query, metrics=None):
-        yield from self.interpret(self.evaluate(self.execute(query), metrics))
+        yield from Search.interpret(self.evaluate(self.execute(query),metrics))
 
     def get(self, query, metrics=None):
         return next(self.do(query, metrics))
