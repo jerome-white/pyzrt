@@ -1,13 +1,16 @@
+#
+# Parse trec_eval output (to standard CSV format).
+#
+
 import sys
 import csv
-from pathlib import Path
 from argparse import ArgumentParser
 
 import pyzrt as pz
 
 arguments = ArgumentParser()
-arguments.add_argument('--model')
 arguments.add_argument('--query', type=Path)
+arguments.add_argument('--model', default='indri')
 arguments.add_argument('--ngrams', type=int)
 args = arguments.parse_args()
 
