@@ -76,15 +76,12 @@ class Search:
     def execute(self, query):
         raise NotImplementedError()
 
-    def evaluate(self, execution, metrics=None):
-        if not metrics:
-            metrics = [ TrecMetric('all_trec') ]
-
+    def evaluate(self, execution):
+        singles = 'qnc'
         cmd = [
             self.trec,
-            '-q',
-            '-c',
-            *map(str, metrics),
+            '-{0}'.format(' -'.join(list(singles))),
+            str(TrecMetric('all_trec')),
             '-M{0}'.format(self.count),
             str(self.qrels),
         ]
@@ -98,27 +95,15 @@ class Search:
                 cmd.append(fp.name)
                 yield from self._shell(cmd)
 
-    def interpret(self, evaluation, summary=False):
+    def interpret(self, evaluation):
         previous = None
-        summarised = False
         results = {}
 
         for line in evaluation:
             (metric, run, value) = line.strip().split()
-            try:
-                run = int(run)
-                assert(run >= 0)
-            except ValueError:
-                run = -1
-
             if previous is not None and previous != run:
-                assert(not summarised)
-
                 yield Measurement(previous, results)
-
                 results = {} # probably not necessary, but safe
-                if run < 0:
-                    summarised = True
 
             try:
                 results[metric] = float(value)
@@ -127,11 +112,11 @@ class Search:
 
             previous = run
 
-        if results and (summary or run >= 0):
+        if results:
             yield Measurement(run, results)
 
-    def do(self, query, metrics=None):
-        yield from self.interpret(self.evaluate(self.execute(query), metrics))
+    def do(self, query):
+        yield from Search.interpret(self.evaluate(self.execute(query)))
 
-    def get(self, query, metrics=None):
-        return next(self.do(query, metrics))
+    def get(self, query):
+        return next(self.do(query))
