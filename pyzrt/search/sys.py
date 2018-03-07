@@ -95,7 +95,8 @@ class Search:
                 cmd.append(fp.name)
                 yield from self._shell(cmd)
 
-    def interpret(self, evaluation):
+    @staticmethod
+    def interpret(evaluation):
         previous = None
         results = {}
 
