@@ -16,7 +16,7 @@ def func(incoming, outgoing, args):
     metric = repr(args.metric)
     
     if args.baseline is not None:
-        norms = pd.read_csv(args.baseline, index_col='topic')
+        norms = pz.util.Baseline(args.baseline, metric)
     else:
         norms = None
         
@@ -29,12 +29,11 @@ def func(incoming, outgoing, args):
 
         if norms is not None:
             query = df.at[0, 'query']
-            topic = int(query[1:])
-            
-            try:
-                df[metric] /= norms.iloc[topic][metric]
-            except IndexError:
+            if query not in norms or norms[query] == 0:
                 df = None
+            else:
+                df[metric] /= norms[query]
+                # df[metric] -= norms[query]
             
         outgoing.put(df)
 
@@ -58,6 +57,7 @@ arguments.add_argument('--data', type=Path)
 arguments.add_argument('--output', type=Path)
 arguments.add_argument('--metric', type=pz.TrecMetric)
 arguments.add_argument('--baseline', type=Path)
+arguments.add_argument('--save-data', type=Path)
 arguments.add_argument('--min-relevant', type=int, default=0)
 arguments.add_argument('--workers', type=int, default=mp.cpu_count())
 args = arguments.parse_args()
@@ -70,6 +70,8 @@ metric_label = {
 
 df = pd.concat(aquire(args))
 df = df[df['num_rel'] >= args.min_relevant]
+if args.save_data:
+    df.to_csv(args.save_data)
 
 hues = df['model'].unique()
 sns.set_context('paper')
@@ -84,10 +86,8 @@ ax = sns.pointplot(x='ngrams',
 ax.legend(ncol=round(len(hues) / 2), loc='upper center')
 ax.set(ylim=(0, None))
 #       ylabel=metric_label)
-if args.baseline:
-    ax.yaxis.set_major_formatter(FuncFormatter('{0:.0%}'.format))
+# if args.baseline:
+#     ax.yaxis.set_major_formatter(FuncFormatter('{0:.0%}'.format))
 
 ax.figure.savefig(str(args.output), bbox_inches='tight')
 
-# if args.save_data:
-#     df.to_csv(args.save_data)
