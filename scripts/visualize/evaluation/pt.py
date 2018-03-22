@@ -1,4 +1,3 @@
-import csv
 import multiprocessing as mp
 from pathlib import Path
 from argparse import ArgumentParser
@@ -9,32 +8,33 @@ import seaborn as sns
 from matplotlib.ticker import FuncFormatter
 
 import pyzrt as pz
-    
+
 def func(incoming, outgoing, args):
     log = pz.util.get_logger()
 
-    metric = repr(args.metric)
-    
-    if args.baseline is not None:
-        norms = pz.util.Baseline(args.baseline, metric)
+    metrics = map(repr, (pz.TrecMetric, args.metric))
+    usecols = ['num_rel', 'query'] + metrics
+
+    if args.baseline:
+        base = pd.read_csv(args.baseline, usecols=usecols)
     else:
-        norms = None
-        
+        base = None
+
     while True:
         result = incoming.get()
         log.info(result.stem)
-        
-        df = pd.read_csv(result)
+
+        df = pd.read_csv(result, usecols=usecols + ['model', 'ngrams']))
         assert(len(df) == 1)
 
-        if norms is not None:
+        if base is not None:
             query = df.at[0, 'query']
-            if query not in norms or norms[query] == 0:
+            if query not in base or base[query] == 0:
                 df = None
             else:
-                df[metric] /= norms[query]
-                # df[metric] -= norms[query]
-            
+                for i in metrics:
+                    df[i] /= base[i]
+
         outgoing.put(df)
 
 def aquire(args):
@@ -55,7 +55,7 @@ arguments = ArgumentParser()
 # arguments.add_argument('--model')
 arguments.add_argument('--data', type=Path)
 arguments.add_argument('--output', type=Path)
-arguments.add_argument('--metric', type=pz.TrecMetric)
+arguments.add_argument('--metric', action='append')
 arguments.add_argument('--baseline', type=Path)
 arguments.add_argument('--save-data', type=Path)
 arguments.add_argument('--min-relevant', type=int, default=0)
@@ -66,7 +66,7 @@ metric_label = {
     'map': 'MAP',
     'recip_rank': 'Mean Reciprocal Rank',
     'ndcg': 'NDCG',
-}[repr(args.metric)]
+}
 
 df = pd.concat(aquire(args))
 df = df[df['num_rel'] >= args.min_relevant]
@@ -74,9 +74,9 @@ if args.save_data:
     df.to_csv(args.save_data)
 
 hues = df['model'].unique()
-sns.set_context('paper')
+# sns.set_context('paper')
 #sns.set(font_scale=1.7)
-sns.set_style("whitegrid")
+sns.set_style('whitegrid')
 ax = sns.pointplot(x='ngrams',
                    y=repr(args.metric),
                    hue='model',
@@ -86,8 +86,5 @@ ax = sns.pointplot(x='ngrams',
 ax.legend(ncol=round(len(hues) / 2), loc='upper center')
 ax.set(ylim=(0, None))
 #       ylabel=metric_label)
-# if args.baseline:
-#     ax.yaxis.set_major_formatter(FuncFormatter('{0:.0%}'.format))
 
 ax.figure.savefig(str(args.output), bbox_inches='tight')
-
