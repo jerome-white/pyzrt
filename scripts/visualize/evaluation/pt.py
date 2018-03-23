@@ -5,6 +5,7 @@ from argparse import ArgumentParser
 import numpy as np
 import pandas as pd
 import seaborn as sns
+import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
 
 import pyzrt as pz
@@ -12,28 +13,34 @@ import pyzrt as pz
 def func(incoming, outgoing, args):
     log = pz.util.get_logger()
 
-    metrics = map(repr, (pz.TrecMetric, args.metric))
-    usecols = ['num_rel', 'query'] + metrics
+    metrics = [ repr(pz.TrecMetric(x)) for x in args.metric ]
+    usecols = ['num_rel', 'query']
 
     if args.baseline:
-        base = pd.read_csv(args.baseline, usecols=usecols)
+        base = pd.read_csv(args.baseline, usecols=usecols + metrics)
     else:
         base = None
 
+    usecols.extend(['model', 'ngrams'])
     while True:
         result = incoming.get()
         log.info(result.stem)
 
-        df = pd.read_csv(result, usecols=usecols + ['model', 'ngrams']))
+        df = pd.read_csv(result, usecols=usecols + metrics)
         assert(len(df) == 1)
 
         if base is not None:
-            query = df.at[0, 'query']
-            if query not in base or base[query] == 0:
-                df = None
+            query = []
+            for i in df.at[0, 'query']:
+                if i.isdigit():
+                    query.append(i)
+            query = int(''.join(query))
+
+            spot = base[base['query'] == query][metrics]
+            if spot.empty:
+                df[metrics] = np.nan
             else:
-                for i in metrics:
-                    df[i] /= base[i]
+                df[metrics] /= spot.reset_index(drop=True)
 
         outgoing.put(df)
 
@@ -69,22 +76,23 @@ metric_label = {
 }
 
 df = pd.concat(aquire(args))
-df = df[df['num_rel'] >= args.min_relevant]
 if args.save_data:
-    df.to_csv(args.save_data)
+    df.to_csv(args.save_data, index=False)
 
-hues = df['model'].unique()
+df = (df[df['num_rel'] >= args.min_relevant]
+      .melt(id_vars=['num_rel', 'query', 'model', 'ngrams'],
+             value_vars=args.metrics, # assumes args are Trec friendly
+             var_name='metric',
+             value_name='result')
+      .sort_values(by=['metric', 'ngrams', 'model'])
+      .drop(['num_rel', 'query'], axis='columns'))
+
 # sns.set_context('paper')
 #sns.set(font_scale=1.7)
 sns.set_style('whitegrid')
-ax = sns.pointplot(x='ngrams',
-                   y=repr(args.metric),
-                   hue='model',
-                   hue_order=sorted(hues),
-                   ci=None,
-                   data=df)
-ax.legend(ncol=round(len(hues) / 2), loc='upper center')
-ax.set(ylim=(0, None))
-#       ylabel=metric_label)
 
-ax.figure.savefig(str(args.output), bbox_inches='tight')
+g = sns.PairGrid(crashes.sort_values("total", ascending=False),
+                 x_vars=crashes.columns[:-3], y_vars=["abbrev"],
+                 size=10, aspect=.25)
+
+plt.savefig(str(args.output), bbox_inches='tight')
