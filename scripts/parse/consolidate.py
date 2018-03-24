@@ -12,45 +12,53 @@ import pandas as pd
 
 import pyzrt as pz
 
-def func(incoming, outgoing, args):
+class ResultReader:
+    def __init__(self, metrics):
+        self.metrics = metrics
+
+    def get(self, path, usecols):
+        df = pd.read_csv(path, usecols=usecols)
+        id_vars = df.columns.difference(self.metrics)
+
+        return df.melt(id_vars=id_vars,
+                       value_vars=self.metrics,
+                       var_name='metric',
+                       value_name='value')
+
+def func(incoming, outgoing, args, metrics):
     log = pz.util.get_logger()
 
-    metrics = [ repr(pz.TrecMetric(x)) for x in args.metric ]
+    reader = ResultReader(metrics)
     usecols = ['num_rel', 'query'] + metrics
 
     if args.baseline:
-        base = pd.read_csv(args.baseline, usecols=usecols)
+        base = reader.get(args.baseline, usecols)
+        base['query'] = base['query'].apply(lambda x: 'Q{0:03d}'.format(x))
     else:
         base = None
 
     usecols.extend(['model', 'ngrams'])
+
     while True:
         result = incoming.get()
         log.info(result.stem)
 
-        df = pd.read_csv(result, usecols=usecols)
-        assert(len(df) == 1)
+        df = reader.get(result, usecols)
+        assert(len(df) == len(metrics))
 
         if base is not None:
-            query = []
-            for i in df.at[0, 'query']:
-                if i.isdigit():
-                    query.append(i)
-            query = int(''.join(query))
-
-            spot = base[base['query'] == query][metrics]
-            if spot.empty:
-                df[metrics] = np.nan
-            else:
-                df[metrics] /= spot.reset_index(drop=True)
+            df = df.merge(base,
+                          on=['query', 'metric'],
+                          suffixes=('', '_baseline'))
+            df.drop(columns='num_rel_baseline', inplace=True)
 
         outgoing.put(df)
 
-def aquire(args):
+def aquire(args, metrics):
     incoming = mp.Queue()
     outgoing = mp.Queue()
 
-    with mp.Pool(args.workers, func, (outgoing, incoming, args)):
+    with mp.Pool(args.workers, func, (outgoing, incoming, args, metrics)):
         jobs = 0
         for i in args.data.iterdir():
             if i.stat().st_size:
@@ -67,4 +75,6 @@ arguments.add_argument('--metric', action='append')
 arguments.add_argument('--workers', type=int, default=mp.cpu_count())
 args = arguments.parse_args()
 
-pd.concat(aquire(args)).to_csv(sys.stdout, index=False)
+metrics = [ repr(pz.TrecMetric(x)) for x in args.metric ]
+
+pd.concat(aquire(args, metrics)).to_csv(sys.stdout, index=False)
