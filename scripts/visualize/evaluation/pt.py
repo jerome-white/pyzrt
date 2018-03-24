@@ -61,10 +61,11 @@ def aquire(args):
 arguments = ArgumentParser()
 # arguments.add_argument('--model')
 arguments.add_argument('--data', type=Path)
-arguments.add_argument('--output', type=Path)
+arguments.add_argument('--output-directory', type=Path)
 arguments.add_argument('--metric', action='append')
 arguments.add_argument('--baseline', type=Path)
 arguments.add_argument('--save-data', type=Path)
+arguments.add_argument('--from-data', type=Path)
 arguments.add_argument('--min-relevant', type=int, default=0)
 arguments.add_argument('--workers', type=int, default=mp.cpu_count())
 args = arguments.parse_args()
@@ -75,24 +76,21 @@ metric_label = {
     'ndcg': 'NDCG',
 }
 
-df = pd.concat(aquire(args))
-if args.save_data:
-    df.to_csv(args.save_data, index=False)
-
-df = (df[df['num_rel'] >= args.min_relevant]
-      .melt(id_vars=['num_rel', 'query', 'model', 'ngrams'],
-             value_vars=args.metrics, # assumes args are Trec friendly
-             var_name='metric',
-             value_name='result')
-      .sort_values(by=['metric', 'ngrams', 'model'])
-      .drop(['num_rel', 'query'], axis='columns'))
+if args.from_data:
+    df = pd.read_csv(args.from_data)
+else:
+    df = pd.concat(aquire(args))
+    if args.save_data:
+        df.to_csv(args.save_data, index=False)
+df = df[df['num_rel'] >= args.min_relevant]
 
 # sns.set_context('paper')
 #sns.set(font_scale=1.7)
 sns.set_style('whitegrid')
 
-g = sns.PairGrid(crashes.sort_values("total", ascending=False),
-                 x_vars=crashes.columns[:-3], y_vars=["abbrev"],
-                 size=10, aspect=.25)
-
-plt.savefig(str(args.output), bbox_inches='tight')
+for i in args.metric:
+    plt.clf()
+    g = sns.FacetGrid(df, col='model')
+    g.map(sns.pointplot, 'ngrams', i)
+    out = args.output_directory.joinpath(i)
+    plt.savefig(str(out), bbox_inches='tight')
