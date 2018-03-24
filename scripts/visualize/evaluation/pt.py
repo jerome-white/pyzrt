@@ -10,10 +10,9 @@ from matplotlib.ticker import FuncFormatter
 
 import pyzrt as pz
 
-def func(incoming, outgoing, args):
+def func(incoming, outgoing, args, metrics):
     log = pz.util.get_logger()
 
-    metrics = [ repr(pz.TrecMetric(x)) for x in args.metric ]
     usecols = ['num_rel', 'query']
 
     if args.baseline:
@@ -44,11 +43,11 @@ def func(incoming, outgoing, args):
 
         outgoing.put(df)
 
-def aquire(args):
+def aquire(args, metrics):
     incoming = mp.Queue()
     outgoing = mp.Queue()
 
-    with mp.Pool(args.workers, func, (outgoing, incoming, args)):
+    with mp.Pool(args.workers, func, (outgoing, incoming, args, metrics)):
         jobs = 0
         for i in args.data.iterdir():
             if i.stat().st_size:
@@ -61,7 +60,7 @@ def aquire(args):
 arguments = ArgumentParser()
 # arguments.add_argument('--model')
 arguments.add_argument('--data', type=Path)
-arguments.add_argument('--output-directory', type=Path)
+arguments.add_argument('--output', type=Path)
 arguments.add_argument('--metric', action='append')
 arguments.add_argument('--baseline', type=Path)
 arguments.add_argument('--save-data', type=Path)
@@ -75,22 +74,26 @@ metric_label = {
     'recip_rank': 'Mean Reciprocal Rank',
     'ndcg': 'NDCG',
 }
+metrics = [ repr(pz.TrecMetric(x)) for x in args.metric ]
 
 if args.from_data:
     df = pd.read_csv(args.from_data)
 else:
-    df = pd.concat(aquire(args))
+    df = pd.concat(aquire(args, metrics))
     if args.save_data:
         df.to_csv(args.save_data, index=False)
-df = df[df['num_rel'] >= args.min_relevant]
 
 # sns.set_context('paper')
 #sns.set(font_scale=1.7)
 sns.set_style('whitegrid')
 
-for i in args.metric:
-    plt.clf()
-    g = sns.FacetGrid(df, col='model')
-    g.map(sns.pointplot, 'ngrams', i)
-    out = args.output_directory.joinpath(i)
-    plt.savefig(str(out), bbox_inches='tight')
+df = (df[df['num_rel'] >= args.min_relevant]
+      .melt(id_vars=['model', 'ngrams'],
+            value_vars=metrics,
+            var_name='metric',
+            value_name='value')
+      .sort_values(by=['metric', 'model', 'ngrams']))
+g = sns.FacetGrid(df, row='metric', col='model')
+g.map(sns.pointplot, 'ngrams', 'value')
+
+g.savefig(str(args.output), bbox_inches='tight')
