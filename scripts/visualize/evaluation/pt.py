@@ -9,8 +9,6 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
 
-import pyzrt as pz
-
 arguments = ArgumentParser()
 arguments.add_argument('--output', type=Path)
 arguments.add_argument('--metric', action='append')
