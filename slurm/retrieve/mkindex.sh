@@ -1,9 +1,13 @@
 #!/bin/bash
 
 workers=20
-while getopts "r:" OPTION; do
+indri=`which IndriBuildIndex`
+
+while getopts "r:i:w:h" OPTION; do
     case $OPTION in
 	r) run=$OPTARG ;;
+	i) indri=$OPTARG ;;
+	w) workers=$OPTARG ;;
         h)
             exit
             ;;
@@ -42,7 +46,7 @@ find \$SLURM_JOBTMP/$ngrams -regextype posix-awk -regex '.*/[0-9]{4}' | \
     --workers $workers \
     --consolidate
 
-IndriBuildIndex \
+$indri \
   -corpus.path=$documents \
   -corpus.class=trectext \
   -index=$index
