@@ -71,6 +71,9 @@ args = arguments.parse_args()
 incoming = mp.Queue()
 outgoing = mp.Queue()
 
+log = pz.util.get_logger(True)
+log.info('BEGIN')
+
 with mp.Pool(args.workers, func, (outgoing, incoming, args.creator)):
     for i in args.terms.iterdir():
         outgoing.put(i)
@@ -80,14 +83,11 @@ with mp.Pool(args.workers, func, (outgoing, incoming, args.creator)):
         outgoing.put(None)
         stats.extend(incoming.get())
 
-log = pz.util.get_logger(True)
-log.info('BEGIN')
-
 kwargs = {
     'dir': str(args.output),
     'mode': 'w',
     'delete': False,
-    'prefix': '',
+    'prefix': args.version + '-',
     'suffix': '.csv',
 }
 version = '{0}-{1}'.format(args.creator[:2], args.version)
@@ -99,4 +99,4 @@ for field in stats.fields:
             'version': version,
         }).to_csv(fp, header=True, index_label='count')
 
-log.info('END')
+log.info('END {0} {1}'.format(args.version, stats.unique))

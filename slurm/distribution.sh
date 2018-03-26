@@ -2,9 +2,9 @@
 
 module load pbzip2/intel/1.1.13
 
-while getopts "r:nh" OPTION; do
+workers=20
+while getopts "r:h" OPTION; do
     case $OPTION in
-        n) normalize=--normalize ;;
         r) root=$OPTARG ;;
         h)
             exit
@@ -13,19 +13,15 @@ while getopts "r:nh" OPTION; do
     esac
 done
 
-#
-# Extract the term files
-#
+output=$root/distributions
+rm --recursive --force $output
+mkdir --parents $output
 
 for i in $root/pseudoterms/*.tar.bz; do
     ngrams=`basename --suffix=.tar.bz $i`
-    
-    output=$root/distributions
-    mkdir --parents $output
-
     job=`mktemp`
+
     echo -n "$ngrams $job "
-    
     cat <<EOF > $job
 #!/bin/bash
 
@@ -35,18 +31,19 @@ tar \
     --directory=\$SLURM_JOBTMP \
     --file=$i
 
-python $ZR_HOME/scripts/zrt/distribution.py $normalize \
-       --creator simulator \
+python $ZR_HOME/scripts/zrt/distribution.py \
        --terms \$SLURM_JOBTMP/$ngrams \
-       --save $output/$ngrams \
-       --plot $output/$ngrams
+       --output $output \
+       --creator simulator \
+       --version $ngrams \
+       --workers $workers
 EOF
 
     sbatch \
         --mem=60G \
         --time=60 \
         --nodes=1 \
-        --cpus-per-task=20 \
+        --cpus-per-task=$workers \
         --job-name=dist-$ngrams \
         $job
 done
