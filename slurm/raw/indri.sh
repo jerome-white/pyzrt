@@ -20,6 +20,7 @@ module try-load parallel/20171022
 
 root=$run/indri
 rm --recursive --force $root
+find $run/queries -size 0 -delete
 
 for i in $run/queries/*; do
     ngrams=`basename $i`
@@ -35,5 +36,3 @@ $indri -trecFormat=true -count=$count -index=$run/index/$ngrams $j > \
 EOF
     done
 done | parallel --line-buffer
-
-find $root -size 0 -delete
