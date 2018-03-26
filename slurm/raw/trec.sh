@@ -19,6 +19,7 @@ module try-load parallel/20171022
 
 root=$run/trec
 rm --recursive --force $root
+find $run/indri -size 0 -delete
 
 for i in $run/indri/*; do
     ngrams=`basename $i`
