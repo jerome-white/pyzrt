@@ -21,7 +21,7 @@ for i in $run/pseudoterms/*; do
     documents=$tmp/$ngrams
     mkdir $documents
 
-    index=$run/indri/$ngrams
+    index=$run/index/$ngrams
     rm --recursive --force $index
     mkdir --parents $index
 
