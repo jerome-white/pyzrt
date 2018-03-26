@@ -25,7 +25,7 @@ df = pd.read_csv(sys.stdin)
 df = df[df['num_rel'] >= args.min_relevant]
 if args.valid_queries:
     with args.valid_queries.open() as fp:
-        good = [ 'Q' + x.zfill(3) for x in fp ]
+        good = [ 'Q' + x.strip().zfill(3) for x in fp ]
     df = df[df['query'].isin(good)]
 
 if df.columns.contains('value_baseline'):
