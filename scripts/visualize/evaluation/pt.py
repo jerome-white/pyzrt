@@ -12,7 +12,6 @@ from matplotlib.ticker import FuncFormatter
 arguments = ArgumentParser()
 arguments.add_argument('--output', type=Path)
 arguments.add_argument('--valid-queries', type=Path)
-arguments.add_argument('--metric', action='append')
 arguments.add_argument('--min-relevant', type=int, default=0)
 args = arguments.parse_args()
 
@@ -37,7 +36,7 @@ if df.columns.contains('value_baseline'):
 df.to_csv('b', index=False)
 
 # sns.set_context('paper')
-#sns.set(font_scale=1.7)
+# sns.set(font_scale=1.7)
 sns.set_style('whitegrid')
 
 g = sns.FacetGrid(df, row='metric', col='model')
