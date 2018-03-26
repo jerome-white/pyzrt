@@ -11,6 +11,7 @@ from matplotlib.ticker import FuncFormatter
 
 arguments = ArgumentParser()
 arguments.add_argument('--output', type=Path)
+arguments.add_argument('--valid-queries', type=Path)
 arguments.add_argument('--metric', action='append')
 arguments.add_argument('--min-relevant', type=int, default=0)
 args = arguments.parse_args()
@@ -23,6 +24,10 @@ args = arguments.parse_args()
 
 df = pd.read_csv(sys.stdin)
 df = df[df['num_rel'] >= args.min_relevant]
+if args.valid_queries:
+    with args.valid_queries.open() as fp:
+        good = [ 'Q' + x.zfill(3) for x in fp ]
+    df = df[df['query'].isin(good)]
 
 if df.columns.contains('value_baseline'):
     normalization = op.sub
