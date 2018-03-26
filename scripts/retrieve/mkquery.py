@@ -5,7 +5,7 @@ import pyzrt as pz
 
 arguments = ArgumentParser()
 arguments.add_argument('--document', type=Path)
-arguments.add_argument('--number', type=int)
+arguments.add_argument('--number', type=int, default=0)
 arguments.add_argument('--model', default='ua')
 args = arguments.parse_args()
 
