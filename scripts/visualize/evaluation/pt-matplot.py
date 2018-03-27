@@ -44,6 +44,10 @@ plt.style.use('ggplot')
 
 for (ax, (i, metrics)) in zip(axes, df.groupby('metric')):
     for (cell, (j, models)) in zip(ax, metrics.groupby('model')):
+        # TODO:
+        #  1. Set capstyle: https://tinyurl.com/y87evy4m
+        #  2. Use Seaborn pointplot directly (at this cell-uar level)
+
         x = sorted(models['ngrams'].unique())
         data = (models[['ngrams', 'value']]
                 .sort_values(by='ngrams')
