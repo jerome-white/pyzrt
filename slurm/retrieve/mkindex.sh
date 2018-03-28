@@ -18,16 +18,17 @@ done
 module load pbzip2/intel/1.1.13
 
 tmp=`mktemp --directory --tmpdir=$BEEGFS`
+rm --recursive --force $run/index
 
 for i in $run/pseudoterms/*; do
     ngrams=`basename --suffix=.tar.bz $i`
 
     documents=$tmp/$ngrams
-    mkdir $documents
-
     index=$run/index/$ngrams
-    rm --recursive --force $index
-    mkdir --parents $index
+
+    for j in $documents $index; do
+	mkdir --parents $j
+    done
 
     job=`mktemp`
 
