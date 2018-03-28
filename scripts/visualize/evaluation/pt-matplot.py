@@ -35,11 +35,27 @@ if df.columns.contains('value_baseline'):
     df = df.assign(value=normalization(df[original], df['value_baseline']))
 df.to_csv('b', index=False)
 
-# sns.set_context('paper')
-# sns.set(font_scale=1.7)
-sns.set_style('whitegrid')
+# plt.style.use('ggplot')
+(figure, axes) = plt.subplots(nrows=df['metric'].nunique(),
+                              ncols=df['model'].nunique(),
+                              sharex=True,
+                              sharey=True,
+                              figsize=(15, 5))
 
-g = sns.FacetGrid(df, row='metric', col='model')
-g.map(sns.pointplot, 'ngrams', 'value', order=sorted(df['ngrams'].unique()))
-
-g.savefig(str(args.output), bbox_inches='tight')
+for (i, (ax, (mt, metrics))) in enumerate(zip(axes, df.groupby('metric'))):
+    iterable = zip(ax, metrics.groupby('model'))
+    for (j, (cell, (mo, models))) in enumerate(iterable):
+        sns.pointplot(x='ngrams',
+                      y='value',
+                      data=models,
+                      order=sorted(models['ngrams'].unique()),
+                      ax=cell)
+        if not j:
+            cell.set_ylabel(mt)
+        else:
+            cell.set_ylabel('')
+        if not i:
+            cell.set_title(mo)
+        cell.set_xlabel('')
+        cell.grid(True, which='both', axis='y', linestyle='dashed')
+plt.savefig(str(args.output), bbox_inches='tight')
