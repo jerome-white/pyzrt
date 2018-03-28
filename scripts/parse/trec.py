@@ -12,7 +12,7 @@ import pyzrt as pz
 arguments = ArgumentParser()
 arguments.add_argument('--query', type=Path)
 arguments.add_argument('--model', default='indri')
-arguments.add_argument('--ngrams', type=int)
+arguments.add_argument('--ngrams', type=float)
 args = arguments.parse_args()
 
 log = pz.util.get_logger(True)
@@ -22,7 +22,7 @@ writer = None
 results = {
     'model': args.model,
     'query': args.query,
-    'ngrams': args.ngrams,
+    'ngrams': int(args.ngrams) if args.ngrams.is_integer() else args.ngrams,
 }
 
 for i in pz.Search.interpret(sys.stdin):
