@@ -31,21 +31,21 @@ arguments.add_argument('--x-min', type=float, default=0)
 arguments.add_argument('--x-max', type=float)
 arguments.add_argument('--normalize', action='store_true')
 arguments.add_argument('--log-scale', action='store_true')
-arguments.add_argument('--ngram', action='append')
+arguments.add_argument('--ngrams', action='append')
 args = arguments.parse_args()
 
 df = pd.concat(aquire(args.measurement, args.terms))
 assert(not df.empty)
-if args.ngram:
-    df = df[df['ngram'].isin(args.ngram)]
+if args.ngrams:
+    df = df[df['ngrams'].isin(map(float, args.ngrams))]
 
-df = df.pivot(index='count', columns='version', values=args.measurement)
+df = df.pivot(index='count', columns='ngrams', values=args.measurement)
 if args.normalize:
     df /= df.sum()
 
 df.plot.line(grid=True,
              xlim=(args.x_min, args.x_max),
-             ylim=(0.0, None),
+             ylim=(0, None),
              logy=args.log_scale,
              title=args.title)
 
