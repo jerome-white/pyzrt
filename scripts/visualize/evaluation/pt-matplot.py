@@ -1,5 +1,6 @@
 import sys
 import operator as op
+import collections as cl
 from pathlib import Path
 from argparse import ArgumentParser
 
@@ -8,6 +9,12 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
+
+Element = cl.namedtuple('Element', 'name, order, ax, df')
+
+def each(axes, group):
+    for (a, (b, (c, d))) in enumerate(zip(axes, group)):
+        yield Element(c, a, b, d)
 
 arguments = ArgumentParser()
 arguments.add_argument('--output', type=Path)
@@ -42,20 +49,20 @@ df.to_csv('b', index=False)
                               sharey=True,
                               figsize=(15, 5))
 
-for (i, (ax, (mt, metrics))) in enumerate(zip(axes, df.groupby('metric'))):
-    iterable = zip(ax, metrics.groupby('model'))
-    for (j, (cell, (mo, models))) in enumerate(iterable):
+for i in each(axes, df.groupby('metric')):
+    for j in each(i.ax, i.df.groupby('model')):
         sns.pointplot(x='ngrams',
                       y='value',
-                      data=models,
-                      order=sorted(models['ngrams'].unique()),
-                      ax=cell)
-        if not j:
-            cell.set_ylabel(mt)
-        else:
-            cell.set_ylabel('')
+                      data=j.df,
+                      order=sorted(j.df['ngrams'].unique()),
+                      ax=j.ax)
+
+        ylabel = '' if j.order else i.name
+        j.ax.set_ylabel(ylabel)
+        j.ax.set_xlabel('')
+
         if not i:
-            cell.set_title(mo)
-        cell.set_xlabel('')
-        cell.grid(True, which='both', axis='y', linestyle='dashed')
+            j.ax.set_title(j.name)
+
+        j.ax.grid(True, which='both', axis='y', linestyle='dashed')
 plt.savefig(str(args.output), bbox_inches='tight')

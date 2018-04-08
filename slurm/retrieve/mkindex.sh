@@ -1,9 +1,13 @@
 #!/bin/bash
 
 workers=20
-while getopts "r:" OPTION; do
+indri=`which IndriBuildIndex`
+
+while getopts "r:i:w:h" OPTION; do
     case $OPTION in
 	r) run=$OPTARG ;;
+	i) indri=$OPTARG ;;
+	w) workers=$OPTARG ;;
         h)
             exit
             ;;
@@ -14,16 +18,17 @@ done
 module load pbzip2/intel/1.1.13
 
 tmp=`mktemp --directory --tmpdir=$BEEGFS`
+rm --recursive --force $run/index
 
 for i in $run/pseudoterms/*; do
     ngrams=`basename --suffix=.tar.bz $i`
 
     documents=$tmp/$ngrams
-    mkdir $documents
-
     index=$run/index/$ngrams
-    rm --recursive --force $index
-    mkdir --parents $index
+
+    for j in $documents $index; do
+	mkdir --parents $j
+    done
 
     job=`mktemp`
 
@@ -42,7 +47,7 @@ find \$SLURM_JOBTMP/$ngrams -regextype posix-awk -regex '.*/[0-9]{4}' | \
     --workers $workers \
     --consolidate
 
-IndriBuildIndex \
+$indri \
   -corpus.path=$documents \
   -corpus.class=trectext \
   -index=$index

@@ -9,7 +9,7 @@
 while getopts "r:n:h" OPTION; do
     case $OPTION in
         r) run=$OPTARG ;;
-	n) ngrams=`printf "%02.f" $OPTARG` ;;
+	n) ngrams=$OPTARG ;;
         *) exit 1 ;;
     esac
 done
