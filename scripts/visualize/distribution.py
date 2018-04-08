@@ -31,7 +31,7 @@ arguments.add_argument('--x-min', type=float, default=0)
 arguments.add_argument('--x-max', type=float)
 arguments.add_argument('--normalize', action='store_true')
 arguments.add_argument('--log-scale', action='store_true')
-arguments.add_argument('--ngram', action='store_append')
+arguments.add_argument('--ngram', action='append')
 args = arguments.parse_args()
 
 df = pd.concat(aquire(args.measurement, args.terms))
