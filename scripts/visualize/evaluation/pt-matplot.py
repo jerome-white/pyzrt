@@ -12,6 +12,20 @@ from matplotlib.ticker import FuncFormatter
 
 Element = cl.namedtuple('Element', 'name, order, ax, df')
 
+class GlobalRange:
+    def __init__(self):
+        self.left = np.inf
+        self.right = -self.left
+
+    def update(self, left, right):
+        if left < self.left:
+            self.left = left
+        if right > self.right:
+            self.right = right
+
+    def astuple(self):
+        return (self.left - 1, self.right + 1)
+
 def each(axes, group):
     for (a, (b, (c, d))) in enumerate(zip(axes, group)):
         yield Element(c, a, b, d)
@@ -49,12 +63,15 @@ df.to_csv('b', index=False)
                               sharey=True,
                               figsize=(15, 5))
 
+xlim = GlobalRange()
 for i in each(axes, df.groupby('metric')):
     for j in each(i.ax, i.df.groupby('model')):
+        domain = j.df['ngrams']
+        xlim.update(*[ f(domain) for f in (min, max) ])
         sns.pointplot(x='ngrams',
                       y='value',
                       data=j.df,
-                      order=sorted(j.df['ngrams'].unique()),
+                      order=sorted(domain.unique()),
                       ax=j.ax)
 
         ylabel = '' if j.order else i.name
@@ -65,4 +82,6 @@ for i in each(axes, df.groupby('metric')):
             j.ax.set_title(j.name)
 
         j.ax.grid(True, which='both', axis='y', linestyle='dashed')
+plt.xlim(xlim.astuple())
+print(xlim.astuple())
 plt.savefig(str(args.output), bbox_inches='tight')
