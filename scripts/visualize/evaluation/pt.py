@@ -35,11 +35,30 @@ if df.columns.contains('value_baseline'):
     df = df.assign(value=normalization(df[original], df['value_baseline']))
 df.to_csv('b', index=False)
 
-# sns.set_context('paper')
+sns.set_context('paper', rc={'lines.linewidth': 1})
 # sns.set(font_scale=1.7)
-sns.set_style('whitegrid')
+sns.set_style('whitegrid', {
+    'lines.solid_capstyle': 'butt',
+})
 
-g = sns.FacetGrid(df, row='metric', col='model')
-g.map(sns.pointplot, 'ngrams', 'value', order=sorted(df['ngrams'].unique()))
+g = sns.FacetGrid(df, row='metric', col='model', sharex=False)
+g.map(sns.pointplot,
+      'ngrams',
+      'value',
+      order=sorted(df['ngrams'].unique()),
+      markers=',',
+      errwidth=1)
+
+for ((row, col, _), data) in g.facet_data():
+    ax = g.facet_axis(row, col)
+
+    if not col:
+        ax.set_ylabel(data['metric'].unique().item())
+    ax.set_title('' if row else data['model'].unique().item())
+
+    ylim = max(map(abs, ax.get_ylim()))
+    ax.set_ylim(-ylim, ylim)
+
+sns.despine(left=True)
 
 g.savefig(str(args.output), bbox_inches='tight')
