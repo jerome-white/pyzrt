@@ -59,6 +59,8 @@ for ((row, col, _), data) in g.facet_data():
     ylim = max(map(abs, ax.get_ylim()))
     ax.set_ylim(-ylim, ylim)
 
+    ax.axhline(color='r')
+
 sns.despine(left=True)
 
 g.savefig(str(args.output), bbox_inches='tight')
